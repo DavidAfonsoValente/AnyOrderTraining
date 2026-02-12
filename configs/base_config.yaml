@@ -1,0 +1,114 @@
+# Base Configuration for Any-Order Masked Training
+
+# Model Configuration
+model:
+  name: "inclusionAI/LLaDA2.0-mini-preview"
+  model_path: null  # Will be set by download script
+  model_type: "llada2_moe"
+  dtype: "bfloat16"
+  device: "cuda"
+  
+# Data Configuration
+data:
+  env_name: "BabyAI-GoToRedBall-v0"
+  data_dir: "data/processed"
+  train_split: 0.8
+  val_split: 0.1
+  test_split: 0.1
+  batch_size: 8
+  num_workers: 4
+  max_trajectory_length: 128
+  shuffle: true
+  
+# Masking Configuration
+masking:
+  strategy: "cell"  # Options: 'cell', 'attribute', 'mixed'
+  mask_prob: 0.30
+  mask_obs: true
+  mask_act: true
+  mask_schedule: null  # Options: null, 'linear', 'cosine', 'step'
+  schedule_start_prob: 0.15
+  schedule_end_prob: 0.50
+  schedule_steps: 10000
+  
+  # Cell-level masking specific
+  cell_masking:
+    mask_all_attributes: true
+    
+  # Attribute-level masking specific
+  attribute_masking:
+    mask_object_prob: 0.33
+    mask_color_prob: 0.33
+    mask_state_prob: 0.33
+    
+# Training Configuration
+training:
+  num_epochs: 50
+  learning_rate: 1e-5
+  weight_decay: 0.01
+  warmup_steps: 500
+  gradient_accumulation_steps: 1
+  max_grad_norm: 1.0
+  fp16: false
+  bf16: true
+  
+  # Optimizer
+  optimizer: "adamw"
+  adam_beta1: 0.9
+  adam_beta2: 0.999
+  adam_epsilon: 1e-8
+  
+  # Scheduler
+  lr_scheduler: "cosine"
+  lr_scheduler_kwargs:
+    num_cycles: 0.5
+    
+  # Checkpointing
+  save_strategy: "steps"
+  save_steps: 500
+  save_total_limit: 3
+  load_best_model_at_end: true
+  
+  # Logging
+  logging_steps: 10
+  logging_dir: "outputs/logs"
+  report_to: ["tensorboard", "wandb"]
+  
+  # Evaluation
+  eval_strategy: "steps"
+  eval_steps: 500
+  eval_accumulation_steps: 1
+  
+# Evaluation Configuration
+evaluation:
+  num_eval_episodes: 100
+  num_test_episodes: 500
+  eval_envs:
+    - "BabyAI-GoToRedBall-v0"
+    - "BabyAI-Pickup-v0"
+    - "BabyAI-Open-v0"
+  
+  metrics:
+    - "world_model_nll"
+    - "action_accuracy"
+    - "task_success_rate"
+    - "partial_obs_robustness"
+    
+  # Visualization
+  visualize_predictions: true
+  num_viz_samples: 10
+  
+# Experiment Tracking
+experiment:
+  name: "any_order_baseline"
+  project: "any-order-masked-training"
+  entity: null  # Set your wandb entity
+  tags: []
+  notes: ""
+  
+# System Configuration
+system:
+  seed: 42
+  num_gpus: 1
+  distributed: false
+  mixed_precision: "bf16"
