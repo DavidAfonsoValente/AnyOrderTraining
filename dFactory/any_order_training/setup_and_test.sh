@@ -13,6 +13,14 @@
 # To run, edit the OUTPUT_PATH below and submit this script to SLURM:
 # sbatch any_order_training/setup_and_test.sh
 
+# --- SAFETY CHECK ---
+# This script is designed to be submitted with sbatch, not run with bash.
+if [ -z "$SLURM_JOB_ID" ]; then
+    echo "ERROR: This script is a SLURM batch job."
+    echo "Please submit it using 'sbatch', do not run it with 'bash'."
+    exit 1
+fi
+
 set -e
 
 # --- (1) USER CONFIGURATION ---
