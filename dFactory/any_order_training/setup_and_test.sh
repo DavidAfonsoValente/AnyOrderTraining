@@ -7,6 +7,7 @@
 #SBATCH --time=03:00:00
 #SBATCH --mem=64G
 #SBATCH --gpus-per-task=1
+#SBATCH --ntasks=1
 #SBATCH --cpus-per-task=4
 
 # This script automates the entire setup, download, and testing process.
