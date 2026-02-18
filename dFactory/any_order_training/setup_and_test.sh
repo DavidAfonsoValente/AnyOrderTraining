@@ -3,7 +3,7 @@
 #SBATCH --job-name=any-order-setup-and-test
 #SBATCH --output=any-order-setup-and-test.%j.out
 #SBATCH --error=any-order-setup-and-test.%j.err
-#SBATCH --partition=normal
+#SBATCH --partition=gpu
 #SBATCH --time=03:00:00
 #SBATCH --mem=64G
 #SBATCH --gpus-per-task=1
