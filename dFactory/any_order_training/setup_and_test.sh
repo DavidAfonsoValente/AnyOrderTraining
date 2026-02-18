@@ -37,14 +37,18 @@ fi
 if [ ! -d "$VENV_PATH" ]; then
     echo "Creating virtual environment in project root..."
     uv venv "$VENV_PATH"
-else
-    echo "Virtual environment already exists in project root."
 fi
+
+# Activate the virtual environment
+source "$VENV_PATH/bin/activate"
 
 # Ensure all dependencies are installed, including VeOmni's and additional ones
 echo "Installing/syncing all dependencies (VeOmni, gymnasium, minigrid, huggingface_hub)..."
-"$VENV_PYTHON" -m uv sync --all-extras
-"$VENV_PIP" install gymnasium minigrid huggingface_hub
+(
+  cd VeOmni || exit
+  uv sync --extra gpu
+)
+pip install gymnasium minigrid huggingface_hub
 
 echo "Environment setup complete."
 
