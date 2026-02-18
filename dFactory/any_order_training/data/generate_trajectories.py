@@ -40,27 +40,31 @@ def grid_to_string(image, direction):
     return f"Direction: {dir_str}\\n{grid_str}"
 
 
+from minigrid.babyai import Bot
+
 def generate_trajectories(env_name, num_trajectories, output_path):
     """Generates trajectories from a BabyAI environment and saves them to a JSONL file."""
     env = gym.make(env_name)
-    # The 'image' observation is a grid of objects.
-    # We don't need ImgObsWrapper as we are not using pixel observations.
     
     with open(output_path, 'w') as f:
         for i in range(num_trajectories):
             print(f"Generating trajectory {i+1}/{num_trajectories} for {env_name}...")
             obs, info = env.reset()
+            
+            # Create a bot agent
+            bot = Bot(env)
+            
             done = False
             truncated = False
-            
             messages = []
             
             while not done and not truncated:
+                # Format observation
                 obs_str = f"Mission: {obs['mission']}\\n" + grid_to_string(obs['image'], obs['direction'])
                 messages.append({"role": "user", "content": obs_str})
                 
-                # Get expert action
-                action = env.get_bot_action()
+                # Get expert action from the bot
+                action = bot.get_bot_action()
                 action_str = env.actions(action).name
                 messages.append({"role": "assistant", "content": action_str})
                 
