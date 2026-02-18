@@ -18,6 +18,11 @@ fi
 OUTPUT_PATH=$1
 echo "Using output path: $OUTPUT_PATH"
 
+# --- Define Python/Pip paths from the main project virtual environment ---
+VENV_PATH=".venv"
+VENV_PYTHON="$VENV_PATH/bin/python"
+VENV_PIP="$VENV_PATH/bin/pip"
+
 # --- 1. Environment Setup ---
 echo "--- Setting up environment ---"
 
@@ -28,20 +33,18 @@ if ! command -v uv &> /dev/null; then
     exit 1
 fi
 
-# Create virtual env and install dependencies
-if [ ! -d ".venv" ]; then
-    echo "Creating virtual environment..."
-    uv sync --extra gpu
+# Create virtual env and install all dependencies in the main project root
+if [ ! -d "$VENV_PATH" ]; then
+    echo "Creating virtual environment in project root..."
+    uv venv "$VENV_PATH"
 else
-    echo "Virtual environment already exists."
+    echo "Virtual environment already exists in project root."
 fi
 
-# Activate virtual environment for this script
-source .venv/bin/activate
-
-# Install additional dependencies
-echo "Installing gymnasium, minigrid, and huggingface_hub..."
-pip install gymnasium minigrid huggingface_hub
+# Ensure all dependencies are installed, including VeOmni's and additional ones
+echo "Installing/syncing all dependencies (VeOmni, gymnasium, minigrid, huggingface_hub)..."
+"$VENV_PYTHON" -m uv sync --all-extras
+"$VENV_PIP" install gymnasium minigrid huggingface_hub
 
 echo "Environment setup complete."
 
@@ -56,7 +59,7 @@ else
 fi
 
 if [ ! -d "$MERGED_MODEL_DIR" ]; then
-    echo "Model not found. Submitting download and merge job to SLURM."
+    echo "Merged model not found. Submitting download and merge job to SLURM."
     echo "The script will wait for the job to complete. This may take a while..."
     sbatch --wait "$DOWNLOAD_SCRIPT"
     echo "Model download and merge complete."
@@ -68,7 +71,7 @@ fi
 echo "--- Generating trajectory data ---"
 
 if [ ! -f "$TRAJECTORY_DATA_FILE" ]; then
-    python any_order_training/data/generate_trajectories.py
+    "$VENV_PYTHON" any_order_training/data/generate_trajectories.py
 else
     echo "Trajectory data already exists."
 fi
@@ -92,14 +95,14 @@ cat "$SMOKE_TEST_CONFIG"
 echo "--- Running local unit tests ---"
 
 export PYTHONPATH=$(pwd)/VeOmni:$(pwd):$PYTHONPATH
-python any_order_training/tests/test_any_order_sampler.py
+"$VENV_PYTHON" any_order_training/tests/test_any_order_sampler.py
 
 echo "Local unit tests passed."
 
 # --- 6. Run GPU Smoke Test ---
 echo "--- Submitting GPU smoke test to SLURM ---"
 
-sbatch any_order_training/slurm/run_smoke_test.sbatch
+sbatch --wait any_order_training/slurm/run_smoke_test.sbatch
 
 echo "Smoke test submitted. Check the SLURM queue and the output files in your working directory."
 echo "Setup and testing script finished."
