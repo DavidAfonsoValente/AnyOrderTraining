@@ -41,7 +41,7 @@ if ! command -v uv &> /dev/null; then
 fi
 
 # Create and activate virtual environment
-uv venv "$VENV_PATH"
+uv venv --clear "$VENV_PATH"
 source "$VENV_PATH/bin/activate"
 
 # Install dependencies
