@@ -28,7 +28,10 @@ echo "Virtual environment activated."
 
 # Ensure all dependencies are installed in the environment
 echo "Syncing dependencies..."
-uv sync --extra gpu
+(
+  cd VeOmni || exit
+  uv sync --extra gpu
+)
 
 # Determine cache and model directories, preferring /scratch if available
 if [ -d "/scratch" ]; then
