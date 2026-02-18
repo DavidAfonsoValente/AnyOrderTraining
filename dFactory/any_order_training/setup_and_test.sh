@@ -50,7 +50,9 @@ if ! command -v uv &> /dev/null; then
 fi
 
 # Create and activate virtual environment
-uv venv --clear "$VENV_PATH"
+rm -rf "$VENV_PATH"
+echo "Creating virtual environment in project root using 'python3 -m venv'..."
+python3 -m venv "$VENV_PATH"
 source "$VENV_PATH/bin/activate"
 
 # Install dependencies
