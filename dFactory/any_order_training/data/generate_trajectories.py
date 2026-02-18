@@ -5,25 +5,7 @@ from minigrid.wrappers import ImgObsWrapper, RGBImgPartialObsWrapper
 import numpy as np
 import json
 import os
-
-# --- Debugging ---
-import sys
-print("--- Python Executable ---")
-print(sys.executable)
-print("\n--- Python Path ---")
-print(sys.path)
-print("\n--- Minigrid Library Info ---")
-try:
-    print("minigrid version:", minigrid.__version__)
-    minigrid_path = os.path.dirname(minigrid.__file__)
-    print("minigrid path:", minigrid_path)
-    print("minigrid contents:", os.listdir(minigrid_path))
-except Exception as e:
-    print("Could not get minigrid info:", e)
-print("--- End Debugging ---\n")
-# --- End Debugging ---
-
-from minigrid.babyai import Bot
+from babyai.bot import Bot
 
 def grid_to_string(image, direction):
     """Converts the grid observation to a string."""
@@ -58,8 +40,6 @@ def grid_to_string(image, direction):
     
     return f"Direction: {dir_str}\\n{grid_str}"
 
-
-from minigrid.babyai import Bot
 
 def generate_trajectories(env_name, num_trajectories, output_path):
     """Generates trajectories from a BabyAI environment and saves them to a JSONL file."""
