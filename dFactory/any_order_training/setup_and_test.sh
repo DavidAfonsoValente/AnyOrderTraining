@@ -61,7 +61,7 @@ echo "Installing/syncing all dependencies..."
   cd VeOmni || exit
   uv sync --extra gpu
 )
-pip install gymnasium minigrid huggingface_hub safetensors transformers babyai
+pip install gymnasium minigrid huggingface_hub safetensors transformers git+https://github.com/mila-iqia/babyai.git
 
 echo "Environment setup complete."
 
