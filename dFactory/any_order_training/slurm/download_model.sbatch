@@ -16,15 +16,14 @@ echo "--- Starting Model Download ---"
 echo "Job ID: $SLURM_JOB_ID"
 echo "Running on node: $SLURMD_NODENAME"
 
-# Activate the virtual environment
-# Assumes the .venv is in the dFactory directory
-if [ -f ".venv/bin/activate" ]; then
-    source .venv/bin/activate
-else
-    echo "Error: Virtual environment not found. Please run the setup script first."
+# Define the python executable from the virtual environment
+VENV_PYTHON=".venv/bin/python"
+
+if [ ! -f "$VENV_PYTHON" ]; then
+    echo "Error: Virtual environment python not found. Please run the setup script first."
     exit 1
 fi
-echo "Virtual environment activated."
+echo "Using python from: $VENV_PYTHON"
 
 # Ensure all dependencies are installed in the environment
 echo "Syncing dependencies..."
@@ -52,7 +51,7 @@ mkdir -p "$HF_HOME"
 mkdir -p "$MODEL_DIR"
 
 # Download the model
-python scripts/download_hf_model.py \
+"$VENV_PYTHON" scripts/download_hf_model.py \
   --repo_id inclusionAI/LLaDA2.0-mini-preview \
   --local_dir "$MODEL_DIR"
 
@@ -64,7 +63,7 @@ echo "--- Merging Model Experts ---"
 MERGED_MODEL_DIR="${MODEL_BASE_DIR}/llada_merged"
 echo "Merged model will be saved to: $MERGED_MODEL_DIR"
 
-python scripts/moe_convertor.py \
+"$VENV_PYTHON" scripts/moe_convertor.py \
   --input-path "$MODEL_DIR" \
   --output-path "$MERGED_MODEL_DIR" \
   --mode merge
