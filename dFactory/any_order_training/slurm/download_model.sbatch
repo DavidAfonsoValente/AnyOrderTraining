@@ -26,6 +26,10 @@ else
 fi
 echo "Virtual environment activated."
 
+# Ensure all dependencies are installed in the environment
+echo "Syncing dependencies..."
+uv sync --extra gpu
+
 # Determine cache and model directories, preferring /scratch if available
 if [ -d "/scratch" ]; then
     export HF_HOME="/scratch/${USER}/hf_cache"
