@@ -47,8 +47,7 @@ mkdir -p "$MODEL_DIR"
 # Download the model
 python scripts/download_hf_model.py \
   --repo_id inclusionAI/LLaDA2.0-mini-preview \
-  --local_dir "$MODEL_DIR" \
-  --cache_dir "$HF_HOME"
+  --local_dir "$MODEL_DIR"
 
 echo "--- Model Download Complete ---"
 
