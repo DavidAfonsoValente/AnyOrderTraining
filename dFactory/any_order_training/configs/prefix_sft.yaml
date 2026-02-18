@@ -1,0 +1,66 @@
+
+# Configuration for Any-Order Supervised Fine-Tuning
+
+model:
+  model_path: "/path/to/your/merged_model" # CHANGE THIS
+  tokenizer_path: "/path/to/your/merged_model" # CHANGE THIS
+  attn_implementation: "sdpa"
+  moe_implementation: "deepspeed"
+
+data:
+  train_path: "/path/to/your/data/babyai_trajectories.jsonl" # CHANGE THIS
+  data_type: "conversation"
+  datasets_type: "mapping"
+  text_keys: "messages"
+  max_seq_len: 2048
+  num_workers: 4
+  drop_last: true
+  pin_memory: true
+  prefetch_factor: 2
+  training_mode: "prefix" # "any_order", "causal", or "prefix"
+  mask_prob: 0.0 # Not used in prefix mode
+  mask_token: "[MASK]"
+
+
+train:
+  output_dir: "/path/to/your/output/prefix" # CHANGE THIS
+  model_assets_dir: ${train.output_dir}/model_assets
+  save_checkpoint_path: ${train.output_dir}/checkpoints
+  load_checkpoint_path: null
+  
+  # Batching
+  micro_batch_size: 1
+  global_batch_size: 16
+  dataloader_batch_size: 1
+  
+  # Training steps
+  train_steps: 1000
+  num_train_epochs: 1
+
+  # Optimizer
+  optimizer: "adamw"
+  lr: 1e-5
+  beta1: 0.9
+  beta2: 0.999
+  weight_decay: 0.1
+  max_grad_norm: 1.0
+
+  # LR scheduler
+  lr_decay_style: "cosine"
+  lr_warmup_ratio: 0.01
+  lr_min: 1e-6
+
+  # Precision
+  enable_mixed_precision: true
+
+  # Checkpointing
+  save_steps: 100
+  
+  # Logging
+  use_wandb: true
+  wandb_project: "any-order-training"
+  wandb_name: "llada2-prefix-sft"
+
+  # Other
+  seed: 42
+  
