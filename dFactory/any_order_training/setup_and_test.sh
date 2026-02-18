@@ -1,112 +1,120 @@
 #!/bin/bash
 
-# This script automates the setup, download, and testing process for the any-order-training project.
+#SBATCH --job-name=any-order-setup-and-test
+#SBATCH --output=any-order-setup-and-test.%j.out
+#SBATCH --error=any-order-setup-and-test.%j.err
+#SBATCH --partition=normal
+#SBATCH --time=03:00:00
+#SBATCH --mem=64G
+#SBATCH --gpus-per-task=1
+#SBATCH --cpus-per-task=4
+
+# This script automates the entire setup, download, and testing process.
+# To run, edit the OUTPUT_PATH below and submit this script to SLURM:
+# sbatch any_order_training/setup_and_test.sh
 
 set -e
 
-# --- Configuration ---
+# --- (1) USER CONFIGURATION ---
+# Please edit this path to your desired output directory
+OUTPUT_PATH="/home/d/dvalente/AnyOrderTraining/output"
+
+
+# --- (2) SCRIPT CONFIGURATION (No changes needed below) ---
+echo "--- Starting Full Setup and Test ---"
+echo "Job ID: $SLURM_JOB_ID"
+echo "Running on node: $SLURMD_NODENAME"
+echo "Output will be saved to: $OUTPUT_PATH"
+
 SMOKE_TEST_CONFIG="any_order_training/configs/any_order_smoke_test.yaml"
 TRAJECTORY_DATA_FILE="any_order_training/data/babyai-gotoredball-v0_trajectories.jsonl"
-DOWNLOAD_SCRIPT="any_order_training/slurm/download_model.sbatch"
-
-# --- Arguments ---
-if [ "$#" -ne 1 ]; then
-    echo "Usage: $0 /path/to/your/output_directory"
-    exit 1
-fi
-
-OUTPUT_PATH=$1
-echo "Using output path: $OUTPUT_PATH"
-
-# --- Define Python/Pip paths from the main project virtual environment ---
 VENV_PATH=".venv"
-VENV_PYTHON="$VENV_PATH/bin/python"
-VENV_PIP="$VENV_PATH/bin/pip"
 
-# --- 1. Environment Setup ---
+# --- 3. Environment Setup ---
 echo "--- Setting up environment ---"
 
 # Check for uv
 if ! command -v uv &> /dev/null; then
-    echo "uv could not be found. Please install it first:"
+    echo "uv could not be found. Please install it first on the login node:"
     echo "curl -LsSf https://astral.sh/uv/install.sh | sh"
     exit 1
 fi
 
-# Create virtual env and install all dependencies in the main project root
-if [ ! -d "$VENV_PATH" ]; then
-    echo "Creating virtual environment in project root..."
-    uv venv "$VENV_PATH"
-fi
-
-# Activate the virtual environment
+# Create and activate virtual environment
+uv venv "$VENV_PATH"
 source "$VENV_PATH/bin/activate"
 
-# Ensure all dependencies are installed, including VeOmni's and additional ones
-echo "Installing/syncing all dependencies (VeOmni, gymnasium, minigrid, huggingface_hub)..."
+# Install dependencies
+echo "Installing/syncing all dependencies..."
 (
   cd VeOmni || exit
   uv sync --extra gpu
 )
-pip install gymnasium minigrid huggingface_hub
+pip install gymnasium minigrid huggingface_hub safetensors transformers
 
 echo "Environment setup complete."
 
-# --- 2. Model Download ---
-echo "--- Submitting model download job ---"
+# --- 4. Model Download and Merge ---
+echo "--- Downloading and Merging Model ---"
 
-# Determine model path
 if [ -d "/scratch" ]; then
-    MERGED_MODEL_DIR="/scratch/${USER}/models/llada_merged"
+    export HF_HOME="/scratch/${USER}/hf_cache"
+    MODEL_BASE_DIR="/scratch/${USER}/models"
 else
-    MERGED_MODEL_DIR="${HOME}/models/llada_merged"
+    export HF_HOME="${HOME}/hf_cache"
+    MODEL_BASE_DIR="${HOME}/models"
 fi
 
+MODEL_DIR="${MODEL_BASE_DIR}/llada"
+MERGED_MODEL_DIR="${MODEL_BASE_DIR}/llada_merged"
+
 if [ ! -d "$MERGED_MODEL_DIR" ]; then
-    echo "Merged model not found. Submitting download and merge job to SLURM."
-    echo "The script will wait for the job to complete. This may take a while..."
-    sbatch --wait "$DOWNLOAD_SCRIPT"
+    echo "Merged model not found. Downloading and merging..."
+    mkdir -p "$HF_HOME"
+    mkdir -p "$MODEL_DIR"
+    mkdir -p "$MERGED_MODEL_DIR"
+
+    python scripts/download_hf_model.py \
+      --repo_id inclusionAI/LLaDA2.0-mini-preview \
+      --local_dir "$MODEL_DIR"
+
+    python scripts/moe_convertor.py \
+      --input-path "$MODEL_DIR" \
+      --output-path "$MERGED_MODEL_DIR" \
+      --mode merge
     echo "Model download and merge complete."
 else
     echo "Merged model already exists at $MERGED_MODEL_DIR."
 fi
 
-# --- 3. Data Generation ---
+# --- 5. Data Generation ---
 echo "--- Generating trajectory data ---"
-
 if [ ! -f "$TRAJECTORY_DATA_FILE" ]; then
-    "$VENV_PYTHON" any_order_training/data/generate_trajectories.py
+    python any_order_training/data/generate_trajectories.py
 else
     echo "Trajectory data already exists."
 fi
-
 echo "Data generation complete."
 
-# --- 4. Configure Smoke Test ---
+# --- 6. Configure Smoke Test ---
 echo "--- Configuring smoke test ---"
-
-# Use sed to replace placeholder paths in the config file.
 sed -i "s|model_path:.*|model_path: \"$MERGED_MODEL_DIR\"|" "$SMOKE_TEST_CONFIG"
 sed -i "s|tokenizer_path:.*|tokenizer_path: \"$MERGED_MODEL_DIR\"|" "$SMOKE_TEST_CONFIG"
 sed -i "s|output_dir:.*|output_dir: \"$OUTPUT_PATH/smoke_test\"|" "$SMOKE_TEST_CONFIG"
 sed -i "s|train_path:.*|train_path: \"$TRAJECTORY_DATA_FILE\"|" "$SMOKE_TEST_CONFIG"
-
 echo "Smoke test configured."
-echo "Updated config file:"
-cat "$SMOKE_TEST_CONFIG"
 
-# --- 5. Run Local Tests ---
+# --- 7. Run Local Tests ---
 echo "--- Running local unit tests ---"
-
 export PYTHONPATH=$(pwd)/VeOmni:$(pwd):$PYTHONPATH
-"$VENV_PYTHON" any_order_training/tests/test_any_order_sampler.py
-
+python any_order_training/tests/test_any_order_sampler.py
 echo "Local unit tests passed."
 
-# --- 6. Run GPU Smoke Test ---
-echo "--- Submitting GPU smoke test to SLURM ---"
+# --- 8. Run GPU Smoke Test ---
+echo "--- Running GPU smoke test ---"
+TRAIN_SCRIPT="any_order_training/tasks/train_any_order.py"
+python -m torch.distributed.launch --nproc_per_node=1 "$TRAIN_SCRIPT" "$SMOKE_TEST_CONFIG"
+echo "GPU smoke test finished."
 
-sbatch --wait any_order_training/slurm/run_smoke_test.sbatch
+echo "--- Full Setup and Test Finished Successfully ---"
 
-echo "Smoke test submitted. Check the SLURM queue and the output files in your working directory."
-echo "Setup and testing script finished."

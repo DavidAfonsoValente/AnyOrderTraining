@@ -9,23 +9,43 @@
 
 set -e
 
-# This script is designed to be run from the root of the dFactory project.
-# The virtual environment is assumed to be created in the dFactory root.
+# This script sets up its own environment and downloads/merges the model.
+# It is designed to be run from the root of the dFactory project.
 
 echo "--- Starting Model Download and Merge ---"
 echo "Job ID: $SLURM_JOB_ID"
 echo "Running on node: $SLURMD_NODENAME"
 
-# Define the python executable from the main project virtual environment
-VENV_PYTHON="./.venv/bin/python"
+# --- 1. Environment Setup (within the SLURM job) ---
+echo "--- Setting up environment inside SLURM job ---"
 
-if [ ! -f "$VENV_PYTHON" ]; then
-    echo "Error: Main project virtual environment python not found at $VENV_PYTHON. Please run the setup script first."
-    exit 1
+VENV_PATH=".venv"
+VENV_PYTHON="$VENV_PATH/bin/python"
+
+# Create virtual env in the project root if it doesn't exist
+if [ ! -d "$VENV_PATH" ]; then
+    echo "Creating virtual environment in project root..."
+    uv venv "$VENV_PATH"
 fi
-echo "Using python from: $VENV_PYTHON"
+
+# Activate the virtual environment
+source "$VENV_PATH/bin/activate"
+
+# Install/sync dependencies from VeOmni's config
+echo "Syncing VeOmni dependencies..."
+(
+  cd VeOmni || exit
+  uv sync --extra gpu
+)
+
+# Install other essential packages
+echo "Installing other essential packages..."
+pip install huggingface_hub safetensors transformers
+
+echo "--- Environment setup complete ---"
 
 
+# --- 2. Download and Merge ---
 # Determine cache and model directories, preferring /scratch if available
 if [ -d "/scratch" ]; then
     export HF_HOME="/scratch/${USER}/hf_cache"
@@ -35,7 +55,6 @@ else
     MODEL_BASE_DIR="${HOME}/models"
 fi
 
-# The final directory for the downloaded model
 MODEL_DIR="${MODEL_BASE_DIR}/llada"
 MERGED_MODEL_DIR="${MODEL_BASE_DIR}/llada_merged"
 
@@ -49,7 +68,7 @@ mkdir -p "$MERGED_MODEL_DIR"
 
 # Download the model
 echo "--- Downloading Model ---"
-"$VENV_PYTHON" scripts/download_hf_model.py \
+python scripts/download_hf_model.py \
   --repo_id inclusionAI/LLaDA2.0-mini-preview \
   --local_dir "$MODEL_DIR"
 
@@ -57,7 +76,7 @@ echo "--- Model Download Complete ---"
 
 # Merge the experts
 echo "--- Merging Model Experts ---"
-"$VENV_PYTHON" scripts/moe_convertor.py \
+python scripts/moe_convertor.py \
   --input-path "$MODEL_DIR" \
   --output-path "$MERGED_MODEL_DIR" \
   --mode merge
