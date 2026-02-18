@@ -1,4 +1,3 @@
-
 #!/bin/bash
 #SBATCH --job-name=dl-llada-32g
 #SBATCH --partition=normal
@@ -46,9 +45,9 @@ mkdir -p "$HF_HOME"
 mkdir -p "$MODEL_DIR"
 
 # Download the model
-python scripts/download_hf_model.py 
-  --repo_id inclusionAI/LLaDA2.0-mini-preview 
-  --local_dir "$MODEL_DIR" 
+python scripts/download_hf_model.py \
+  --repo_id inclusionAI/LLaDA2.0-mini-preview \
+  --local_dir "$MODEL_DIR" \
   --cache_dir "$HF_HOME"
 
 echo "--- Model Download Complete ---"
@@ -59,9 +58,9 @@ echo "--- Merging Model Experts ---"
 MERGED_MODEL_DIR="${MODEL_BASE_DIR}/llada_merged"
 echo "Merged model will be saved to: $MERGED_MODEL_DIR"
 
-python scripts/moe_convertor.py 
-  --input-path "$MODEL_DIR" 
-  --output-path "$MERGED_MODEL_DIR" 
+python scripts/moe_convertor.py \
+  --input-path "$MODEL_DIR" \
+  --output-path "$MERGED_MODEL_DIR" \
   --mode merge
 
 echo "--- Model Merging Complete ---"
