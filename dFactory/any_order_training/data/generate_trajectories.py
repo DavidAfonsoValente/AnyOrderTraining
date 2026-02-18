@@ -6,6 +6,25 @@ import numpy as np
 import json
 import os
 
+# --- Debugging ---
+import sys
+print("--- Python Executable ---")
+print(sys.executable)
+print("\n--- Python Path ---")
+print(sys.path)
+print("\n--- Minigrid Library Info ---")
+try:
+    print("minigrid version:", minigrid.__version__)
+    minigrid_path = os.path.dirname(minigrid.__file__)
+    print("minigrid path:", minigrid_path)
+    print("minigrid contents:", os.listdir(minigrid_path))
+except Exception as e:
+    print("Could not get minigrid info:", e)
+print("--- End Debugging ---\n")
+# --- End Debugging ---
+
+from minigrid.babyai import Bot
+
 def grid_to_string(image, direction):
     """Converts the grid observation to a string."""
     h, w, c = image.shape
