@@ -30,7 +30,7 @@ echo "Using python from: $VENV_PYTHON"
 echo "Syncing dependencies..."
 (
   cd VeOmni || exit
-  "$VENV_PYTHON" -m uv sync --extra gpu
+  uv sync --extra gpu
 )
 
 # Determine cache and model directories, preferring /scratch if available
