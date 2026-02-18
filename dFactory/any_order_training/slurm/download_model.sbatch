@@ -26,12 +26,9 @@ if [ ! -f "$VENV_PYTHON" ]; then
 fi
 echo "Using python from: $VENV_PYTHON"
 
-# Ensure all dependencies are installed in the environment
-echo "Syncing dependencies..."
-(
-  cd VeOmni || exit
-  uv sync --extra gpu
-)
+# Install essential packages for the download and merge scripts
+echo "Installing essential packages..."
+"$VENV_PIP" install torch huggingface_hub safetensors
 
 # Determine cache and model directories, preferring /scratch if available
 if [ -d "/scratch" ]; then
