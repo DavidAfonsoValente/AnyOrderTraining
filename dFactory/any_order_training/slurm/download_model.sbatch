@@ -26,9 +26,12 @@ if [ ! -f "$VENV_PYTHON" ]; then
 fi
 echo "Using python from: $VENV_PYTHON"
 
-# Explicitly install torch to ensure it's available
-echo "Installing torch..."
-"$VENV_PIP" install torch torchvision torchaudio
+# Ensure all dependencies are installed in the environment
+echo "Syncing dependencies..."
+(
+  cd VeOmni || exit
+  "$VENV_PYTHON" -m uv sync --extra gpu
+)
 
 # Determine cache and model directories, preferring /scratch if available
 if [ -d "/scratch" ]; then
