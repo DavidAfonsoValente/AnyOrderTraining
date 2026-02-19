@@ -24,28 +24,34 @@ fi
 
 set -e
 
+# --- (0) DEFINE ABSOLUTE PATHS ---
+# Use the directory where sbatch was called as the project root.
+PROJECT_ROOT="$SLURM_SUBMIT_DIR"
+echo "Project root is: $PROJECT_ROOT"
+
 # --- (1) USER CONFIGURATION ---
-# Please edit this path to your desired output directory
+# Please edit this path to your desired output directory.
+# Using an absolute path is recommended.
 OUTPUT_PATH="/home/d/dvalente/AnyOrderTraining/output"
 
 
 # --- (2) SCRIPT CONFIGURATION (No changes needed below) ---
 echo "--- Starting Full Setup and Test ---"
+echo "--- VERSION 5 ---"
 echo "Job ID: $SLURM_JOB_ID"
 echo "Running on node: $SLURMD_NODENAME"
 echo "Output will be saved to: $OUTPUT_PATH"
 
-SMOKE_TEST_CONFIG="any_order_training/configs/any_order_smoke_test.yaml"
-TRAJECTORY_DATA_FILE="any_order_training/data/babyai-gotoredball-v0_trajectories.jsonl"
-VENV_PATH=".venv"
+SMOKE_TEST_CONFIG="$PROJECT_ROOT/any_order_training/configs/any_order_smoke_test.yaml"
+TRAJECTORY_DATA_FILE="$PROJECT_ROOT/any_order_training/data/babyai-gotoredball-v0_trajectories.jsonl"
+VENV_PATH="$PROJECT_ROOT/.venv"
 
 # --- 3. Environment Setup ---
 echo "--- Setting up environment ---"
 
-# Check for uv
+# Check for uv (assumes it's in the user's PATH on the compute node)
 if ! command -v uv &> /dev/null; then
-    echo "uv could not be found. Please install it first on the login node:"
-    echo "curl -LsSf https://astral.sh/uv/install.sh | sh"
+    echo "uv could not be found. Please install it on the login node first."
     exit 1
 fi
 
@@ -58,18 +64,18 @@ source "$VENV_PATH/bin/activate"
 # Install dependencies
 echo "Installing/syncing all dependencies..."
 (
-  cd VeOmni || exit
+  cd "$PROJECT_ROOT/VeOmni" || exit
   uv sync --extra gpu
 )
 
 # Clone and patch babyai because the official package is broken
 echo "Cloning and patching babyai..."
-rm -rf babyai_source # Remove old clone if it exists
-git clone https://github.com/mila-iqia/babyai.git babyai_source
-sed -i 's/packages=\["babyai", "babyai.levels", "babyai.utils"\],/packages=\["babyai", "babyai.levels", "babyai.utils", "babyai.rl"\],/' babyai_source/setup.py
+rm -rf "$PROJECT_ROOT/babyai_source" # Remove old clone if it exists
+git clone https://github.com/mila-iqia/babyai.git "$PROJECT_ROOT/babyai_source"
+sed -i 's/packages=\["babyai", "babyai.levels", "babyai.utils"\],/packages=\["babyai", "babyai.levels", "babyai.utils", "babyai.rl"\],/' "$PROJECT_ROOT/babyai_source/setup.py"
 
 # Install all other dependencies, including the patched babyai
-pip install gymnasium huggingface_hub safetensors transformers ./babyai_source
+pip install gymnasium huggingface_hub safetensors transformers "$PROJECT_ROOT/babyai_source"
 
 echo "Environment setup complete."
 
@@ -93,11 +99,11 @@ if [ ! -d "$MERGED_MODEL_DIR" ]; then
     mkdir -p "$MODEL_DIR"
     mkdir -p "$MERGED_MODEL_DIR"
 
-    python scripts/download_hf_model.py \
+    python "$PROJECT_ROOT/scripts/download_hf_model.py" \
       --repo_id inclusionAI/LLaDA2.0-mini-preview \
       --local_dir "$MODEL_DIR"
 
-    python scripts/moe_convertor.py \
+    python "$PROJECT_ROOT/scripts/moe_convertor.py" \
       --input-path "$MODEL_DIR" \
       --output-path "$MERGED_MODEL_DIR" \
       --mode merge
@@ -109,7 +115,7 @@ fi
 # --- 5. Data Generation ---
 echo "--- Generating trajectory data ---"
 if [ ! -f "$TRAJECTORY_DATA_FILE" ]; then
-    python any_order_training/data/generate_trajectories.py
+    python "$PROJECT_ROOT/any_order_training/data/generate_trajectories.py"
 else
     echo "Trajectory data already exists."
 fi
@@ -125,13 +131,13 @@ echo "Smoke test configured."
 
 # --- 7. Run Local Tests ---
 echo "--- Running local unit tests ---"
-export PYTHONPATH=$(pwd)/VeOmni:$(pwd):$PYTHONPATH
-python any_order_training/tests/test_any_order_sampler.py
+export PYTHONPATH="$PROJECT_ROOT/VeOmni:$PROJECT_ROOT"
+python "$PROJECT_ROOT/any_order_training/tests/test_any_order_sampler.py"
 echo "Local unit tests passed."
 
 # --- 8. Run GPU Smoke Test ---
 echo "--- Running GPU smoke test ---"
-TRAIN_SCRIPT="any_order_training/tasks/train_any_order.py"
+TRAIN_SCRIPT="$PROJECT_ROOT/any_order_training/tasks/train_any_order.py"
 python -m torch.distributed.launch --nproc_per_node=1 "$TRAIN_SCRIPT" "$SMOKE_TEST_CONFIG"
 echo "GPU smoke test finished."
 
