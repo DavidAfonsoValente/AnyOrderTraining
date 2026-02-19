@@ -75,7 +75,7 @@ git clone https://github.com/mila-iqia/babyai.git "$PROJECT_ROOT/babyai_source"
 sed -i 's/packages=\["babyai", "babyai.levels", "babyai.utils"\],/packages=\["babyai", "babyai.levels", "babyai.utils", "babyai.rl"\],/' "$PROJECT_ROOT/babyai_source/setup.py"
 
 # Install all other dependencies, including the patched babyai
-pip install gymnasium huggingface_hub safetensors transformers "$PROJECT_ROOT/babyai_source"
+pip install gymnasium minigrid huggingface_hub safetensors transformers "$PROJECT_ROOT/babyai_source"
 
 echo "Environment setup complete."
 
