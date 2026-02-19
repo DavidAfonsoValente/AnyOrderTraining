@@ -4,6 +4,7 @@ import numpy as np
 import json
 import os
 from collections import deque
+from minigrid.core.constants import DIR_TO_VEC
 
 # ==============================================================================
 # A robust, stateless, rule-based expert for solving simple Minigrid tasks.
