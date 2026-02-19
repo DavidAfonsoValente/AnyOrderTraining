@@ -96,6 +96,7 @@ setup(
 echo "Patching babyai source to use gymnasium..."
 find "$PROJECT_ROOT/babyai_source" -type f -name "*.py" -exec sed -i 's/import gym/import gymnasium as gym/g' {} +
 find "$PROJECT_ROOT/babyai_source" -type f -name "*.py" -exec sed -i 's/gym.spaces/gymnasium.spaces/g' {} +
+find "$PROJECT_ROOT/babyai_source" -type f -name "*.py" -exec sed -i 's/from gym_minigrid.minigrid import COLOR_NAMES, DIR_TO_VEC/from minigrid.core.constants import COLOR_NAMES, DIR_TO_VEC/g' {} +
 find "$PROJECT_ROOT/babyai_source" -type f -name "*.py" -exec sed -i 's/from gym_minigrid/from minigrid/g' {} +
 find "$PROJECT_ROOT/babyai_source" -type f -name "*.py" -exec sed -i 's/import gym_minigrid/import minigrid/g' {} +
 
