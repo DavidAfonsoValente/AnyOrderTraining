@@ -72,7 +72,26 @@ echo "Installing/syncing all dependencies..."
 echo "Cloning and patching babyai..."
 rm -rf "$PROJECT_ROOT/babyai_source" # Remove old clone if it exists
 git clone https://github.com/mila-iqia/babyai.git "$PROJECT_ROOT/babyai_source"
-sed -i 's/packages=\["babyai", "babyai.levels", "babyai.utils"\],/packages=\["babyai", "babyai.levels", "babyai.utils", "babyai.rl"\],/' "$PROJECT_ROOT/babyai_source/setup.py"
+
+# Overwrite setup.py with a fixed version that uses find_packages() and modern dependencies
+echo "from setuptools import setup, find_packages
+
+setup(
+    name=\"babyai\",
+    version=\"1.1.2\",
+    license=\"BSD 3-clause\",
+    keywords=\"memory, environment, agent, rl, openaigym, openai-gym, gym\",
+    packages=find_packages(),
+    install_requires=[
+        \"gymnasium\",
+        \"numpy>=1.17.0\",
+        \"torch>=0.4.1\",
+        \"blosc>=1.5.1\",
+        \"minigrid>=2.0.0\",
+    ],
+)
+" > "$PROJECT_ROOT/babyai_source/setup.py"
+
 
 # Install all other dependencies, including the patched babyai
 pip install gymnasium minigrid huggingface_hub safetensors transformers "$PROJECT_ROOT/babyai_source"
