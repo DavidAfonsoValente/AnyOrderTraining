@@ -61,6 +61,14 @@ echo "Installing/syncing all dependencies..."
   cd VeOmni || exit
   uv sync --extra gpu
 )
+
+# Clone and patch babyai because the official package is broken
+echo "Cloning and patching babyai..."
+rm -rf babyai_source # Remove old clone if it exists
+git clone https://github.com/mila-iqia/babyai.git babyai_source
+sed -i 's/packages=\["babyai", "babyai.levels", "babyai.utils"\],/packages=\["babyai", "babyai.levels", "babyai.utils", "babyai.rl"\],/' babyai_source/setup.py
+
+# Install all other dependencies, including the patched babyai
 pip install gymnasium huggingface_hub safetensors transformers ./babyai_source
 
 echo "Environment setup complete."
