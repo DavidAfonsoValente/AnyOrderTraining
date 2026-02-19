@@ -173,9 +173,9 @@ if __name__ == "__main__":
     os.makedirs(output_dir, exist_ok=True)
     
     tasks = {
-        "minigrid-GoToDoor-v0": solve_gotodoor,
-        "minigrid-PickupDist-v0": solve_pickup,
-        "minigrid-Unlock-v0": solve_unlock
+        "MiniGrid-GoToDoor-6x6-v0": solve_gotodoor,
+        "MiniGrid-PickupDist-6x6-v0": solve_pickup,
+        "MiniGrid-Unlock-6x6-v0": solve_unlock
     }
     
     for env_name, solver in tasks.items():
