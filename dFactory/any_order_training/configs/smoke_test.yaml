@@ -1,0 +1,40 @@
+
+# Configuration for Smoke Test
+
+model:
+  model_path: "/path/to/your/merged_model" # This will be replaced by the setup script
+  tokenizer_path: "/path/to/your/merged_model" # This will be replaced by the setup script
+  attn_implementation: "sdpa"
+  moe_implementation: "deepspeed"
+
+data:
+  train_path: "any_order_training/data/minigrid-gotodoor-v0_expert.jsonl" # This will be replaced by the setup script
+  data_type: "conversation"
+  datasets_type: "mapping"
+  text_keys: "messages"
+  max_seq_len: 1024 # Smaller for smoke test
+  num_workers: 1
+  training_mode: "any_order"
+  mask_prob: 0.5
+  masking_strategy: "all"
+  mask_token: "[MASK]"
+
+train:
+  output_dir: "/path/to/your/output/smoke_test" # This will be replaced by the setup script
+  model_assets_dir: ${train.output_dir}/model_assets
+  save_checkpoint_path: ${train.output_dir}/checkpoints
+  
+  micro_batch_size: 1
+  global_batch_size: 1
+  
+  train_steps: 10
+  num_train_epochs: 1
+
+  optimizer: "adamw"
+  lr: 1e-5
+  
+  enable_mixed_precision: true
+  save_steps: 5
+  
+  use_wandb: false
+  seed: 42

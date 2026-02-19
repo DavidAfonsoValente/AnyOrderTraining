@@ -1,0 +1,39 @@
+
+# Phase 2: GoTo Task - Prefix SFT Baseline
+
+model:
+  model_path: "/path/to/your/merged_model" # CHANGE THIS
+  tokenizer_path: "/path/to/your/merged_model" # CHANGE THIS
+  attn_implementation: "sdpa"
+  moe_implementation: "deepspeed"
+
+data:
+  train_path: "any_order_training/data/minigrid-unlock-v0_expert.jsonl"
+  data_type: "conversation"
+  datasets_type: "mapping"
+  max_seq_len: 2048
+  training_mode: "prefix" # This is the key parameter for this experiment
+  mask_prob: 0.0
+  masking_strategy: "all"
+
+train:
+  output_dir: "output/phase2/unlock/prefix" # CHANGE THIS
+  model_assets_dir: ${train.output_dir}/model_assets
+  save_checkpoint_path: ${train.output_dir}/checkpoints
+  
+  micro_batch_size: 4
+  global_batch_size: 32
+  
+  train_steps: 2000
+  num_train_epochs: 1
+
+  optimizer: "adamw"
+  lr: 2e-5
+  
+  enable_mixed_precision: true
+  save_steps: 500
+  
+  use_wandb: true
+  wandb_project: "any-order-phase2"
+  wandb_name: "unlock-prefix"
+  seed: 42

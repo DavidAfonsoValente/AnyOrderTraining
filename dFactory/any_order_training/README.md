@@ -1,59 +1,78 @@
+# Any-Order Masked Training
 
-# Any-Order Masked Training for Trajectory-Level Learning
+This project implements and evaluates the "Any-Order Masked Training" paradigm for LLM-based agents, as described in `PROJECT_DESCRIPTION.md`.
 
-This project implements the "Any-Order Masked Training" paradigm for LLM-based agents. It is built on top of the `dFactory` and `VeOmni` framework to fine-tune the LLaDA 2.0 model.
+This README provides a concise guide to setting up the project and running the experiments.
 
-## Quick Start: Automated Setup, Download, and Test
+## Step 1: One-Time Setup and Smoke Test
 
-A single script is provided to automate the entire setup, model download, data generation, and testing process.
+A single script, `setup_and_test.sh`, automates the entire setup process. It will:
+1.  Create a Python virtual environment.
+2.  Install all required dependencies.
+3.  Download the pre-trained LLaDA 2.0 model.
+4.  Generate the expert trajectory datasets for the three experiment tasks.
+5.  Run a small "smoke test" on a GPU to verify that the entire training pipeline is operational.
+
+**To run the setup, submit this script to your SLURM cluster:**
+```bash
+sbatch any_order_training/setup_and_test.sh
+```
+You only need to run this script **once**. After it completes successfully, your environment is ready and all data is generated. Check the `any-order-setup-and-test.<job_id>.out` file for the "Full Setup and Test Finished Successfully" message.
+
+*(Note: You may need to edit the `OUTPUT_PATH` variable inside the script if you want to change the default output directory.)*
+
+## Step 2: Running the Phase 2 Ablation Studies
+
+After the one-time setup is complete, you can run the full suite of Phase 2 experiments.
+
+The `run_ablations.sh` script is provided to easily launch these jobs.
 
 **Usage:**
 
-From the root of the `dFactory` directory, run the script with a single argument: the path to your desired output directory.
+1.  **Open the script**: `any_order_training/run_ablations.sh`
+2.  **Uncomment the experiments**: By default, all `sbatch` commands are commented out. Uncomment the lines for the experiments you wish to run. It is recommended to start with one task group (e.g., all "GoToDoor" experiments).
+3.  **Execute the script**:
+    ```bash
+    bash any_order_training/run_ablations.sh
+    ```
 
+This will submit a series of SLURM jobs, one for each uncommented experiment. The results (model checkpoints and logs) will be saved to the directory specified in the corresponding YAML configuration file (by default, subdirectories within `output/phase2/`).
+
+## Step 3: Evaluating the Results
+
+After your training jobs are complete, you can use the `evaluate.py` script to calculate the Negative Log-Likelihood (NLL) of the trained models.
+
+**Usage:**
 ```bash
-bash any_order_training/setup_and_test.sh /path/to/your/output_directory
+# First, activate your environment
+source .venv/bin/activate
+
+# Then, run the evaluation
+python any_order_training/scripts/evaluate.py \
+    --model_path /path/to/your/trained_model_checkpoint \
+    --tokenizer_path /path/to/your/trained_model_checkpoint \
+    --dataset_path /path/to/the/test_dataset.jsonl
 ```
-
-**Example:**
-```bash
-bash any_order_training/setup_and_test.sh /home/d/dvalente/AnyOrderTraining/output
-```
-
-**What this script does:**
-
-1.  **Environment Setup**: Creates a Python virtual environment and installs all necessary dependencies (`uv`, `gymnasium`, `minigrid`, `huggingface_hub`, etc.).
-2.  **Model Download**: Submits a SLURM job (`any_order_training/slurm/download_model.sbatch`) to download the `inclusionAI/LLaDA2.0-mini-preview` model and convert it to the required "merged-expert" format. The script will wait for this job to complete before continuing. The model is saved to `/scratch/$USER/models` if available, otherwise `~/models`.
-3.  **Data Generation**: Generates the BabyAI trajectory datasets.
-4.  **Configuration**: Automatically configures the smoke test to use the downloaded model path and your specified output path.
-5.  **Local Tests**: Runs the local unit tests.
-6.  **GPU Smoke Test**: Submits a smoke test job to your SLURM cluster to verify that the end-to-end training pipeline works on a GPU.
-
-After running this script, your environment will be fully set up, the model downloaded, data generated, and a test run will be initiated.
-
-## Manual Usage
-
-For more granular control over the process (e.g., to run different experiments), you can follow the manual steps. Please refer to the `PROJECT_DESCRIPTION.md` and `testing.md` files for more details.
 
 ## Project Structure
 
-The project is organized as follows:
-
+For a full breakdown of the project goals, methodology, and experimental design, please see the `PROJECT_DESCRIPTION.md` file.
 ```
 any_order_training/
-├── setup_and_test.sh           # Automated setup and testing script
+├── setup_and_test.sh       # --> STEP 1: Run this once with sbatch
+├── run_ablations.sh        # --> STEP 2: Run this with bash to launch experiments
 ├── configs/
-│   └── ...                     # Configuration files for experiments
+│   ├── phase2/             # All experiment configurations
+│   └── smoke_test.yaml
 ├── data/
-│   └── ...                     # Data generation and processing
-├── sampler/
-│   └── ...                     # The AnyOrderMaskSampler
+│   ├── generate_trajectories.py
+│   └── transform.py
 ├── scripts/
-│   └── ...                     # Evaluation script
-├── slurm/
-│   └── ...                     # SLURM batch scripts
+│   └── evaluate.py
 ├── tasks/
-│   └── ...                     # The main training script
+│   └── train_any_order.py
+├── sampler/
+│   └── any_order_sampler.py
 └── tests/
-    └── ...                     # Unit tests
+    └── test_any_order_sampler.py
 ```

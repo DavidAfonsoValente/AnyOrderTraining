@@ -11,6 +11,7 @@ def process_any_order_sft_example(
     training_mode: str = 'any_order',
     mask_prob: float = 0.5,
     mask_token: str = "[MASK]",
+    masking_strategy: str = "all",
     source_name: Optional[str] = None,
 ) -> List[Dict[str, "torch.Tensor"]]:
     if isinstance(text_keys, str):
@@ -30,8 +31,12 @@ def process_any_order_sft_example(
 
     # Apply masking based on the training mode
     if training_mode == 'any_order':
-        sampler = AnyOrderMaskSampler(mask_prob=mask_prob, mask_token=mask_token)
-        masked_trajectory, labels, _ = sampler(trajectory)
+        sampler = AnyOrderMaskSampler(
+            mask_prob=mask_prob, 
+            mask_token=mask_token, 
+            masking_strategy=masking_strategy
+        )
+        masked_trajectory, _, _ = sampler(trajectory)
     elif training_mode == 'causal':
         # For causal, we mask the last action
         masked_trajectory = trajectory[:-1] + [mask_token]

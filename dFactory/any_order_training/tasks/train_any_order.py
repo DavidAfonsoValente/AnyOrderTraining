@@ -74,6 +74,10 @@ class AnyOrderDataArguments(DataArguments):
         default="[MASK]",
         metadata={"help": "Mask token for any_order training mode."},
     )
+    masking_strategy: Literal["all", "observations", "actions"] = field(
+        default="all",
+        metadata={"help": "Masking strategy for any_order training mode."},
+    )
 
 @dataclass
 class AnyOrderTrainingArguments(TrainingArguments):
@@ -139,6 +143,7 @@ def main():
             training_mode=args.data.training_mode,
             mask_prob=args.data.mask_prob,
             mask_token=args.data.mask_token,
+            masking_strategy=args.data.masking_strategy,
         )
     else:
         raise NotImplementedError(f"Unsupported data type: {args.data.data_type}.")
