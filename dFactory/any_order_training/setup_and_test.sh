@@ -96,6 +96,8 @@ setup(
 echo "Patching babyai source to use gymnasium..."
 find "$PROJECT_ROOT/babyai_source" -type f -name "*.py" -exec sed -i 's/import gym/import gymnasium as gym/g' {} +
 find "$PROJECT_ROOT/babyai_source" -type f -name "*.py" -exec sed -i 's/gym.spaces/gymnasium.spaces/g' {} +
+find "$PROJECT_ROOT/babyai_source" -type f -name "*.py" -exec sed -i 's/from gym_minigrid/from minigrid/g' {} +
+find "$PROJECT_ROOT/babyai_source" -type f -name "*.py" -exec sed -i 's/import gym_minigrid/import minigrid/g' {} +
 
 # Install all other dependencies, including the patched babyai
 pip install gymnasium minigrid huggingface_hub safetensors transformers "$PROJECT_ROOT/babyai_source"
