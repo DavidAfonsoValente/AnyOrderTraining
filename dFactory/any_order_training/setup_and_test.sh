@@ -37,7 +37,7 @@ OUTPUT_PATH="/home/d/dvalente/AnyOrderTraining/output"
 
 # --- (2) SCRIPT CONFIGURATION (No changes needed below) ---
 echo "--- Starting Full Setup and Test ---"
-echo "--- VERSION 5 ---"
+echo "--- VERSION 6 ---"
 echo "Job ID: $SLURM_JOB_ID"
 echo "Running on node: $SLURMD_NODENAME"
 echo "Output will be saved to: $OUTPUT_PATH"
@@ -93,13 +93,13 @@ setup(
 " > "$PROJECT_ROOT/babyai_source/setup.py"
 
 # Patch the source code to use gymnasium instead of gym
-echo "Patching babyai source to use gymnasium..."
+echo "Patching babyai source code..."
+find "$PROJECT_ROOT/babyai_source" -type f -name "*.py" -exec sed -i 's/from gym_minigrid.minigrid import COLOR_NAMES, DIR_TO_VEC/from minigrid.core.constants import COLOR_NAMES, DIR_TO_VEC/g' {} +
+find "$PROJECT_ROOT/babyai_source" -type f -name "*.py" -exec sed -i 's/from gym_minigrid.roomgrid import RoomGrid/from minigrid.core.roomgrid import RoomGrid/g' {} +
 find "$PROJECT_ROOT/babyai_source" -type f -name "*.py" -exec sed -i 's/import gym/import gymnasium as gym/g' {} +
 find "$PROJECT_ROOT/babyai_source" -type f -name "*.py" -exec sed -i 's/gym.spaces/gymnasium.spaces/g' {} +
-find "$PROJECT_ROOT/babyai_source" -type f -name "*.py" -exec sed -i 's/from gym_minigrid.minigrid import COLOR_NAMES, DIR_TO_VEC/from minigrid.core.constants import COLOR_NAMES, DIR_TO_VEC/g' {} +
-find "$PROJECT_ROOT/babyai_source" -type f -name "*.py" -exec sed -i 's/from minigrid.roomgrid import RoomGrid/from minigrid.core.roomgrid import RoomGrid/g' {} +
-find "$PROJECT_ROOT/babyai_source" -type f -name "*.py" -exec sed -i 's/from gym_minigrid/from minigrid/g' {} +
 find "$PROJECT_ROOT/babyai_source" -type f -name "*.py" -exec sed -i 's/import gym_minigrid/import minigrid/g' {} +
+find "$PROJECT_ROOT/babyai_source" -type f -name "*.py" -exec sed -i 's/from gym_minigrid/from minigrid/g' {} +
 
 # Install all other dependencies, including the patched babyai
 pip install gymnasium minigrid huggingface_hub safetensors transformers "$PROJECT_ROOT/babyai_source"
