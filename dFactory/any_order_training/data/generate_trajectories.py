@@ -5,7 +5,6 @@ from minigrid.wrappers import ImgObsWrapper, RGBImgPartialObsWrapper
 import numpy as np
 import json
 import os
-from babyai.bot import Bot
 
 def grid_to_string(image, direction):
     """Converts the grid observation to a string."""
@@ -50,20 +49,20 @@ def generate_trajectories(env_name, num_trajectories, output_path):
             print(f"Generating trajectory {i+1}/{num_trajectories} for {env_name}...")
             obs, info = env.reset()
             
-            # Create a bot agent
-            bot = Bot(env)
-            
             done = False
             truncated = False
             messages = []
+            
+            # Use a random policy
+            print("WARNING: Using a random policy to generate trajectories.")
             
             while not done and not truncated:
                 # Format observation
                 obs_str = f"Mission: {obs['mission']}\\n" + grid_to_string(obs['image'], obs['direction'])
                 messages.append({"role": "user", "content": obs_str})
                 
-                # Get expert action from the bot
-                action = bot.get_bot_action()
+                # Get random action
+                action = env.action_space.sample()
                 action_str = env.actions(action).name
                 messages.append({"role": "assistant", "content": action_str})
                 
