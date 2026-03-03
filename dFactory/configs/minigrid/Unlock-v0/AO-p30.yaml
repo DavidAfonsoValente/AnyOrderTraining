@@ -1,0 +1,32 @@
+# Config for Phase 2: MiniGrid Ablation
+# Environment: GoToDoor-v0
+# Condition: AO-p30 (Any-Order with p=0.30)
+
+model:
+  model_path: /home/davidvalente/AnyOrderTraining/models/LLaDA2.0-mini-preview_merged
+  tokenizer_path: /home/davidvalente/AnyOrderTraining/models/LLaDA2.0-mini-preview_merged
+  attn_implementation: "sdpa"
+
+data:
+  train_path: /home/davidvalente/AnyOrderTraining/data/minigrid/Unlock-v0_train.jsonl
+  data_type: "conversation"
+  datasets_type: "local"
+  max_seq_len: 256
+  sampler:
+    mode: 'any_order'
+    mask_strategy: 'mixed'
+    mask_prob: 0.30
+
+train:
+  output_dir: /home/davidvalente/AnyOrderTraining/results/phase2/GoToDoor-v0/AO-p30
+  seed: 42
+  num_train_epochs: 10
+  micro_batch_size: 4
+  global_batch_size: 32
+  lr: 5.0e-5
+  lr_warmup_ratio: 0.01
+  lr_decay_style: "cosine"
+  weight_decay: 0.1
+  use_wandb: false
+  save_steps: 1000
+  enable_mixed_precision: true

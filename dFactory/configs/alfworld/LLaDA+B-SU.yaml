@@ -1,0 +1,36 @@
+# Config for Phase 3: ALFWorld Primary Evaluation
+# Condition: LLaDA+B-SU (Within-LLaDA ablation)
+
+model:
+  model_path: /home/davidvalente/AnyOrderTraining/models/LLaDA2.0-mini-preview_merged
+  tokenizer_path: /home/davidvalente/AnyOrderTraining/models/LLaDA2.0-mini-preview_merged
+  attn_implementation: "sdpa"
+
+data:
+  # This path assumes the standard location for the downloaded ALFWorld data.
+  # This might need to be adjusted based on where `alfworld-download` stores it.
+  train_path: /home/davidvalente/AnyOrderTraining/data/alfworld/train.jsonl
+  data_type: "conversation"
+  datasets_type: "local"
+  # ALFWorld trajectories are longer than MiniGrid
+  max_seq_len: 1024
+  sampler:
+    # B-SingleUnit, but on ALFWorld
+    mode: 'b_singleunit'
+    mask_strategy: 'actions_only'
+    mask_prob: 0.0
+
+train:
+  output_dir: /home/davidvalente/AnyOrderTraining/results/phase3/LLaDA+B-SU
+  seed: 42
+  # ALFWorld is a more complex dataset, may require more epochs
+  num_train_epochs: 5
+  micro_batch_size: 1
+  global_batch_size: 16
+  lr: 2.0e-5
+  lr_warmup_ratio: 0.01
+  lr_decay_style: "cosine"
+  weight_decay: 0.1
+  use_wandb: false
+  save_steps: 1000
+  enable_mixed_precision: true
