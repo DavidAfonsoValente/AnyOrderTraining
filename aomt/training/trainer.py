@@ -1,11 +1,16 @@
 # aomt/training/trainer.py
+import sys
+import os
+
+# Add the project root to the Python path
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
+
 import torch
 from torch.utils.data import Dataset, DataLoader
 import numpy as np
 from transformers import AutoTokenizer, AutoModelForCausalLM, get_scheduler
 from tqdm import tqdm
 import yaml
-import os
 import argparse
 import torch.distributed as dist
 from torch.distributed.fsdp import FullyShardedDataParallel as FSDP
