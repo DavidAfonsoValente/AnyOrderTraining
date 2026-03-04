@@ -146,8 +146,6 @@ def run_training(config_path: str, is_distributed: bool):
         config = yaml.safe_load(f)
 
     # 3. Setup Tokenizer
-    # Diagnostic: Always download from hub to rule out local file issues.
-    print(f"Loading tokenizer '{config['model']}' from Hugging Face Hub.")
     tokenizer = AutoTokenizer.from_pretrained(config["model"], low_cpu_mem_usage=True)
     if tokenizer.pad_token is None: tokenizer.add_special_tokens({'pad_token': tokenizer.eos_token})
     if tokenizer.mask_token is None: tokenizer.add_special_tokens({'mask_token': '[MASK]'})
