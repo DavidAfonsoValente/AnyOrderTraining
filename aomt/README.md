@@ -43,12 +43,19 @@ The setup process involves installing dependencies, downloading the base model, 
     cd aomt
     ```
 
-2.  **Run the setup script:**
-    This script will install all Python packages, clone and install the `dFactory` framework, and download the `LLaDA2.0-mini` model from Hugging Face.
+2.  **Run the setup script (inside an interactive session):**
+    The setup script downloads large model files and can consume a lot of memory. To avoid issues on shared login nodes, run it within an interactive Slurm session.
 
     ```bash
+    # First, request a compute node
+    salloc --time=1:00:00 --mem=32G --ntasks=1
+    
+    # Once the job starts, run the setup script
     chmod +x setup.sh
     ./setup.sh
+
+    # After setup is complete, exit the session
+    exit
     ```
 
 3.  **Set Environment Variable (Important):**
