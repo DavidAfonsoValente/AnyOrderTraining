@@ -66,6 +66,15 @@ The setup process involves installing dependencies, downloading the base model, 
     export ALFWORLD_DATA=/path/to/aomt/data/alfworld
     ```
 
+### Optional: Run Unit Tests
+
+To ensure the core logic is functioning correctly, you can run the provided unit tests. It's recommended to do this within your activated Python virtual environment.
+
+```bash
+source venv/bin/activate
+pytest aomt/tests/
+```
+
 ## 3. End-to-End Workflow
 
 This project has been automated with a set of master scripts to streamline the entire experimental process. Once the initial setup is complete, you can run all experiments and view the results by following these four steps.
@@ -94,6 +103,7 @@ srun ./scripts/run_verification_suite.sh
 This script will:
 1.  **Verify Data Structure:** Load the processed data and print examples to ensure it's correctly formatted.
 2.  **Visualize Masking:** Display a few examples of how each of the AOMT masking strategies (`Standard_SFT`, `AOMT_Action_Only`, `AOMT_Mixed`) will be applied to the data during training.
+3.  **Run Sanity Checks:** Execute automated sanity checks on critical components like attention masks, initial loss ranges, mask coverage, and for any attention leaks.
 
 ### Step 3: Run All Experiments on the Cluster
 
