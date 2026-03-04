@@ -92,18 +92,23 @@ This script performs the following steps:
 2.  **Processes and Tokenizes:** Converts the raw text trajectories into a memory-efficient, structured format, ready for training.
 3.  **Verifies Processed Data:** Runs a verification check on the processed data, displaying features and several example `TokenizedTrajectory` objects to confirm data integrity.
 
-### Step 2: Verify Setup
+### Step 2: Verify and Visualize Experiments
 
-Before launching the full-scale experiments, run the master verification suite. This script provides a visual check to confirm that the training data and masking logic are working as expected.
+Before launching the full-scale experiments, you can run the master visualization script. This script provides a clear visual confirmation of the training data for each specific experiment defined in your `configs` directory.
 
+```bash
+srun ./scripts/visualize_experiments.sh
+```
+
+This script will iterate through each of your experiment config files and show you:
+- The configuration being used.
+- Examples of the original, unmasked training data.
+- The **masked** version of the data, so you can see exactly how the data will look for that specific training run.
+
+You can also run the full sanity check suite to verify all components:
 ```bash
 srun ./scripts/run_verification_suite.sh
 ```
-
-This script will:
-1.  **Verify Data Structure:** Load the processed data and print examples to ensure it's correctly formatted.
-2.  **Visualize Masking:** Display a few examples of how each of the AOMT masking strategies (`Standard_SFT`, `AOMT_Action_Only`, `AOMT_Mixed`) will be applied to the data during training.
-3.  **Run Sanity Checks:** Execute automated sanity checks on critical components like attention masks, initial loss ranges, mask coverage, and for any attention leaks.
 
 ### Step 3: Run All Experiments on the Cluster
 
