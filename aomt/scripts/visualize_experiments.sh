@@ -25,10 +25,9 @@ echo "========================================"
 
 # Find all .yaml files in the configs directory, excluding eval_config.yaml
 for config_file in $(find "$CONFIG_DIR" -name "*.yaml" ! -name "eval_config.yaml"); do
-    srun python3 "$SCRIPT_DIR/verify_masking.py" --config "$config_file"
+    python3 "$SCRIPT_DIR/verify_masking.py" --config "$config_file"
 done
 
-echo "
-========================================"
+echo "\n========================================"
 echo "      Visualization complete."
 echo "========================================"
