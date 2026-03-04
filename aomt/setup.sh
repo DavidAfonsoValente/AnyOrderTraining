@@ -4,6 +4,20 @@
 # Exit immediately if a command exits with a non-zero status.
 set -e
 
+# --- 0. Setup Virtual Environment ---
+VENV_DIR="venv"
+echo "--- Setting up Python virtual environment in './${VENV_DIR}' ---"
+if [ -d "$VENV_DIR" ]; then
+    echo "Virtual environment already exists. Skipping creation."
+else
+    python3 -m venv "$VENV_DIR"
+fi
+
+# Activate the virtual environment
+source "${VENV_DIR}/bin/activate"
+echo "Virtual environment activated."
+
+
 # --- 1. Install Python Dependencies ---
 echo "Installing Python packages from requirements.txt..."
 pip install --upgrade pip
@@ -37,13 +51,12 @@ echo "Setting up evaluation environment data..."
 # Set ALFWORLD_DATA environment variable. Note: This needs to be set in the user's shell profile for persistence.
 export ALFWORLD_DATA=$(pwd)/data/alfworld
 echo "ALFWORLD_DATA will be set to: $ALFWORLD_DATA"
-echo "To make this permanent, please add 'export ALFWORLD_DATA=$(pwd)/data/alfworld' to your ~/.bashrc or ~/.zshrc file."
+echo "To make this permanent, please add the following to your ~/.bashrc or ~/.zshrc file:"
+echo "export ALFWORLD_DATA=\\"$(pwd)/data/alfworld\\""
 # The alfworld library will automatically download its data to this location upon first use.
 # We create the directory to be safe.
 mkdir -p $ALFWORLD_DATA
 echo "Evaluation data setup initiated."
 
-echo -e "
---- Environment setup complete! ---"
-echo "Remember to set the ALFWORLD_DATA environment variable in your shell profile."
-
+echo -e "\n--- Environment setup complete! ---"
+echo "To use this environment in your shell, run: source ${VENV_DIR}/bin/activate"

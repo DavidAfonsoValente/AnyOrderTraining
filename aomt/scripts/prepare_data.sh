@@ -17,6 +17,9 @@ SCRIPT_DIR=$(dirname "$0")
 PROJECT_ROOT="$SCRIPT_DIR/.."
 DATA_DIR="$PROJECT_ROOT/data"
 
+# Activate virtual environment
+source "$PROJECT_ROOT/venv/bin/activate"
+
 echo "========================================"
 echo "      AOMT Data Preparation"
 echo "========================================"

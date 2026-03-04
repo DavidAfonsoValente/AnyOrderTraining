@@ -70,6 +70,10 @@ export MASTER_PORT=29500 # A free port
 export WORLD_SIZE=$SLURM_NPROCS
 export RANK=$SLURM_PROCID
 
+# Activate the virtual environment
+echo "Activating Python virtual environment..."
+source venv/bin/activate
+
 # 5. Launch the FSDP Training Job
 # We use `srun` to execute the command on the allocated compute node.
 # `torchrun` is the standard tool for launching distributed PyTorch jobs.
@@ -80,9 +84,9 @@ GPUS_PER_NODE=$(echo "$SLURM_GPUS_PER_TASK" | cut -d':' -f2)
 
 echo "Launching torchrun with $GPUS_PER_NODE processes..."
 
-srun torchrun --nproc_per_node="$GPUS_PER_NODE" --master_addr="$MASTER_ADDR" --master_port="$MASTER_PORT" 
-    training/trainer.py 
-    --config "$CONFIG_FILE" 
+srun torchrun --nproc_per_node="$GPUS_PER_NODE" --master_addr="$MASTER_ADDR" --master_port="$MASTER_PORT" \
+    training/trainer.py \
+    --config "$CONFIG_FILE" \
     --distributed
 
 echo "----------------------------------------"
