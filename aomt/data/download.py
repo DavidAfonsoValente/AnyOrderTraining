@@ -26,10 +26,11 @@ def download_dataset(save_path: str):
             print("Applying special handling for 'agent-eto/eto-sft-trajectory' dataset due to heterogeneous data files.")
             
             # Load each data file as a separate dataset
-            print("Loading individual data files...")
-            gworld_ds = load_dataset(DATASET_NAME, data_files="data/gworld_sft.json", split="train")
-            mind2web_ds = load_dataset(DATASET_NAME, data_files="data/mind2web_sft.json", split="train")
-            webshop_ds = load_dataset(DATASET_NAME, data_files="data/webshop_sft.json", split="train")
+            print("Loading individual data files using direct HTTPS URLs...")
+            base_url = f"https://huggingface.co/datasets/{DATASET_NAME}/resolve/main/data"
+            gworld_ds = load_dataset("json", data_files=f"{base_url}/gworld_sft.json", split="train")
+            mind2web_ds = load_dataset("json", data_files=f"{base_url}/mind2web_sft.json", split="train")
+            webshop_ds = load_dataset("json", data_files=f"{base_url}/webshop_sft.json", split="train")
 
             # The 'webshop' file contains extra columns ('reward', 'source') that are
             # not present in the other files, causing schema mismatches.
