@@ -1,6 +1,7 @@
 # aomt/data/download.py
 from datasets import load_dataset, DatasetDict, concatenate_datasets, Value
 import argparse
+import os
 
 # The dataset name as specified in the engineering specs
 DATASET_NAME = "agent-eto/eto-sft-trajectory"
