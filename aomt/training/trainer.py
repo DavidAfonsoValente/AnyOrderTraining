@@ -14,15 +14,16 @@ import yaml
 import argparse
 import torch.distributed as dist
 from torch.distributed.fsdp import FullyShardedDataParallel as FSDP
-from torch.utils.data.distributed import DistributedSampler
 from torch.distributed.fsdp.wrap import size_based_auto_wrap_policy
 import functools
 
-from aomt.data.unit_parser import TokenizedTrajectory, UnitSpan
+from aomt.data.unit_parser import TokenizedTrajectory, TokenizedUnit
 from aomt.training.mask_sampler import MaskMode, apply_unit_mask
 from aomt.training.objectives import masked_unit_cross_entropy
 from aomt.training.collator import AOMTDataCollator, build_prefix_sft_examples
 from datasets import load_from_disk
+from collections import defaultdict
+from torch.utils.data import Sampler
 
 # --- Section 7.1: Dataset Class ---
 
@@ -56,14 +57,14 @@ class AOMTDataset(Dataset):
         
         # Reconstruct the TokenizedTrajectory on the fly
         unit_spans = [
-            UnitSpan(type, start, end)
-            for type, start, end in zip(item["unit_spans_type"], item["unit_spans_start"], item["unit_spans_end"])
+            TokenizedUnit(unit_type=type, token_start=start, token_end=end, unit_index=j)
+            for j, (type, start, end) in enumerate(zip(item["unit_spans_type"], item["unit_spans_start"], item["unit_spans_end"]))
         ]
         traj = TokenizedTrajectory(
             input_ids=torch.tensor(item["input_ids"]),
             unit_spans=unit_spans,
             env=item["env"],
-            id=item["id"],
+            trajectory_id=item["id"],
         )
         
         rng = np.random.default_rng(self.base_rng.integers(1e9))
@@ -76,6 +77,61 @@ class AOMTDataset(Dataset):
             "loss_mask": loss_mask,
             "use_causal_mask": (self.mode == MaskMode.STANDARD_SFT),
         }
+
+class BenchmarkUniformSampler(Sampler):
+    """
+    Samples elements uniformly from each benchmark, to handle imbalances.
+    """
+    def __init__(self, dataset, num_replicas=None, rank=None):
+        if num_replicas is None:
+            if not dist.is_available():
+                num_replicas = 1
+            else:
+                num_replicas = dist.get_world_size()
+        if rank is None:
+            if not dist.is_available():
+                rank = 0
+            else:
+                rank = dist.get_rank()
+            
+        self.dataset = dataset
+        self.num_replicas = num_replicas
+        self.rank = rank
+        self.epoch = 0
+
+        self.indices_by_env = defaultdict(list)
+        for idx, env in enumerate(self.dataset['env']):
+            self.indices_by_env[env].append(idx)
+        
+        self.env_names = list(self.indices_by_env.keys())
+        self.max_len = max(len(indices) for indices in self.indices_by_env.values()) if self.indices_by_env else 0
+        
+        self.total_size = self.max_len * len(self.env_names)
+        
+        self.num_samples = self.total_size // self.num_replicas
+
+    def __iter__(self):
+        g = torch.Generator()
+        g.manual_seed(self.epoch)
+        
+        indices = []
+        for env_name in self.env_names:
+            env_indices = self.indices_by_env[env_name]
+            repeated_indices = (env_indices * (self.max_len // len(env_indices) + 1))[:self.max_len]
+            indices.extend(repeated_indices)
+        
+        np.random.RandomState(self.epoch).shuffle(indices)
+
+        if self.num_replicas > 1:
+            indices = indices[self.rank:self.total_size:self.num_replicas]
+
+        return iter(indices)
+
+    def __len__(self):
+        return self.num_samples if self.num_replicas > 1 else self.total_size
+
+    def set_epoch(self, epoch):
+        self.epoch = epoch
 
 class PrefixSFTDataset(Dataset):
     """
@@ -109,7 +165,6 @@ def training_step(model, batch, device):
 
     is_causal = batch["use_causal_mask"][0].item()
     
-    # Let the model itself handle attention mask creation
     outputs = model(
         input_ids=batch["input_ids"],
         attention_mask=batch["attention_mask"],
@@ -119,7 +174,7 @@ def training_step(model, batch, device):
     loss = masked_unit_cross_entropy(outputs.logits, batch["target_ids"], batch["loss_mask"])
     return loss
 
-# --- Main Training Loop (dFactory placeholder) ---
+# --- Main Training Loop ---
 
 def run_training(config_path: str, is_distributed: bool):
     """
@@ -134,43 +189,38 @@ def run_training(config_path: str, is_distributed: bool):
         world_size = dist.get_world_size()
         torch.cuda.set_device(rank)
 
+    # Load Config
+    with open(config_path, 'r') as f:
+        config = yaml.safe_load(f)
+    
     if rank == 0:
         print(f"--- Training Config: {config_path} ---")
         print(f"Distributed: {is_distributed}, World Size: {world_size}")
-        with open(config_path, 'r') as f:
-            print(yaml.safe_load(f))
+        print(yaml.dump(config))
         print("--------------------")
 
-    # 2. Load Config
-    with open(config_path, 'r') as f:
-        config = yaml.safe_load(f)
-
-    # 3. Setup Tokenizer
+    # Setup Tokenizer
     tokenizer = AutoTokenizer.from_pretrained(config["model"], low_cpu_mem_usage=True)
     if tokenizer.pad_token is None: tokenizer.add_special_tokens({'pad_token': tokenizer.eos_token})
     if tokenizer.mask_token is None: tokenizer.add_special_tokens({'mask_token': '[MASK]'})
 
-    # 4. Load Data from memory-mapped format
-    data_path = config.get("data_cache_path") # This now points to a directory
-    if rank == 0:
-        if not os.path.exists(data_path):
-             raise FileNotFoundError(f"Processed dataset not found at {data_path}. Run parse_trajectories.py first.")
-    
+    # Load Data
+    data_path = os.path.join(config.get("data_cache_path"), config.get("train_split", "train"))
+    if not os.path.exists(data_path):
+         raise FileNotFoundError(f"Processed dataset not found at {data_path}. Run parse_trajectories.py first.")
     processed_dataset = load_from_disk(data_path)
 
-    # 5. Initialize Dataset, Sampler, DataLoader
+    # Initialize Dataset, Sampler, DataLoader
     mask_mode = MaskMode(config["mask_mode"])
     dataset = AOMTDataset(processed_dataset, tokenizer, mode=mask_mode, mask_prob=config.get("mask_prob", 0.0))
-    sampler = DistributedSampler(dataset, num_replicas=world_size, rank=rank, shuffle=True) if is_distributed else None
-    collator = AOMTDataCollator(tokenizer)
-    dataloader = DataLoader(dataset, batch_size=config.get("per_device_batch_size", 2), collate_fn=collator, sampler=sampler, shuffle=(sampler is None))
-
-    # 6. Initialize Model
-    # FSDP requires a specific wrapping policy.
-    auto_wrap_policy = functools.partial(
-        size_based_auto_wrap_policy, min_num_params=1_000_000
-    )
     
+    sampler = BenchmarkUniformSampler(processed_dataset, num_replicas=world_size, rank=rank)
+    
+    collator = AOMTDataCollator(tokenizer)
+    dataloader = DataLoader(dataset, batch_size=config.get("per_device_batch_size", 2), collate_fn=collator, sampler=sampler, shuffle=False)
+
+    # Initialize Model
+    auto_wrap_policy = functools.partial(size_based_auto_wrap_policy, min_num_params=1_000_000)
     model = AutoModelForCausalLM.from_pretrained(config["model"], torch_dtype=torch.bfloat16)
     model.resize_token_embeddings(len(tokenizer))
 
@@ -179,15 +229,19 @@ def run_training(config_path: str, is_distributed: bool):
     else:
         model = model.to(rank)
 
-    # 7. Optimizer & Scheduler
+    # Optimizer & Scheduler
     optimizer = torch.optim.AdamW(model.parameters(), lr=config["learning_rate"], weight_decay=config["weight_decay"])
     lr_scheduler = get_scheduler(name=config.get("lr_schedule", "cosine"), optimizer=optimizer, num_warmup_steps=config.get("warmup_steps", 0), num_training_steps=len(dataloader) * config["num_epochs"])
 
-    # 8. Training Loop
+    # Training Loop
     if rank == 0: print("Starting training...")
+    global_step = 0
+    checkpoint_dir = f"./checkpoints/{config['name']}"
+    os.makedirs(checkpoint_dir, exist_ok=True)
+    
     for epoch in range(config["num_epochs"]):
         if rank == 0: print(f"\n--- Epoch {epoch+1}/{config['num_epochs']} ---")
-        if is_distributed: sampler.set_epoch(epoch)
+        sampler.set_epoch(epoch)
         
         model.train()
         progress_bar = tqdm(dataloader, desc=f"Epoch {epoch+1}", disable=(rank != 0))
@@ -195,12 +249,28 @@ def run_training(config_path: str, is_distributed: bool):
         for batch in progress_bar:
             loss = training_step(model, batch, rank)
             loss.backward()
+            torch.nn.utils.clip_grad_norm_(model.parameters(), config.get("gradient_clip", 1.0))
             optimizer.step()
             lr_scheduler.step()
             optimizer.zero_grad()
+            
+            global_step += 1
             if rank == 0: progress_bar.set_postfix(loss=loss.item())
 
-    if rank == 0: print("\n--- Training Complete ---")
+            # Checkpoint saving
+            if global_step % config.get("save_interval", 500) == 0:
+                save_path = os.path.join(checkpoint_dir, f"step_{global_step}")
+                if rank == 0: print(f"\nSaving checkpoint to {save_path}...")
+                model.save_pretrained(save_path)
+                tokenizer.save_pretrained(save_path)
+    
+    if rank == 0:
+        print("\n--- Training Complete ---")
+        final_save_path = os.path.join(checkpoint_dir, "final_checkpoint")
+        print(f"Saving final model to {final_save_path}...")
+        model.save_pretrained(final_save_path)
+        tokenizer.save_pretrained(final_save_path)
+        
     if is_distributed: dist.destroy_process_group()
 
 if __name__ == "__main__":

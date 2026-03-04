@@ -42,7 +42,7 @@ def parse_conversation_to_trajectory(example: dict) -> Trajectory:
             raise ValueError(f"Trajectory {example['id']}, Turn {i}: "
                              f"Expected unit type '{expected_utype}' but got '{u.unit_type}'.")
 
-    return Trajectory(id=example["id"], env=example.get("env", "unknown"), units=units)
+    return Trajectory(id=example["id"], env=example.get("env", example.get("task", "unknown")), units=units)
 
 
 # Section 4: Trajectory Unit Parser

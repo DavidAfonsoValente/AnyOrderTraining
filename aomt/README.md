@@ -68,14 +68,14 @@ The setup process involves installing dependencies, downloading the base model, 
 
 ## 3. End-to-End Workflow
 
-This project has been automated with a set of master scripts to streamline the entire experimental process. Once the initial setup is complete, you can run all experiments and view the results by following these three steps.
+This project has been automated with a set of master scripts to streamline the entire experimental process. Once the initial setup is complete, you can run all experiments and view the results by following these four steps.
 
 ### Step 1: Prepare Data
 
 First, run the master data preparation script. This script automates the entire process of downloading, processing, and verifying the dataset. This script is idempotent and can be run safely multiple times.
 
 ```bash
-./scripts/prepare_data.sh
+srun ./scripts/prepare_data.sh
 ```
 
 This script performs the following steps:
@@ -83,7 +83,19 @@ This script performs the following steps:
 2.  **Processes and Tokenizes:** Converts the raw text trajectories into a memory-efficient, structured format, ready for training.
 3.  **Verifies Processed Data:** Runs a verification check on the processed data, displaying features and several example `TokenizedTrajectory` objects to confirm data integrity.
 
-### Step 2: Run All Experiments on the Cluster
+### Step 2: Verify Setup
+
+Before launching the full-scale experiments, run the master verification suite. This script provides a visual check to confirm that the training data and masking logic are working as expected.
+
+```bash
+srun ./scripts/run_verification_suite.sh
+```
+
+This script will:
+1.  **Verify Data Structure:** Load the processed data and print examples to ensure it's correctly formatted.
+2.  **Visualize Masking:** Display a few examples of how each of the AOMT masking strategies (`Standard_SFT`, `AOMT_Action_Only`, `AOMT_Mixed`) will be applied to the data during training.
+
+### Step 3: Run All Experiments on the Cluster
 
 Next, submit all training jobs to the Slurm cluster. The `run_all_experiments.sh` script will submit the main baseline jobs in parallel and correctly handle the dependency for the two-stage Prefix-SFT experiment.
 
@@ -93,7 +105,7 @@ Next, submit all training jobs to the Slurm cluster. The `run_all_experiments.sh
 
 This will queue all the necessary training jobs. You can monitor their progress with `squeue -u $USER`. Checkpoints for each experiment will be saved to the `checkpoints/` directory.
 
-### Step 3: Evaluate and Analyze Results
+### Step 4: Evaluate and Analyze Results
 
 After the training jobs are complete, you need to run the full evaluation suite on each of the generated checkpoints.
 
@@ -101,7 +113,7 @@ First, find your checkpoint directories (e.g., `checkpoints/aomt_mixed`). Then, 
 
 **Example: Evaluating the `aomt_mixed` model**
 ```bash
-python3 run_full_eval.py --checkpoint_path checkpoints/aomt_mixed
+srun python3 run_full_eval.py --checkpoint_path checkpoints/aomt_mixed
 ```
 
 Once all checkpoints have been evaluated, you can automatically generate a summary table of all results using the analysis script:
