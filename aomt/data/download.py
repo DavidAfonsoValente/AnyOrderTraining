@@ -43,7 +43,7 @@ def download_dataset(save_path: str):
             # Fix for 'id' column type mismatch before concatenation
             all_datasets = [alfworld_ds, sciworld_ds, webshop_ds]
             for i, ds in enumerate(all_datasets):
-                if 'id' in ds.features and not isinstance(ds.features['id'], Value):
+                if 'id' in ds.features and isinstance(ds.features['id'], Value) and ds.features['id'].dtype != 'string':
                     print(f"Casting 'id' column of dataset {i} to string type.")
                     all_datasets[i] = ds.cast_column('id', Value(dtype='string'))
 
