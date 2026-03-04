@@ -46,10 +46,10 @@ def process_and_cache_dataset(
         local_model_path = 'models/LLaDA2.0-mini'
         if os.path.isdir(local_model_path):
              print(f"Found local model at {local_model_path}, using it.")
-             tokenizer = AutoTokenizer.from_pretrained(local_model_path)
+             tokenizer = AutoTokenizer.from_pretrained(local_model_path, low_cpu_mem_usage=True)
         else:
              print(f"Local model not found, downloading {model_name}.")
-             tokenizer = AutoTokenizer.from_pretrained(model_name)
+             tokenizer = AutoTokenizer.from_pretrained(model_name, low_cpu_mem_usage=True)
     except Exception as e:
         print(f"Error loading tokenizer: {e}")
         return
