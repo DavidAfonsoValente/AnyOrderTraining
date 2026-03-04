@@ -75,9 +75,11 @@ def process_and_cache_dataset(
         processed_examples = {
             "input_ids": [], "unit_spans_type": [], "unit_spans_start": [], "unit_spans_end": [], "env": [], "id": []
         }
-        for example in batch["conversations"]:
+        # Correctly iterate through examples in the batch
+        for i in range(len(batch["id"])):
+            example = {key: value[i] for key, value in batch.items()}
             try:
-                parsed_traj = parse_conversation_to_trajectory({"conversations": example})
+                parsed_traj = parse_conversation_to_trajectory(example)
                 tokenized_traj = tokenize_trajectory(parsed_traj, tokenizer, max_length)
 
                 if tokenized_traj:
@@ -88,8 +90,9 @@ def process_and_cache_dataset(
                     processed_examples["env"].append(tokenized_traj.env)
                     processed_examples["id"].append(tokenized_traj.id)
 
-            except ValueError as e:
+            except (ValueError, KeyError) as e:
                 # Silently skip trajectories that fail parsing
+                print(f"Skipping example {example.get('id', 'N/A')} due to error: {e}")
                 continue
         return processed_examples
 
