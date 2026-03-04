@@ -18,26 +18,27 @@ from torch.utils.data.distributed import DistributedSampler
 from torch.distributed.fsdp.wrap import size_based_auto_wrap_policy
 import functools
 
-from aomt.data.unit_parser import TokenizedTrajectory
+from aomt.data.unit_parser import TokenizedTrajectory, UnitSpan
 from aomt.training.mask_sampler import MaskMode, apply_unit_mask
 from aomt.training.objectives import masked_unit_cross_entropy
 from aomt.training.collator import AOMTDataCollator, build_prefix_sft_examples
+from datasets import load_from_disk
 
 # --- Section 7.1: Dataset Class ---
 
 class AOMTDataset(Dataset):
     """
-    A PyTorch Dataset for Any-Order Masked Training.
+    A PyTorch Dataset for Any-Order Masked Training, using a memory-mapped dataset.
     """
     def __init__(
         self,
-        tokenized_trajectories: list[TokenizedTrajectory],
+        processed_dataset: torch.utils.data.Dataset,
         tokenizer: AutoTokenizer,
         mode: MaskMode,
         mask_prob: float,
         seed: int = 42,
     ):
-        self.trajectories = tokenized_trajectories
+        self.processed_dataset = processed_dataset
         self.tokenizer = tokenizer
         self.mode = mode
         self.mask_prob = mask_prob
@@ -48,10 +49,23 @@ class AOMTDataset(Dataset):
             raise ValueError("Tokenizer must have a `mask_token_id`.")
 
     def __len__(self):
-        return len(self.trajectories)
+        return len(self.processed_dataset)
 
     def __getitem__(self, idx: int) -> dict:
-        traj = self.trajectories[idx]
+        item = self.processed_dataset[idx]
+        
+        # Reconstruct the TokenizedTrajectory on the fly
+        unit_spans = [
+            UnitSpan(type, start, end)
+            for type, start, end in zip(item["unit_spans_type"], item["unit_spans_start"], item["unit_spans_end"])
+        ]
+        traj = TokenizedTrajectory(
+            input_ids=torch.tensor(item["input_ids"]),
+            unit_spans=unit_spans,
+            env=item["env"],
+            id=item["id"],
+        )
+        
         rng = np.random.default_rng(self.base_rng.integers(1e9))
         masked_ids, loss_mask = apply_unit_mask(
             traj, self.mask_prob, self.mode, self.mask_token_id, rng
@@ -136,16 +150,17 @@ def run_training(config_path: str, is_distributed: bool):
     if tokenizer.pad_token is None: tokenizer.add_special_tokens({'pad_token': tokenizer.eos_token})
     if tokenizer.mask_token is None: tokenizer.add_special_tokens({'mask_token': '[MASK]'})
 
-    # 4. Load Data
+    # 4. Load Data from memory-mapped format
+    data_path = config.get("data_cache_path") # This now points to a directory
     if rank == 0:
-        if not os.path.exists(config.get("data_cache_path")):
-             raise FileNotFoundError(f"Cache not found at {config.get('data_cache_path')}. Run parse_trajectories.py first.")
+        if not os.path.exists(data_path):
+             raise FileNotFoundError(f"Processed dataset not found at {data_path}. Run parse_trajectories.py first.")
     
-    tokenized_trajectories = torch.load(config.get("data_cache_path"))
+    processed_dataset = load_from_disk(data_path)
 
     # 5. Initialize Dataset, Sampler, DataLoader
     mask_mode = MaskMode(config["mask_mode"])
-    dataset = AOMTDataset(tokenized_trajectories, tokenizer, mode=mask_mode, mask_prob=config.get("mask_prob", 0.0))
+    dataset = AOMTDataset(processed_dataset, tokenizer, mode=mask_mode, mask_prob=config.get("mask_prob", 0.0))
     sampler = DistributedSampler(dataset, num_replicas=world_size, rank=rank, shuffle=True) if is_distributed else None
     collator = AOMTDataCollator(tokenizer)
     dataloader = DataLoader(dataset, batch_size=config.get("per_device_batch_size", 2), collate_fn=collator, sampler=sampler, shuffle=(sampler is None))

@@ -6,21 +6,18 @@ import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 
 import argparse
-from typing import List
 import torch
-from datasets import load_from_disk
+from datasets import load_from_disk, Features, Value, Sequence
 from transformers import AutoTokenizer
-from tqdm import tqdm
 
 from aomt.data.unit_parser import (
     parse_conversation_to_trajectory,
-    tokenize_trajectory,
-    TokenizedTrajectory
+    tokenize_trajectory
 )
 
 # --- Constants ---
 DEFAULT_DATASET_PATH = "./dataset_cache"
-DEFAULT_CACHE_PATH = "./cache"
+DEFAULT_CACHE_PATH = "./processed_dataset" # Changed to reflect new format
 DEFAULT_MODEL_NAME = "inclusionAI/LLaDA2.0-mini"
 DEFAULT_MAX_LENGTH = 2048
 
@@ -30,31 +27,22 @@ def process_and_cache_dataset(
     model_name: str,
     max_length: int,
     split: str = "train",
-    num_proc: int = 1 # Using 1 for simplicity, can be increased.
+    num_proc: int = 4 # Increased for potentially faster processing
 ):
     """
-    Loads a raw dataset, processes it into TokenizedTrajectory objects,
-    and saves the result to a cache file.
-
-    Args:
-        dataset_path (str): Path to the saved raw dataset.
-        cache_path (str): Directory to save the cached processed data.
-        model_name (str): Name of the tokenizer model to use.
-        max_length (int): Maximum sequence length for tokenization.
-        split (str): The dataset split to process (e.g., 'train', 'test').
-        num_proc (int): Number of processes to use for mapping.
+    Loads a raw dataset, processes it using map for memory efficiency,
+    and saves the result to disk in Arrow format.
     """
     # 1. Setup paths and tokenizer
+    # The cache path is now a directory for the Arrow dataset
     os.makedirs(cache_path, exist_ok=True)
-    cache_file = os.path.join(cache_path, f"{split}_tokenized_trajectories_len{max_length}.pt")
-
-    if os.path.exists(cache_file):
-        print(f"Cache file '{cache_file}' already exists. Skipping processing.")
+    
+    if os.path.exists(os.path.join(cache_path, split)):
+        print(f"Processed dataset for split '{split}' already exists in '{cache_path}'. Skipping processing.")
         return
 
     print(f"Loading tokenizer '{model_name}'...")
     try:
-        # Use the local model path if available, otherwise download
         local_model_path = 'models/LLaDA2.0-mini'
         if os.path.isdir(local_model_path):
              print(f"Found local model at {local_model_path}, using it.")
@@ -81,40 +69,61 @@ def process_and_cache_dataset(
         print(f"Error: Split '{split}' not found in the dataset.")
         return
         
-    # 2. Process the data
-    tokenized_trajectories: List[TokenizedTrajectory] = []
+    # 2. Define the processing function for map
+    def process_and_tokenize_batch(batch):
+        """Processes a batch of examples."""
+        processed_examples = {
+            "input_ids": [], "unit_spans_type": [], "unit_spans_start": [], "unit_spans_end": [], "env": [], "id": []
+        }
+        for example in batch["conversations"]:
+            try:
+                parsed_traj = parse_conversation_to_trajectory({"conversations": example})
+                tokenized_traj = tokenize_trajectory(parsed_traj, tokenizer, max_length)
+
+                if tokenized_traj:
+                    processed_examples["input_ids"].append(tokenized_traj.input_ids)
+                    processed_examples["unit_spans_type"].append([s.unit_type for s in tokenized_traj.unit_spans])
+                    processed_examples["unit_spans_start"].append([s.token_start for s in tokenized_traj.unit_spans])
+                    processed_examples["unit_spans_end"].append([s.token_end for s in tokenized_traj.unit_spans])
+                    processed_examples["env"].append(tokenized_traj.env)
+                    processed_examples["id"].append(tokenized_traj.id)
+
+            except ValueError as e:
+                # Silently skip trajectories that fail parsing
+                continue
+        return processed_examples
+
+    # 3. Define the features for the new dataset
+    output_features = Features({
+        'input_ids': Sequence(feature=Value(dtype='int64')),
+        'unit_spans_type': Sequence(feature=Value(dtype='string')),
+        'unit_spans_start': Sequence(feature=Value(dtype='int32')),
+        'unit_spans_end': Sequence(feature=Value(dtype='int32')),
+        'env': Value(dtype='string'),
+        'id': Value(dtype='string'),
+    })
+
+    # 4. Process the data using map
+    print(f"Processing {len(raw_dataset)} examples from the '{split}' split using map...")
+    processed_dataset = raw_dataset.map(
+        process_and_tokenize_batch,
+        batched=True,
+        batch_size=100, # Process in batches of 100
+        num_proc=num_proc,
+        remove_columns=raw_dataset.column_names, # Remove old columns
+        features=output_features
+    )
     
-    print(f"Processing {len(raw_dataset)} examples from the '{split}' split...")
-
-    for example in tqdm(raw_dataset, desc=f"Tokenizing {split} split"):
-        try:
-            # Step 1: Parse raw dict into a structured Trajectory
-            parsed_traj = parse_conversation_to_trajectory(example)
-            
-            # Step 2: Tokenize the structured Trajectory
-            tokenized_traj = tokenize_trajectory(parsed_traj, tokenizer, max_length)
-
-            if tokenized_traj:
-                tokenized_trajectories.append(tokenized_traj)
-
-        except ValueError as e:
-            print(f"Skipping trajectory {example.get('id', 'N/A')} due to parsing error: {e}")
-            continue
-    
-    if not tokenized_trajectories:
-        print("No trajectories were successfully processed. Aborting.")
-        return
-
-    # 3. Save to cache
-    print(f"Saving {len(tokenized_trajectories)} processed trajectories to '{cache_file}'...")
-    torch.save(tokenized_trajectories, cache_file)
+    # 5. Save to disk
+    save_path = os.path.join(cache_path, split)
+    print(f"Saving processed dataset to '{save_path}'...")
+    processed_dataset.save_to_disk(save_path)
     print("Caching complete.")
 
 
 def main():
     parser = argparse.ArgumentParser(description="Parse and tokenize agent trajectories.")
     
-    # Get the directory of the current script
     script_dir = os.path.dirname(__file__)
 
     parser.add_argument(
