@@ -81,34 +81,32 @@ This project has been automated with a set of master scripts to streamline the e
 
 ### Step 1: Prepare Data
 
-First, run the master data preparation script. This script automates the entire process of downloading, processing, and verifying the dataset. This script is idempotent and can be run safely multiple times.
+First, run the master data preparation script inside an interactive Slurm session. This script automates the entire process of downloading, processing, and verifying the dataset. This script is idempotent and can be run safely multiple times.
 
 ```bash
 ./scripts/prepare_data.sh
 ```
 
-This script performs the following steps:
-1.  **Downloads Raw Data:** Fetches the `agent-eto/eto-sft-trajectory` dataset from Hugging Face.
-2.  **Processes and Tokenizes:** Converts the raw text trajectories into a memory-efficient, structured format, ready for training.
-3.  **Verifies Processed Data:** Runs a verification check on the processed data, displaying features and several example `TokenizedTrajectory` objects to confirm data integrity.
-
 ### Step 2: Verify and Visualize Experiments
 
-Before launching the full-scale experiments, you can run the master visualization script. This script provides a clear visual confirmation of the training data for each specific experiment defined in your `configs` directory.
+Before launching the full-scale experiments, you can run two verification scripts.
+
+**A) Visualize Data for Each Experiment:**
+To see concrete examples of how the data is prepared for each training run, use the `visualize_experiments.sh` script.
 
 ```bash
 ./scripts/visualize_experiments.sh
 ```
 
-This script will iterate through each of your experiment config files and show you:
-- The configuration being used.
-- Examples of the original, unmasked training data.
-- The **masked** version of the data, so you can see exactly how the data will look for that specific training run.
+This will loop through each of your experiment configs (e.g., `sft_standard.yaml`, `aomt_mixed.yaml`) and show you a few examples of the exact masked data the model will see during training. This is the best way to confirm that each experiment is set up as intended.
 
-You can also run the full sanity check suite to verify all components:
+**B) Run Automated Sanity Checks:**
+To perform a suite of automated checks on the core components of the model and data processing, run the `run_verification_suite.sh` script.
+
 ```bash
 ./scripts/run_verification_suite.sh
 ```
+This script checks attention masks, loss functions, and other critical components to catch potential issues early.
 
 ### Step 3: Run All Experiments on the Cluster
 
