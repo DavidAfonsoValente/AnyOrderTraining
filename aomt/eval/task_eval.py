@@ -1,41 +1,35 @@
-# aomt/eval/task_eval.py
 import torch
 import torch.nn.functional as F
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from tqdm import tqdm
 import importlib
+import yaml
+import os
+import numpy as np
 
-# Placeholder for actual environment interaction.
-# In a real setup, this would be `alfworld.agents.environment` or similar.
-class MockEnv:
-    def __init__(self, initial_observation="Initial state."):
-        self.current_observation = initial_observation
-        self.steps = 0
-        self.max_steps = 10
-        self.done = False
+# Lazy imports for environments
+alfworld_env_module = None
+scienceworld_env_module = None
+webshop_env_module = None
 
-    def step(self, action: str):
-        if self.done:
-            return self.current_observation, 0, self.done
-        
-        print(f"Action: {action}")
-        self.steps += 1
-        if "success" in action or self.steps >= self.max_steps:
-            self.done = True
-            reward = 1.0 if "success" in action else 0.0
-            self.current_observation = "Task finished."
-        else:
-            self.current_observation = f"You took action '{action}'. State updated."
-            reward = 0.0
-        
-        print(f"Observation: {self.current_observation}")
-        return self.current_observation, reward, self.done
-
-    def reset(self):
-        self.steps = 0
-        self.done = False
-        self.current_observation = "Initial state."
-        return self.current_observation
+def _lazy_import_environments():
+    """Lazily imports environment packages."""
+    global alfworld_env_module, scienceworld_env_module, webshop_env_module
+    if alfworld_env_module is None:
+        try:
+            alfworld_env_module = importlib.import_module('alfworld.agents.environment')
+        except ImportError:
+            print("Warning: `alfworld` package not found. ALFWorld evaluation will be skipped.")
+    if scienceworld_env_module is None:
+        try:
+            scienceworld_env_module = importlib.import_module('scienceworld')
+        except ImportError:
+            print("Warning: `scienceworld` package not found. ScienceWorld evaluation will be skipped.")
+    if webshop_env_module is None:
+        try:
+            webshop_env_module = importlib.import_module('webshop.env')
+        except ImportError:
+            print("Warning: `webshop` package not found. WebShop evaluation will be skipped.")
 
 # --- Section 8.2: LLaDA 2.0 Inference ---
 
@@ -124,66 +118,133 @@ def llada_generate(
     final_response_ids = full_input[0, prompt_len:]
     return tokenizer.decode(final_response_ids, skip_special_tokens=True)
 
-def run_task_evaluation(model, tokenizer, env_name: str, tasks: list, device="cuda"):
+def run_task_evaluation(model, tokenizer, env_name: str, eval_config: dict, split: str = "seen", device="cuda"):
     """
-    High-level function to run task-based evaluation.
+    High-level function to run task-based evaluation on real environments.
     """
-    print(f"\n--- Running Task Evaluation on {env_name} ---")
+    print(f"\n--- Running Task Evaluation on {env_name} ({split} split) ---")
     
-    try:
-        if env_name == "alfworld":
-            # Lazy import alfworld
-            import alfworld.agents.environment
-        # Add other envs here
-    except ImportError:
-        print(f"Environment '{env_name}' not installed. Using MockEnv.")
-        env_name = "mock"
+    _lazy_import_environments() # Ensure environments are imported
+
+    env = None
+    tasks_to_evaluate = []
+    
+    if env_name == "alfworld" and alfworld_env_module:
+        alf_conf = eval_config.get("alfworld", {})
+        
+        try:
+            # AlfredTWEnv expects a dictionary as config
+            # We'll construct a minimal one from eval_config
+            config_for_env = {
+                "alfworld": {
+                    "data_path": alf_conf.get("data_path", "/tmp"), # Placeholder, should be set in eval_config
+                    "task_filter": [] # Not using task_filter directly here, tasks come from 'tasks_to_evaluate'
+                }
+            }
+            
+            env = alfworld_env_module.AlfredTWEnv(config_for_env["alfworld"], train_eval=alf_conf.get("train_eval_split", "eval_out_of_distribution"))
+            tasks_to_evaluate = alf_conf.get(f"{split}_tasks", [])
+        except Exception as e:
+            print(f"Error initializing ALFWorld environment: {e}. Skipping ALFWorld.")
+            return {}
+
+    elif env_name == "scienceworld" and scienceworld_env_module:
+        sw_conf = eval_config.get("scienceworld", {})
+        try:
+            env = scienceworld_env_module.ScienceWorldEnv()
+            tasks_data = sw_conf.get(f"{split}_tasks", [])
+            
+            for task_spec in tasks_data:
+                env.load(task_spec["name"], task_spec["variation_idx"], sw_conf.get("simplification_str", "easy"))
+                tasks_to_evaluate.append(env)
+
+        except Exception as e:
+            print(f"Error initializing ScienceWorld environment: {e}. Skipping ScienceWorld.")
+            return {}
+
+    elif env_name == "webshop" and webshop_env_module:
+        ws_conf = eval_config.get("webshop", {})
+        try:
+            env = webshop_env_module.WebAgentTextEnv(
+                observation_mode=ws_conf.get("observation_mode", "text"),
+                human_goals=ws_conf.get("human_goals", True)
+            )
+            tasks_to_evaluate = ws_conf.get(f"{split}_tasks", [])
+
+        except Exception as e:
+            print(f"Error initializing WebShop environment: {e}. Skipping WebShop.")
+            return {}
+    
+    if env is None or not tasks_to_evaluate:
+        print(f"Warning: Environment '{env_name}' not properly initialized or no tasks to evaluate. Skipping.")
+        return {}
 
     results = {"success_rate": [], "scores": []}
+    max_episode_steps = eval_config.get("max_episode_steps", 100)
 
-    for task in tqdm(tasks, desc=f"Evaluating {env_name}"):
+    for task_item in tqdm(tasks_to_evaluate, desc=f"Evaluating {env_name} tasks"):
+        current_env = env 
+        current_task_name = ""
+
+        if env_name == "scienceworld":
+            current_env = task_item 
+            current_task_name = current_env.get_task_name()
+        elif env_name == "alfworld":
+            current_task_name = task_item
+        elif env_name == "webshop":
+            current_task_name = task_item
+
         if env_name == "alfworld":
-            # This is complex; requires a config and task files.
-            # For this implementation, we will use a mock.
-            env = MockEnv(initial_observation=f"ALFWorld Task: {task}")
-        else:
-            env = MockEnv(initial_observation=f"Task: {task}")
-            
-        obs = env.reset()
-        full_context_str = f"Observation: {obs}\n"
+            obs, info = current_env.reset({ 'task': current_task_name })
+            obs_str = obs[0]
+            task_success = 0.0
+        elif env_name == "scienceworld":
+            obs_str = current_env.reset() 
+            task_success = 0.0
+        elif env_name == "webshop":
+            obs_str = current_env.reset(current_task_name)
+            task_success = 0.0
+
+        full_context_str = f"Observation: {obs_str}\n"
         done = False
+        steps_taken = 0
         
-        while not done:
-            prompt_ids = tokenizer.encode(full_context_str, return_tensors="pt")
+        while not done and steps_taken < max_episode_steps:
+            prompt_ids = tokenizer.encode(full_context_str, return_tensors="pt", max_length=model.config.max_position_embeddings - gen_length).to(device)
             
             action_text = llada_generate(model, tokenizer, prompt_ids, device=device)
             action_text = action_text.split("Act:")[1].strip() if "Act:" in action_text else action_text
 
-            obs, reward, done = env.step(action_text)
+            if env_name == "alfworld":
+                obs_list, reward, done, info = current_env.step([action_text])
+                obs_str = obs_list[0]
+                is_success = info.get('won', False)
+                task_success = 1.0 if is_success else 0.0
+            elif env_name == "scienceworld":
+                reward, done, obs_str = current_env.step(action_text)
+                task_success = reward
+            elif env_name == "webshop":
+                obs_str, reward, done, info = current_env.step(action_text)
+                task_success = reward
+            
+            full_context_str += f"Action: {action_text}\nObservation: {obs_str}\n"
+            steps_taken += 1
 
-            # Append to context
-            full_context_str += f"Action: {action_text}\nObservation: {obs}\n"
+        if env_name == "alfworld":
+            results["success_rate"].append(task_success)
+        elif env_name == "scienceworld":
+            results["scores"].append(task_success) 
+        elif env_name == "webshop":
+            results["scores"].append(task_success)
 
-        results["success_rate"].append(reward) # For binary success
+    avg_success_rate = np.mean(results["success_rate"]) if results["success_rate"] else 0.0
+    avg_score = np.mean(results["scores"]) if results["scores"] else 0.0
 
-    avg_success = np.mean(results["success_rate"])
-    print(f"Average Success Rate on {env_name}: {avg_success:.2%}")
-    return {"avg_success_rate": avg_success}
+    output_metrics = {}
+    if avg_success_rate > 0:
+        output_metrics["avg_success_rate"] = avg_success_rate
+    if avg_score > 0:
+        output_metrics["avg_score"] = avg_score
 
-if __name__ == '__main__':
-    # This is a demonstration of how to use the functions.
-    # It requires a trained model and tokenizer.
-    model_path = "./models/LLaDA2.0-mini"
-    if not importlib.util.find_spec("alfworld"):
-         print("Warning: alfworld is not installed. Task evaluation will use a mock environment.")
-         
-    if importlib.util.find_spec("transformers") and os.path.isdir(model_path):
-        tokenizer = AutoTokenizer.from_pretrained(model_path)
-        model = AutoModelForCausalLM.from_pretrained(model_path)
-        
-        # Example tasks for a mock evaluation
-        mock_tasks = ["put hot potato on countertop", "find the key"]
-        run_task_evaluation(model, tokenizer, "alfworld", mock_tasks)
-    else:
-        print("Skipping task_eval demonstration.")
-        print("Please ensure `transformers` is installed and the model is downloaded to ./models/LLaDA2.0-mini")
+    print(f"Evaluation on {env_name} complete. Results: {output_metrics}")
+    return output_metrics

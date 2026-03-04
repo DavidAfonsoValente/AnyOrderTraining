@@ -23,32 +23,40 @@ def download_dataset(save_path: str):
     print(f"Downloading dataset '{DATASET_NAME}'...")
     try:
         if DATASET_NAME == "agent-eto/eto-sft-trajectory":
-            print("Applying special handling for 'agent-eto/eto-sft-trajectory' dataset...")
+            print("Applying special handling for 'agent-eto/eto-sft-trajectory' dataset due to heterogeneous data files.")
             
-            # We use the 'json' loader and pass the repo name to 'data_files' 
-            # as a dictionary or use the 'path' parameter correctly.
-            
-            print("Loading gworld_sft.json...")
-            gworld_ds = load_dataset("json", data_files=f"hf://datasets/{DATASET_NAME}/data/gworld_sft.json", split="train")
-            
-            print("Loading mind2web_sft.json...")
-            mind2web_ds = load_dataset("json", data_files=f"hf://datasets/{DATASET_NAME}/data/mind2web_sft.json", split="train")
-            
-            print("Loading webshop_sft.json...")
-            webshop_ds = load_dataset("json", data_files=f"hf://datasets/{DATASET_NAME}/data/webshop_sft.json", split="train")
+            # Load each data file as a separate dataset
+            print("Loading individual data files using direct HTTPS URLs...")
+            base_url = f"https://huggingface.co/datasets/{DATASET_NAME}/resolve/main/data"
+            alfworld_ds = load_dataset("json", data_files=f"{base_url}/alfworld_sft.json", split="train", download_mode="force_redownload")
+            sciworld_ds = load_dataset("json", data_files=f"{base_url}/sciworld_sft.json", split="train", download_mode="force_redownload")
+            webshop_ds = load_dataset("json", data_files=f"{base_url}/webshop_sft.json", split="train", download_mode="force_redownload")
 
-            # Handle the column mismatch
+            # The 'webshop' file contains extra columns ('reward', 'source') that are
+            # not present in the other files, causing schema mismatches.
+            # These columns are not used by the parsing scripts, so we remove them.
             columns_to_remove = [c for c in ['reward', 'source'] if c in webshop_ds.column_names]
             if columns_to_remove:
-                print(f"Removing inconsistent columns from 'webshop': {columns_to_remove}")
+                print(f"Removing inconsistent columns from 'webshop' data: {columns_to_remove}")
                 webshop_ds = webshop_ds.remove_columns(columns_to_remove)
 
-            print("Concatenating into single 'train' split...")
-            train_dataset = concatenate_datasets([gworld_ds, mind2web_ds, webshop_ds])
-            dataset = DatasetDict({"train": train_dataset})
+            # Concatenate all parts into a single 'train' split
+            print("Concatenating data files into a single 'train' split...")
+            train_dataset = concatenate_datasets([alfworld_ds, sciworld_ds, webshop_ds])
+            
+            # The processing script expects a 'train' split. It can handle a missing 'test' split.
+            dataset = DatasetDict({ "train": train_dataset })
 
         else:
+            # For any other dataset, use the default loading behavior
             dataset = load_dataset(DATASET_NAME)
+        
+        print(f"Saving dataset to '{save_path}'...")
+        dataset.save_to_disk(save_path)
+        print(f"Dataset successfully downloaded and saved to '{save_path}'.")
+    except Exception as e:
+        print(f"An error occurred while processing the dataset: {e}")
+        print("Please check your internet connection and Hugging Face Hub credentials.")
 
 def main():
     """Main function to run the download script."""
