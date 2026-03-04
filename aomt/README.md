@@ -72,11 +72,16 @@ This project has been automated with a set of master scripts to streamline the e
 
 ### Step 1: Prepare Data
 
-First, run the master data preparation script. This will download the raw dataset from Hugging Face and process it into the cached format required for training and evaluation. This script is idempotent and can be run safely multiple times.
+First, run the master data preparation script. This script automates the entire process of downloading, processing, and verifying the dataset. This script is idempotent and can be run safely multiple times.
 
 ```bash
 ./scripts/prepare_data.sh
 ```
+
+This script performs the following steps:
+1.  **Downloads Raw Data:** Fetches the `agent-eto/eto-sft-trajectory` dataset from Hugging Face.
+2.  **Processes and Tokenizes:** Converts the raw text trajectories into a memory-efficient, structured format, ready for training.
+3.  **Verifies Processed Data:** Runs a verification check on the processed data, displaying features and several example `TokenizedTrajectory` objects to confirm data integrity.
 
 ### Step 2: Run All Experiments on the Cluster
 
