@@ -6,7 +6,7 @@ import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 
 from datasets import load_from_disk
-from aomt.data.unit_parser import TokenizedTrajectory, UnitSpan
+from aomt.data.unit_parser import TokenizedTrajectory, TokenizedUnit
 import torch
 
 def verify_processed_data(data_path: str, split: str = "train", num_examples: int = 5):
@@ -26,19 +26,17 @@ def verify_processed_data(data_path: str, split: str = "train", num_examples: in
     print(f"Loading processed dataset from '{full_path}'...")
     processed_dataset = load_from_disk(full_path)
     print(f"Dataset loaded. Total examples: {len(processed_dataset)}")
-    print("
-Dataset Features:")
+    print("\nDataset Features:")
     print(processed_dataset.features)
 
-    print(f"
-Displaying {num_examples} examples:")
+    print(f"\nDisplaying {num_examples} examples:")
     for i in range(min(num_examples, len(processed_dataset))):
         item = processed_dataset[i]
         
         # Reconstruct the TokenizedTrajectory object
         unit_spans = [
-            UnitSpan(type, start, end)
-            for type, start, end in zip(item["unit_spans_type"], item["unit_spans_start"], item["unit_spans_end"])
+            TokenizedUnit(unit_type=type, token_start=start, token_end=end, unit_index=j)
+            for j, (type, start, end) in enumerate(zip(item["unit_spans_type"], item["unit_spans_start"], item["unit_spans_end"]))
         ]
         tokenized_traj = TokenizedTrajectory(
             input_ids=torch.tensor(item["input_ids"]),
@@ -47,8 +45,7 @@ Displaying {num_examples} examples:")
             trajectory_id=item["id"], # 'id' in dataset features corresponds to 'trajectory_id'
         )
 
-        print(f"
---- Example {i+1} ---")
+        print(f"\n--- Example {i+1} ---")
         print(f"  Trajectory ID: {tokenized_traj.trajectory_id}")
         print(f"  Environment: {tokenized_traj.env}")
         print(f"  Input IDs Shape: {tokenized_traj.input_ids.shape}")
@@ -66,6 +63,5 @@ if __name__ == "__main__":
     verify_processed_data(default_data_path, split="train")
     
     # Try to verify 'test' split if it exists, but don't error if it doesn't
-    print("
-Verifying 'test' split (if available):")
+    print("\nVerifying 'test' split (if available):")
     verify_processed_data(default_data_path, split="test")
