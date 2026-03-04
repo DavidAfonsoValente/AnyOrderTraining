@@ -28,9 +28,9 @@ def download_dataset(save_path: str):
             # Load each data file as a separate dataset
             print("Loading individual data files using direct HTTPS URLs...")
             base_url = f"https://huggingface.co/datasets/{DATASET_NAME}/resolve/main/data"
-            gworld_ds = load_dataset("json", data_files=f"{base_url}/gworld_sft.json", split="train")
-            mind2web_ds = load_dataset("json", data_files=f"{base_url}/mind2web_sft.json", split="train")
-            webshop_ds = load_dataset("json", data_files=f"{base_url}/webshop_sft.json", split="train")
+            gworld_ds = load_dataset("json", data_files=f"{base_url}/gworld_sft.json", split="train", download_mode="force_redownload")
+            mind2web_ds = load_dataset("json", data_files=f"{base_url}/mind2web_sft.json", split="train", download_mode="force_redownload")
+            webshop_ds = load_dataset("json", data_files=f"{base_url}/webshop_sft.json", split="train", download_mode="force_redownload")
 
             # The 'webshop' file contains extra columns ('reward', 'source') that are
             # not present in the other files, causing schema mismatches.
