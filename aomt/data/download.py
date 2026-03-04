@@ -1,6 +1,6 @@
 # aomt/data/download.py
 import os
-from datasets import load_dataset
+from datasets import load_dataset, DatasetDict, concatenate_datasets
 import argparse
 
 # The dataset name as specified in the engineering specs
@@ -22,12 +22,39 @@ def download_dataset(save_path: str):
 
     print(f"Downloading dataset '{DATASET_NAME}'...")
     try:
-        # Use the save_to_disk method to store the dataset locally
-        dataset = load_dataset(DATASET_NAME)
+        if DATASET_NAME == "agent-eto/eto-sft-trajectory":
+            print("Applying special handling for 'agent-eto/eto-sft-trajectory' dataset due to heterogeneous data files.")
+            
+            # Load each data file as a separate dataset
+            print("Loading individual data files...")
+            gworld_ds = load_dataset(DATASET_NAME, data_files="data/gworld_sft.json", split="train")
+            mind2web_ds = load_dataset(DATASET_NAME, data_files="data/mind2web_sft.json", split="train")
+            webshop_ds = load_dataset(DATASET_NAME, data_files="data/webshop_sft.json", split="train")
+
+            # The 'webshop' file contains extra columns ('reward', 'source') that are
+            # not present in the other files, causing schema mismatches.
+            # These columns are not used by the parsing scripts, so we remove them.
+            columns_to_remove = [c for c in ['reward', 'source'] if c in webshop_ds.column_names]
+            if columns_to_remove:
+                print(f"Removing inconsistent columns from 'webshop' data: {columns_to_remove}")
+                webshop_ds = webshop_ds.remove_columns(columns_to_remove)
+
+            # Concatenate all parts into a single 'train' split
+            print("Concatenating data files into a single 'train' split...")
+            train_dataset = concatenate_datasets([gworld_ds, mind2web_ds, webshop_ds])
+            
+            # The processing script expects a 'train' split. It can handle a missing 'test' split.
+            dataset = DatasetDict({ "train": train_dataset })
+
+        else:
+            # For any other dataset, use the default loading behavior
+            dataset = load_dataset(DATASET_NAME)
+        
+        print(f"Saving dataset to '{save_path}'...")
         dataset.save_to_disk(save_path)
         print(f"Dataset successfully downloaded and saved to '{save_path}'.")
     except Exception as e:
-        print(f"An error occurred while downloading the dataset: {e}")
+        print(f"An error occurred while processing the dataset: {e}")
         print("Please check your internet connection and Hugging Face Hub credentials.")
 
 def main():
