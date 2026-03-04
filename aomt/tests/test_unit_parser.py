@@ -104,7 +104,7 @@ class TestUnitParser(unittest.TestCase):
         self.assertIsNotNone(tokenized_traj)
         self.assertEqual(len(tokenized_traj.unit_spans), 2)
         self.assertEqual(tokenized_traj.unit_spans[-1].unit_type, "act")
-        self.assertEqual(tokenized_traj.unit_spans[-1].turn_index, 1)
+        self.assertEqual(tokenized_traj.unit_spans[-1].unit_index, 1)
         self.assertLessEqual(len(tokenized_traj.input_ids), 8)
         print("Test passed.")
 

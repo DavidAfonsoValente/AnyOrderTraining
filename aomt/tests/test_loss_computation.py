@@ -72,15 +72,24 @@ class TestLossComputation(unittest.TestCase):
         """
         print("\nRunning test: test_attention_mask_correctness")
         
-        # Use a tiny, randomly initialized model for this test
-        config = AutoConfig.from_pretrained("gpt2", n_layer=2, n_head=2)
+        # Use a tiny, randomly initialized model and a gpt2 tokenizer
+        config = AutoConfig.from_pretrained("gpt2", n_layer=2, n_head=2, vocab_size=50257)
         model = AutoModelForCausalLM.from_config(config).to("cpu")
+        tokenizer = AutoTokenizer.from_pretrained("gpt2")
         
+        # Add a mask token if it doesn't exist
+        if tokenizer.mask_token is None:
+            tokenizer.add_special_tokens({'mask_token': '[MASK]'})
+            # Resize model embeddings to match new tokenizer size
+            model.resize_token_embeddings(len(tokenizer))
+            
+        mask_token_id = tokenizer.mask_token_id
+
         # A batch where an action is masked. SFT should only see the prefix,
         # while AOMT should see the whole trajectory.
         # [OBS_0] [ACT_0] [OBS_1]
         # Target is ACT_0
-        input_ids = torch.randint(0, self.vocab_size, (1, 30))
+        input_ids = torch.randint(0, tokenizer.vocab_size - 1, (1, 30)) # Avoid mask token in random input
         target_ids = input_ids.clone()
         loss_mask = torch.zeros_like(input_ids, dtype=torch.bool)
         loss_mask[0, 10:20] = True # Mask the middle unit (ACT_0)
@@ -99,7 +108,7 @@ class TestLossComputation(unittest.TestCase):
         
         # --- AOMT (Bidirectional) Run ---
         aomt_input_ids = input_ids.clone()
-        aomt_input_ids[loss_mask] = 50257 # Use a fake mask token ID
+        aomt_input_ids[loss_mask] = mask_token_id
         aomt_batch = {
             "input_ids": aomt_input_ids,
             "target_ids": target_ids.clone(),

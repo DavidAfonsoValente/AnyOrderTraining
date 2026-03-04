@@ -30,9 +30,14 @@ def parse_conversation_to_trajectory(example: dict) -> Trajectory:
         Trajectory: A structured representation of the conversation.
     """
     units = []
-    for i, turn in enumerate(example["conversations"]):
+    # Ensure 'conversations' is always treated as a list of dicts.
+    # The raw dataset has 'conversations' as a list at the top level.
+    # When batched, example['conversations'] will be a list of lists.
+    # The inner loop handles each single conversation list.
+    conversation_list = example["conversations"] if isinstance(example["conversations"], list) else [example["conversations"]]
+
+    for i, turn in enumerate(conversation_list):
         utype = "obs" if turn["from"] == "human" else "act"
-        # The first 'human' turn is O_0 and can contain task instructions.
         units.append(TrajectoryUnit(unit_type=utype, text=turn["value"], turn_index=i))
 
     # Validate that the turns strictly alternate between "obs" and "act"
