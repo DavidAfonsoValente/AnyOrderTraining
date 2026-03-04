@@ -1,6 +1,5 @@
 # aomt/data/download.py
-import os
-from datasets import load_dataset, DatasetDict, concatenate_datasets
+from datasets import load_dataset, DatasetDict, concatenate_datasets, Value
 import argparse
 
 # The dataset name as specified in the engineering specs
@@ -40,9 +39,16 @@ def download_dataset(save_path: str):
                 print(f"Removing inconsistent columns from 'webshop' data: {columns_to_remove}")
                 webshop_ds = webshop_ds.remove_columns(columns_to_remove)
 
+            # Fix for 'id' column type mismatch before concatenation
+            all_datasets = [alfworld_ds, sciworld_ds, webshop_ds]
+            for i, ds in enumerate(all_datasets):
+                if 'id' in ds.features and not isinstance(ds.features['id'], Value):
+                    print(f"Casting 'id' column of dataset {i} to string type.")
+                    all_datasets[i] = ds.cast_column('id', Value(dtype='string'))
+
             # Concatenate all parts into a single 'train' split
             print("Concatenating data files into a single 'train' split...")
-            train_dataset = concatenate_datasets([alfworld_ds, sciworld_ds, webshop_ds])
+            train_dataset = concatenate_datasets(all_datasets)
             
             # The processing script expects a 'train' split. It can handle a missing 'test' split.
             dataset = DatasetDict({ "train": train_dataset })
