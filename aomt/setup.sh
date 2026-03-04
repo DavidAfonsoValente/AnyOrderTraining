@@ -34,13 +34,14 @@ echo "dFactory repository is ready."
 
 # --- 3. Download LLaDA 2.0 mini model ---
 echo "Downloading LLaDA 2.0 mini model..."
-if [ -d "models/LLaDA2.0-mini" ]; then
-    echo "Model directory already exists. Skipping download."
+# A more robust check for a key file, not just the directory.
+if [ -f "models/LLaDA2.0-mini/model.safetensors.index.json" ]; then
+    echo "Model appears to be downloaded already (found model.safetensors.index.json). Skipping download."
 else
     # The spec uses a generic path, we'll place it inside the aomt project folder
     huggingface-cli download inclusionAI/LLaDA2.0-mini --local-dir ./models/LLaDA2.0-mini --local-dir-use-symlinks False
 fi
-echo "LLaDA 2.0 mini model downloaded."
+echo "LLaDA 2.0 mini model download check complete."
 
 
 # --- 4. Setup Evaluation Data ---
