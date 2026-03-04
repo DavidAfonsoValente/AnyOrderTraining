@@ -1,0 +1,34 @@
+# configs/prefix_sft_stage2.yaml
+# Baseline 2, Stage 2: Fine-tuning the world-model checkpoint with standard SFT
+name: prefix_sft_stage2
+
+# CRITICAL: This path points to the output of the Stage 1 training.
+# It will need to be updated by the user/script after Stage 1 completes.
+model: "./checkpoints/prefix_sft_stage1/final_checkpoint"
+
+# --- Training Objective ---
+# This stage is identical to standard SFT, just starting from a different checkpoint.
+mask_mode: "standard_sft"
+mask_prob: null
+use_causal_mask: true # Switch back to causal attention for action prediction
+
+# --- dFactory Training Defaults ---
+learning_rate: 2.5e-5
+warmup_steps: 50
+lr_schedule: "cosine"
+min_lr: 2.5e-6
+weight_decay: 0.1
+gradient_clip: 1.0
+global_batch_size: 64
+per_device_batch_size: 2
+gradient_accumulation_steps: 8
+max_seq_length: 2048
+mixed_precision: "bf16"
+num_epochs: 3
+
+# --- Evaluation ---
+# Evaluate the final, task-ready model.
+eval_nll_obs: true # Can still be evaluated on a bidirectional copy of the model
+eval_task: true
+eval_splits: ["seen", "unseen"]
+noise_fractions: [0.0, 0.1, 0.2, 0.3]

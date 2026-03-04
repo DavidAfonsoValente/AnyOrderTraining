@@ -1,0 +1,28 @@
+# configs/sft_standard.yaml
+# Baseline 1: Standard Supervised Fine-Tuning (Next-Action Prediction)
+name: standard_sft
+model: inclusionAI/LLaDA2.0-mini
+
+# --- Training Objective ---
+mask_mode: "standard_sft"
+mask_prob: null  # Not applicable; all actions are always targeted
+use_causal_mask: true # CRITICAL: This enforces left-to-right attention
+
+# --- dFactory Training Defaults (as per spec) ---
+learning_rate: 2.5e-5
+warmup_steps: 50
+lr_schedule: "cosine"
+min_lr: 2.5e-6
+weight_decay: 0.1
+gradient_clip: 1.0
+global_batch_size: 64
+per_device_batch_size: 2
+gradient_accumulation_steps: 8
+max_seq_length: 2048
+mixed_precision: "bf16"
+num_epochs: 3
+
+# --- Evaluation ---
+eval_nll_obs: false # Cannot be computed by a causal model
+eval_splits: ["seen", "unseen"]
+noise_fractions: [0.0, 0.1, 0.2, 0.3]

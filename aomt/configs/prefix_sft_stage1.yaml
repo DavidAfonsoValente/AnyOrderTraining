@@ -1,0 +1,32 @@
+# configs/prefix_sft_stage1.yaml
+# Baseline 2, Stage 1: Pre-training on ALEE's Implicit World Modeling objective
+name: prefix_sft_stage1
+model: inclusionAI/LLaDA2.0-mini
+
+# --- Training Objective ---
+# The `collator` field tells the training script to use the specialized
+# `build_prefix_sft_examples` function to create (O_t, A_t) -> O_{t+1} pairs.
+collator: "prefix_sft_stage1"
+mask_mode: "prefix_sft_stage1"
+use_causal_mask: false # Use bidirectional attention for this objective
+
+# --- dFactory Training Defaults ---
+learning_rate: 2.5e-5
+warmup_steps: 50
+lr_schedule: "cosine"
+min_lr: 2.5e-6
+weight_decay: 0.1
+gradient_clip: 1.0
+global_batch_size: 64
+per_device_batch_size: 8 # Can use a larger batch size for shorter sequences
+gradient_accumulation_steps: 2
+max_seq_length: 512 # Examples are short (O_t, A_t, O_{t+1})
+mixed_precision: "bf16"
+num_epochs: 3
+
+# --- Evaluation ---
+# This model is not directly deployable for tasks as it only predicts observations.
+# We evaluate its world-model capabilities before Stage 2 fine-tuning.
+eval_nll_obs: true
+eval_task: false
+save_for_stage2: true # Flag to save checkpoint for the next stage

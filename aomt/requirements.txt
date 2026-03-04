@@ -1,0 +1,11 @@
+# Core ML/DS Libraries
+torch==2.3.0 --index-url https://download.pytorch.org/whl/cu121
+transformers==4.45.0
+datasets
+accelerate
+huggingface_hub
+numpy
+
+# Evaluation Environments
+alfworld
+scienceworld
