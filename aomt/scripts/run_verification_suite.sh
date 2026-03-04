@@ -25,15 +25,15 @@ echo "========================================"
 
 # --- Step 1: Verify Processed Data ---
 echo "\n[1/3] Verifying processed data structure..."
-srun python3 "$SCRIPT_DIR/verify_data.py"
+python3 "$SCRIPT_DIR/verify_data.py"
 
 # --- Step 2: Verify Masking Strategies ---
 echo "\n[2/3] Verifying data masking strategies..."
-srun python3 "$SCRIPT_DIR/verify_masking.py"
+python3 "$SCRIPT_DIR/verify_masking.py"
 
 # --- Step 3: Run Sanity Checks ---
 echo "\n[3/3] Running automated sanity checks..."
-srun python3 "$SCRIPT_DIR/run_sanity_checks.py"
+python3 "$SCRIPT_DIR/run_sanity_checks.py"
 
 echo "\n========================================"
 echo "      Verification complete."
