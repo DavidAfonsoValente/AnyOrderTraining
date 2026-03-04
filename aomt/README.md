@@ -84,7 +84,7 @@ This project has been automated with a set of master scripts to streamline the e
 First, run the master data preparation script. This script automates the entire process of downloading, processing, and verifying the dataset. This script is idempotent and can be run safely multiple times.
 
 ```bash
-srun ./scripts/prepare_data.sh
+./scripts/prepare_data.sh
 ```
 
 This script performs the following steps:
@@ -97,7 +97,7 @@ This script performs the following steps:
 Before launching the full-scale experiments, you can run the master visualization script. This script provides a clear visual confirmation of the training data for each specific experiment defined in your `configs` directory.
 
 ```bash
-srun ./scripts/visualize_experiments.sh
+./scripts/visualize_experiments.sh
 ```
 
 This script will iterate through each of your experiment config files and show you:
@@ -107,7 +107,7 @@ This script will iterate through each of your experiment config files and show y
 
 You can also run the full sanity check suite to verify all components:
 ```bash
-srun ./scripts/run_verification_suite.sh
+./scripts/run_verification_suite.sh
 ```
 
 ### Step 3: Run All Experiments on the Cluster
@@ -128,7 +128,7 @@ First, find your checkpoint directories (e.g., `checkpoints/aomt_mixed`). Then, 
 
 **Example: Evaluating the `aomt_mixed` model**
 ```bash
-srun python3 run_full_eval.py --checkpoint_path checkpoints/aomt_mixed
+python3 run_full_eval.py --checkpoint_path checkpoints/aomt_mixed
 ```
 
 Once all checkpoints have been evaluated, you can automatically generate a summary table of all results using the analysis script:

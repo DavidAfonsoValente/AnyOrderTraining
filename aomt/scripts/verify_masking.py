@@ -24,11 +24,9 @@ def verify_experiment_data(config_path: str, data_path: str, num_examples: int =
         data_path (str): Path to the processed dataset directory.
         num_examples (int): Number of examples to show.
     """
-    print(f"
-========================================")
+    print(f"\n========================================")
     print(f"  Verifying Experiment Config: {os.path.basename(config_path)}")
-    print(f"========================================
-")
+    print(f"========================================\n")
 
     # 1. Load Config
     with open(config_path, 'r') as f:
@@ -63,8 +61,7 @@ def verify_experiment_data(config_path: str, data_path: str, num_examples: int =
         mask_prob=mask_prob if mask_prob is not None else 0.0
     )
     
-    print(f"Displaying {num_examples} examples with mask_prob={dataset.mask_prob}:
-")
+    print(f"Displaying {num_examples} examples with mask_prob={dataset.mask_prob}:\n")
 
     for i in range(num_examples):
         print(f"--- Example {i+1} for {mask_mode.name} ---")
