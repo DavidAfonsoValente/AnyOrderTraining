@@ -25,19 +25,19 @@ def download_dataset(save_path: str):
         if DATASET_NAME == "agent-eto/eto-sft-trajectory":
             print("Applying special handling for 'agent-eto/eto-sft-trajectory' dataset...")
             
-            # Using repo_id + data_files is the most reliable way to load specific files
-            # The library will automatically use your cached login token.
+            # We use the 'json' loader and pass the repo name to 'data_files' 
+            # as a dictionary or use the 'path' parameter correctly.
             
             print("Loading gworld_sft.json...")
-            gworld_ds = load_dataset("json", data_files={"train": "data/gworld_sft.json"}, path=DATASET_NAME, split="train")
+            gworld_ds = load_dataset("json", data_files=f"hf://datasets/{DATASET_NAME}/data/gworld_sft.json", split="train")
             
             print("Loading mind2web_sft.json...")
-            mind2web_ds = load_dataset("json", data_files={"train": "data/mind2web_sft.json"}, path=DATASET_NAME, split="train")
+            mind2web_ds = load_dataset("json", data_files=f"hf://datasets/{DATASET_NAME}/data/mind2web_sft.json", split="train")
             
             print("Loading webshop_sft.json...")
-            webshop_ds = load_dataset("json", data_files={"train": "data/webshop_sft.json"}, path=DATASET_NAME, split="train")
+            webshop_ds = load_dataset("json", data_files=f"hf://datasets/{DATASET_NAME}/data/webshop_sft.json", split="train")
 
-            # Remove inconsistent columns
+            # Handle the column mismatch
             columns_to_remove = [c for c in ['reward', 'source'] if c in webshop_ds.column_names]
             if columns_to_remove:
                 print(f"Removing inconsistent columns from 'webshop': {columns_to_remove}")
@@ -49,13 +49,6 @@ def download_dataset(save_path: str):
 
         else:
             dataset = load_dataset(DATASET_NAME)
-        
-        print(f"Saving dataset to '{save_path}'...")
-        dataset.save_to_disk(save_path)
-        print(f"Dataset successfully saved to '{save_path}'.")
-
-    except Exception as e:
-        print(f"An error occurred: {e}")
 
 def main():
     """Main function to run the download script."""
