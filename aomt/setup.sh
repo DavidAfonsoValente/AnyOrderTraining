@@ -23,17 +23,14 @@ echo "Installing Python packages from requirements.txt..."
 pip install --upgrade pip
 pip install -r requirements.txt
 
-# --- 2. Install dFactory ---
-echo "Cloning and installing dFactory..."
+# --- 2. Clone dFactory repository ---
+echo "Cloning dFactory repository..."
 if [ -d "dFactory" ]; then
     echo "dFactory directory already exists. Skipping clone."
 else
     git clone https://github.com/inclusionAI/dFactory
 fi
-cd dFactory
-pip install -e .
-cd ..
-echo "dFactory installation complete."
+echo "dFactory repository is ready."
 
 # --- 3. Download LLaDA 2.0 mini model ---
 echo "Downloading LLaDA 2.0 mini model..."

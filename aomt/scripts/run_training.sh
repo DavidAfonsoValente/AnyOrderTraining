@@ -61,6 +61,9 @@ echo "----------------------------------------"
 # Activate virtual environment
 source "$PROJECT_ROOT/venv/bin/activate"
 
+# Add dFactory to python path
+export PYTHONPATH="$PROJECT_ROOT/dFactory:$PYTHONPATH"
+
 # We are calling the simple, single-process trainer.py for demonstration.
 # A real FSDP setup would use `torchrun` or `accelerate launch`.
 python3 "$PROJECT_ROOT/training/trainer.py" --config "$CONFIG_FILE" "$@"

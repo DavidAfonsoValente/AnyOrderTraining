@@ -20,6 +20,9 @@ DATA_DIR="$PROJECT_ROOT/data"
 # Activate virtual environment
 source "$PROJECT_ROOT/venv/bin/activate"
 
+# Add dFactory to python path
+export PYTHONPATH="$PROJECT_ROOT/dFactory:$PYTHONPATH"
+
 echo "========================================"
 echo "      AOMT Data Preparation"
 echo "========================================"

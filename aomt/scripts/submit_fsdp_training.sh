@@ -72,7 +72,13 @@ export RANK=$SLURM_PROCID
 
 # Activate the virtual environment
 echo "Activating Python virtual environment..."
-source venv/bin/activate
+# Assuming this script is run from the project root (e.g., AnyOrderTraining/aomt)
+PROJECT_ROOT=$(pwd)
+source "$PROJECT_ROOT/venv/bin/activate"
+
+# Add dFactory to the python path
+export PYTHONPATH="$PROJECT_ROOT/dFactory:$PYTHONPATH"
+echo "PYTHONPATH updated to include dFactory."
 
 # 5. Launch the FSDP Training Job
 # We use `srun` to execute the command on the allocated compute node.
