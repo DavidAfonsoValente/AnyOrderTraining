@@ -9,3 +9,6 @@ numpy
 # Evaluation Environments
 alfworld
 scienceworld
+
+# Testing
+pytest
