@@ -88,7 +88,7 @@ def process_and_cache_dataset(
                     processed_examples["unit_spans_start"].append([s.token_start for s in tokenized_traj.unit_spans])
                     processed_examples["unit_spans_end"].append([s.token_end for s in tokenized_traj.unit_spans])
                     processed_examples["env"].append(tokenized_traj.env)
-                    processed_examples["id"].append(tokenized_traj.id)
+                    processed_examples["id"].append(tokenized_traj.trajectory_id)
 
             except (ValueError, KeyError) as e:
                 # Silently skip trajectories that fail parsing
