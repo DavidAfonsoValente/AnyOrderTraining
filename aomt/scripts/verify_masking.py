@@ -42,6 +42,14 @@ def verify_experiment_data(config_path: str, data_path: str, num_examples: int =
         print(f"Error: Invalid mask_mode '{mask_mode_str}' in config.")
         return
 
+    # Handle the special case for PREFIX_SFT_STAGE1, which is handled by the collator
+    if mask_mode == MaskMode.PREFIX_SFT_STAGE1:
+        print(f"Info: '{mask_mode.name}' masking is handled by the data collator, not the sampler.")
+        print("Skipping sampler-based visualization for this config.")
+        print("\n" + "-"*40)
+        return
+
+
     # 2. Load Tokenizer and Processed Data
     print(f"Loading tokenizer '{model_name}'...")
     tokenizer = AutoTokenizer.from_pretrained(model_name, low_cpu_mem_usage=True)

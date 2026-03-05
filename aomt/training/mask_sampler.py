@@ -54,8 +54,22 @@ def _select_units_to_mask(
         return [u for u in units if u.unit_type == "act" and rng.random() < mask_prob]
 
     elif mode == MaskMode.MIXED:
-        # AOMT-Mixed (Full Method): Randomly mask a subset of *any* unit (obs or act).
-        return [u for u in units if rng.random() < mask_prob]
+        # AOMT-Mixed: Randomly mask thought, action, and observation units, but NOT the objective.
+        units_to_mask = []
+        for i, u in enumerate(units):
+            # The objective is the first unit (index 0) and has type "obs".
+            # We explicitly exclude the objective from masking.
+            is_objective = i == 0 and u.unit_type == "obs"
+            
+            # Thoughts and actions are contained within "act" units.
+            is_action_or_thought = u.unit_type == "act"
+
+            # Observations are "obs" units that are not the objective.
+            is_observation = u.unit_type == "obs" and not is_objective
+
+            if (is_action_or_thought or is_observation) and rng.random() < mask_prob:
+                units_to_mask.append(u)
+        return units_to_mask
 
     else:
         raise ValueError(f"Unknown MaskMode: {mode}")
