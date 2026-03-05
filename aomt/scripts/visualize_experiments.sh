@@ -24,7 +24,7 @@ echo "    AOMT Experiment Visualization"
 echo "========================================"
 
 # Find all .yaml files in the configs directory, excluding eval_config.yaml
-for config_file in $(find "$CONFIG_DIR" -name "*.yaml" ! -name "eval_config.yaml"); do
+for config_file in $(find "$CONFIG_DIR" -name "*.yaml" ! -name "eval_config.yaml" ! -name "prefix_sft_stage2.yaml"); do
     python3 "$SCRIPT_DIR/verify_masking.py" --config "$config_file"
 done
 
