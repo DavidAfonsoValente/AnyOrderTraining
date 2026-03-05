@@ -103,8 +103,9 @@ def verify_experiment_data(config_path: str, data_path: str, num_examples: int =
         
         if is_summarized_dataset:
             # For summarized datasets, examples are short; show the whole thing.
-            snippet_original = tokenizer.decode(target_ids, skip_special_tokens=True)
-            snippet_masked = tokenizer.decode(input_ids, skip_special_tokens=True)
+            # Set skip_special_tokens to False to make [MASK] and other tokens visible.
+            snippet_original = tokenizer.decode(target_ids, skip_special_tokens=False)
+            snippet_masked = tokenizer.decode(input_ids, skip_special_tokens=False)
             
             print("\n  CONTEXT (Input to be Unmasked):")
             print(f"  {snippet_masked}")
