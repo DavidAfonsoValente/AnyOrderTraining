@@ -1,0 +1,64 @@
+\section{Introduction}
+\label{sec:intro}
+
+Supervised fine-tuning (SFT) on expert demonstrations is the dominant starting
+point for LLM-based agents \citep{deng2023mind2web,zeng2023agenttuning,yao2023react}.
+The standard objective---autoregressive next-action prediction---has a precise
+structural limitation: it commits to a \emph{single, fixed} assignment of trajectory
+elements to the roles of context and target.
+
+\begin{definition}[Training Order]
+\label{def:order}
+A \emph{training order} $\sigma$ is a function
+$\sigma\colon \Ucal(\tau) \to \{\texttt{context},\, \texttt{target}\}$
+partitioning the units of a trajectory $\tau$ into a context set $\Ccal_\sigma$
+and a target set $\Tcal_\sigma$ for a single training update.
+\end{definition}
+
+Standard SFT always uses the same order: every preceding observation and action
+is context; the next action is the only target. A trajectory of length $T$ contains
+$O(2^T)$ possible context/target assignments, of which standard SFT exploits
+exactly $T$---one per action step. Recent alternatives such as
+ALEE \citep{zhang2025alee} introduce richer signals but each fix a single training
+order and require either live environment interaction or human annotation.
+
+\paragraph{This paper.}
+We propose \textbf{Any-Order Masked Training (\aomt{})}, which removes the
+single-order constraint entirely. At each training step, an arbitrary subset of
+whole observation and action \emph{units} is randomly masked; the remaining units
+serve as bidirectional context; and a masked diffusion language model
+\citep{nie2025llada} reconstructs all masked units in a single forward pass.
+Over multiple epochs, the same trajectory appears under many distinct
+context/target assignments---inducing any-order learning without additional data
+collection, environment interaction, or reward signals.
+
+We use LLaDA~2.0 \citep{bie2025llada20} as our base model: masked diffusion LMs
+natively support full bidirectional attention and are structurally designed for
+span reconstruction. Masking is applied at the \emph{unit level} (whole
+observations or actions) rather than at the token level, preventing partial-token
+information leakage and forcing reconstruction to rely on inter-unit trajectory
+structure.
+
+\paragraph{Contributions.}
+\textbf{(1)} \textbf{\aomt{}}: a reward-free offline training objective applying
+unit-level random masking to agent trajectories, extracting richer supervision from
+a fixed expert corpus.
+\textbf{(2)} \textbf{Formal unification} (Proposition~\ref{prop:subsumption}):
+standard SFT and offline ALEE-IWM are degenerate special cases of \aomt{}.
+\textbf{(3)} \textbf{Observation-masked NLL}: a novel metric for implicit
+world-model quality, naturally supported by masked DLMs.
+\textbf{(4)} \textbf{Empirical evaluation} on ALFWorld, ScienceWorld, and WebShop
+with ablations and robustness analysis.
+
+\begin{figure}[t]
+  \centering
+  \input{figures/method_overview}
+  \caption{%
+    \textbf{Any-Order Masked Training vs.\ prior single-order methods.}
+    Standard SFT and Prefix SFT (offline IWM) each fix one training order.
+    \aomt{} resamples an arbitrary unit-level mask each step, exposing the same
+    trajectory under many context/target assignments across epochs.
+    Inference is always next-action generation.
+  }
+  \label{fig:method_overview}
+\end{figure}

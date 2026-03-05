@@ -1,0 +1,67 @@
+\section{Experiments}
+\label{sec:experiments}
+
+\paragraph{Benchmarks.}
+We evaluate on the three-benchmark suite standard for LLM agent SFT
+\citep{song2024eto,zhang2024ipr,zhang2025alee}.
+\textbf{ALFWorld} \citep{shridhar2021alfworld} is a text-based household
+environment (six task categories; binary success).
+\textbf{ScienceWorld} \citep{wang2022scienceworld} is a science simulator with
+30 task types requiring causal reasoning over 10--120 steps
+(average normalised score $\times100$); the unseen split is the primary
+generalisation target.
+\textbf{WebShop} \citep{yao2022webshop} requires sequential product search over
+12,087 items (average reward $\times100$).
+
+\paragraph{Data.}
+All experiments use the \texttt{agent-eto/eto-sft-trajectory} dataset
+\citep{song2024eto}: expert ReAct trajectories with GPT-4 rationales.
+No environment interaction or reward labelling is performed for any variant;
+all methods train on identical data.
+
+\paragraph{Baselines.}
+\textbf{Zero-shot LLaDA~2.0-mini}: untuned base model.
+\textbf{Standard SFT}: next-action prediction with causal mask---the degenerate
+limit of \aomt{} and primary baseline.
+\textbf{Prefix SFT (offline IWM)}: ALEE's IWM objective
+\citep{zhang2025alee} on offline data only (Stage~1: $-\log p_\theta(O_{t+1} \mid
+O_t, A_t)$; Stage~2: standard SFT), isolating the IWM objective from ALEE's
+data-collection contribution.
+\textbf{\aomt{}-Action-Only}: mask restricted to action units, isolating
+bidirectional context from world-model training.
+\textbf{\aomt{}-Mixed} (full method): each unit masked independently with
+probability $p$, jointly training policy and implicit world model.
+ETO \citep{song2024eto}, IPR \citep{zhang2024ipr}, and Early Experience IWM
+\citep{zhang2025alee} are cross-paradigm references requiring rollouts
+(and rewards for ETO/IPR).
+
+\paragraph{Model and training.}
+All experiments use LLaDA~2.0-mini \citep{bie2025llada20}: 16B total / 1.4B
+active parameters (MoE). Trajectories are tokenised as flat sequences with
+separator tokens; unit spans are recorded at preprocessing so the mask sampler
+enforces whole-unit masking. Hyperparameters: lr $2.5\times10^{-5}$ (cosine
+decay to $2.5\times10^{-6}$), 50 warmup steps, weight decay 0.1, gradient
+clip~1.0, batch size~64, sequence length~2048, bf16. Standard SFT and Prefix
+SFT train for 3 epochs; \aomt{} variants for 5. Mask probability $p$ is swept
+over $\{0.15, 0.25, 0.40, 0.50\}$ on ALFWorld and transferred to other
+benchmarks. Inference: iterative unmasking, temperature~0.0, block length~32,
+32 decoding steps \citep{bie2025llada20}.
+
+\paragraph{Evaluation metrics.}
+Primary metrics are task success~(\%) for ALFWorld, average normalised score for
+ScienceWorld, and average reward for WebShop. We additionally report
+\emph{observation-masked NLL}:
+\begin{equation}
+  \NLL_{\text{obs}}(\theta) =
+    -\mathbb{E}_{\tau \sim \Dcal_{\text{test}}}\;
+    \mathbb{E}_{t}\!\left[\log p_\theta(O_t \mid \tau \setminus O_t)\right],
+  \label{eq:nll_obs}
+\end{equation}
+where $\tau \setminus O_t$ provides all other units as clean bidirectional
+context. $\NLL_{\text{obs}}$ is a pseudo-log-likelihood
+\citep{salazar2020masked} comparable across masked DLMs but incommensurable
+with autoregressive log-likelihoods (Appendix~\ref{app:nll_details}).
+Standard SFT and Prefix SFT are excluded from this metric.
+Robustness is evaluated by randomly corrupting fraction
+$\rho \in \{0.1, 0.2, 0.3\}$ of observation tokens at test time
+(ALFWorld seen).

@@ -1,0 +1,111 @@
+\section{Method}
+\label{sec:method}
+
+\subsection{Setup and Notation}
+
+A trajectory of length $T$ is the interleaved sequence
+$\tau = (O_0, A_0, O_1, A_1, \ldots, O_{T-1}, A_{T-1}, O_T)$,
+where $O_t \in \mathcal{O}$ and $A_t \in \mathcal{A}$ are multi-token text
+spans called \emph{trajectory units}, with unit set
+$\Ucal(\tau) = \{O_0, A_0, \ldots, O_T\}$, $|\Ucal| = 2T+1$.
+An offline expert dataset $\Dcal = \{\tau^{(n)}\}_{n=1}^N$ is the sole training
+source; \aomt{} uses no environment interaction or reward signal.
+
+Standard SFT fixes $\sigma_\text{SFT}$: units $\{O_0,\ldots,O_t\}$ are context,
+$A_t$ is the target, for each $t$, exploiting exactly $T$ of the $2^{2T+1}$
+possible context/target partitions.
+
+\begin{remark}
+\label{rem:fraction}
+Standard SFT exploits a fraction $T/2^{2T+1}$ of possible context/target
+partitions---exponentially vanishing in $T$.
+\end{remark}
+
+\subsection{Any-Order Masked Training}
+\label{sec:aomt_core}
+
+A binary unit-level mask $m \in \{0,1\}^{|\Ucal|}$ partitions units into masked
+targets $\Tcal(m) = \{u_i : m_i = 1\}$ and context $\Ccal(m) = \{u_i : m_i = 0\}$,
+with $m_i \stackrel{\text{iid}}{\sim} \mathrm{Bernoulli}(p)$.
+All tokens of masked units are replaced by \texttt{[MASK]}; context tokens are
+unchanged. The \aomt{} objective is:
+\begin{equation}
+  \Lcal_{\text{AOMT}} =
+    \mathbb{E}_{\tau \sim \Dcal}\;
+    \mathbb{E}_{m \sim \mathrm{Mask}(p)}\;
+    \left[
+      -\sum_{u_i \in \Tcal(m)} \log p_\theta\!\left(u_i \mid \Ccal(m)\right)
+    \right],
+  \label{eq:aomt}
+\end{equation}
+where $p_\theta$ attends bidirectionally over all context units.
+The mask is resampled at every training step; across epochs, the same trajectory
+appears under many distinct assignments.
+
+\paragraph{Why unit-level masking.}
+Token-level masking on an action such as \texttt{``heat potato with oven''} can
+leave partial cues visible, letting the model complete the action rather than
+reason from trajectory context. Unit-level masking removes this shortcut and
+aligns the loss with the semantic granularity at which agent decisions are made.
+
+\paragraph{Training vs.\ inference.}
+At inference, all \aomt{} models behave identically to standard SFT: the current
+observation history is context and the next action is generated via LLaDA~2.0's
+iterative unmasking \citep{bie2025llada20}. No observation prediction is
+performed at test time.
+
+\subsection{AOMT Subsumes Prior Single-Order Methods}
+
+\begin{proposition}[Subsumption]
+\label{prop:subsumption}
+\emph{(i)} Standard SFT is the special case of \aomt{} with the mask sampler
+constrained to always mask $A_t$ with causal context $\{O_0,\ldots,O_t\}$.
+\emph{(ii)} Offline ALEE-IWM is the special case of \aomt{} with the mask
+sampler constrained to always mask $O_{t+1}$ with context $(O_t, A_t)$.
+\aomt{} with an unconstrained sampler strictly generalises both.
+\end{proposition}
+
+\begin{proof}[Proof sketch]
+For (i), fixing $m$ to mask $A_t$ with context $\{O_0,\ldots,O_t\}$ and
+substituting into Eq.~\eqref{eq:aomt} recovers the standard SFT loss
+$-\log p_\theta(A_t \mid O_0,\ldots,O_t)$.
+For (ii), fixing $m$ to mask $O_{t+1}$ with context $(O_t,A_t)$ recovers
+the ALEE-IWM loss $-\log p_\theta(O_{t+1} \mid O_t,A_t)$.
+Full derivation in Appendix~\ref{app:proofs}.
+\end{proof}
+
+\begin{figure}[t]
+  \centering
+  \input{figures/mask_illustration}
+  \caption{%
+    \textbf{Unit-level mask configurations in \aomt{}} on the same ALFWorld
+    trajectory.
+    Blue = masked targets; white = bidirectional context.
+    \emph{(a)} Action-only masking.
+    \emph{(b)} Observation masking.
+    \emph{(c)} Mixed masking.
+    At inference, the model generates only the next action.
+  }
+  \label{fig:mask_illustration}
+\end{figure}
+
+\subsection{Algorithm}
+
+\begin{algorithm}[h]
+  \caption{Any-Order Masked Training (\aomt{})}
+  \label{alg:aomt}
+  \begin{algorithmic}[1]
+    \REQUIRE Expert dataset $\Dcal$, masked DLM $p_\theta$,
+             mask probability $p$, learning rate $\eta$, epochs $E$
+    \FOR{epoch $= 1, \ldots, E$}
+      \FOR{trajectory $\tau \in \Dcal$}
+        \STATE Parse $\tau$ into unit sequence $\Ucal(\tau) = (O_0, A_0, \ldots, O_T)$
+        \STATE Sample $m \sim \mathrm{Mask}(p)$ \hfill\textit{// resampled each step}
+        \STATE Replace all tokens in $\Tcal(m)$ with \texttt{[MASK]}
+        \STATE Forward pass with full bidirectional attention over $\Ccal(m)$
+        \STATE Update $\theta \leftarrow \theta - \eta\nabla_\theta\Lcal_{\text{AOMT}}$
+      \ENDFOR
+    \ENDFOR
+    \RETURN $\theta$
+  \end{algorithmic}
+\end{algorithm}

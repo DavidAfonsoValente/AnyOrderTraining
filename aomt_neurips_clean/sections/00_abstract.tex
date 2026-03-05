@@ -1,0 +1,21 @@
+\begin{abstract}
+Supervised fine-tuning (SFT) on expert trajectories is the dominant paradigm for
+bootstrapping LLM-based agents, yet it commits to a single, rigid \emph{training
+order}: the full causal prefix is context, the next action is the only target.
+A trajectory of length $T$ contains $O(2^T)$ possible context/target assignments;
+standard SFT exploits exactly $T$ of them.
+We propose \textbf{Any-Order Masked Training (\aomt{})}, a reward-free offline
+paradigm that treats agent learning as a trajectory-level reconstruction problem.
+At each training step, an arbitrary subset of observation and action
+\emph{units}---whole semantic spans, not individual tokens---is randomly masked;
+the remaining units serve as bidirectional context; and a masked diffusion language
+model reconstructs the masked units in a single forward pass.
+Resampling the mask across epochs, the same expert trajectory simultaneously
+supervises a large family of conditional distributions.
+We prove that standard SFT and the offline variant of ALEE's Implicit World
+Modeling objective \citep{zhang2025alee} are degenerate special cases of \aomt{}
+under constrained mask samplers.
+We evaluate on ALFWorld, ScienceWorld, and WebShop, and introduce
+\emph{observation-masked NLL} as a novel metric for implicit world-model quality.
+\PLACEHOLDER{Final results and main findings to be inserted after experiments complete.}
+\end{abstract}
