@@ -2,6 +2,7 @@
 # Baseline 1: Standard Supervised Fine-Tuning (Next-Action Prediction)
 name: standard_sft
 model: inclusionAI/LLaDA2.0-mini
+data_cache_path: "aomt/data/processed_dataset"
 
 # --- Training Objective ---
 mask_mode: "standard_sft"

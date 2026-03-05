@@ -2,6 +2,7 @@
 # Baseline 2, Stage 1: Pre-training on ALEE's Implicit World Modeling objective
 name: prefix_sft_stage1
 model: inclusionAI/LLaDA2.0-mini
+data_cache_path: "aomt/data/processed_dataset"
 
 # --- Training Objective ---
 mask_mode: "prefix_sft_stage1"

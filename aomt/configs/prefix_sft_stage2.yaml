@@ -5,6 +5,7 @@ name: prefix_sft_stage2
 # CRITICAL: This path points to the output of the Stage 1 training.
 # It will need to be updated by the user/script after Stage 1 completes.
 model: "checkpoints/prefix_sft_stage1/final_checkpoint"
+data_cache_path: "aomt/data/processed_dataset"
 
 # --- Training Objective ---
 # This stage fine-tunes the IWM model on a policy objective.
