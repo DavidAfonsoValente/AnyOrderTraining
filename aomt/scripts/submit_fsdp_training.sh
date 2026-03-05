@@ -15,8 +15,12 @@
 
 # --- Slurm Configuration ---
 #
-# These settings are based on the engineering specs and cluster_info.md.
-# The spec recommends 4-8 A100 80GB GPUs. We will request 4.
+# These settings can be adjusted based on available cluster resources.
+# We default to a safe, single-GPU configuration.
+
+# Define the number of GPUs to request. This variable is used in the SBATCH
+# directive and to configure torchrun, ensuring consistency.
+NUM_GPUS=1
 
 #SBATCH --job-name=aomt_fsdp_training
 #SBATCH --output=slurm_logs/aomt_fsdp_%j.out
@@ -24,7 +28,7 @@
 #SBATCH --partition=gpu-long
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
-#SBATCH --gres=gpu:1
+#SBATCH --gres=gpu:${NUM_GPUS}
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=64G
 #SBATCH --time=48:00:00
@@ -47,7 +51,7 @@ echo "========================================"
 echo "Date:             $(date)"
 echo "SLURM Job ID:     $SLURM_JOB_ID"
 echo "SLURM Hostname:   $SLURMD_NODENAME"
-echo "GPUs:             $CUDA_VISIBLE_DEVICES"
+echo "GPUs Requested:   $NUM_GPUS"
 echo "Config File:      $CONFIG_FILE"
 echo "----------------------------------------"
 
@@ -86,12 +90,9 @@ echo "PYTHONPATH updated to include dFactory."
 # `torchrun` is the standard tool for launching distributed PyTorch jobs.
 # `--nproc_per_node` should match the number of GPUs requested.
 
-GPUS_PER_NODE=$(echo "$SLURM_GPUS_PER_TASK" | cut -d':' -f2)
-[ -z "$GPUS_PER_NODE" ] && GPUS_PER_NODE=4 # Default if parsing fails
+echo "Launching torchrun with $NUM_GPUS processes..."
 
-echo "Launching torchrun with $GPUS_PER_NODE processes..."
-
-srun torchrun --nproc_per_node="$GPUS_PER_NODE" --master_addr="$MASTER_ADDR" --master_port="$MASTER_PORT" \
+srun torchrun --nproc_per_node="$NUM_GPUS" --master_addr="$MASTER_ADDR" --master_port="$MASTER_PORT" \
     training/trainer.py \
     --config "$CONFIG_FILE" \
     --distributed

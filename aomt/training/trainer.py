@@ -225,7 +225,10 @@ def run_training(config_path: str, is_distributed: bool):
         print(f"Distributed: {is_distributed}, World Size: {world_size}")
         print(yaml.dump(config))
         print("--------------------")
+        
+        wandb = None # Initialize wandb to None
         try:
+            import wandb
             wandb.init(
                 project="aomt",
                 name=config.get("name", "default_run"),
@@ -233,7 +236,8 @@ def run_training(config_path: str, is_distributed: bool):
             )
         except ImportError:
             print("Warning: `wandb` not installed. Skipping online logging. Please run `pip install wandb`")
-            wandb = None # Disable wandb if not installed
+            # wandb is already None
+
 
     # Setup Tokenizer
     tokenizer = AutoTokenizer.from_pretrained(config["model"], low_cpu_mem_usage=True)
