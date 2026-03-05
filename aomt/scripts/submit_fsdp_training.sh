@@ -22,7 +22,6 @@
 #SBATCH --output=slurm_logs/aomt_fsdp_%j.out
 #SBATCH --error=slurm_logs/aomt_fsdp_%j.err
 #SBATCH --partition=gpu-long
-#SBATCH --nodelist=xgpk0
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --gpus-per-task=4
