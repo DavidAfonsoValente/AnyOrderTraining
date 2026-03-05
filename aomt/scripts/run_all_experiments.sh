@@ -30,31 +30,48 @@ echo "========================================"
 echo "    Submitting All AOMT Experiments"
 echo "========================================"
 
-# --- 1. Submit Independent Experiments ---
+# --- 1. Submit Experiments in a Dependency Chain ---
 echo "
-Submitting independent experiments using a 'shotgun' approach for multiple GPU types..."
-for config in "${INDEPENDENT_CONFIGS[@]}"; do
-    job_name="aomt_$(basename "$config" .yaml)"
-    echo "Submitting job '$job_name' for: $config with multiple GPU types"
-    
-    # Try submitting for several common GPU types. The first to run will cancel the others.
-    sbatch --job-name="$job_name" --gres=gpu:a100-80:1 scripts/submit_fsdp_training.sh "$config"
-    sbatch --job-name="$job_name" --gres=gpu:a100-40:1 scripts/submit_fsdp_training.sh "$config"
-    sbatch --job-name="$job_name" --gres=gpu:nv:1 scripts/submit_fsdp_training.sh "$config"
-done
+Submitting experiments in a dependency chain to respect job quotas..."
 
-# --- 2. Submit aomt_mixed ablation sweep ---
+# We will chain the independent experiments: sft_standard -> action_only -> mixed
+# The prefix_sft stage 1 can run in parallel with the start of the chain.
+
+last_job_id=""
+
+# --- Submit sft_standard (First in the main chain) ---
+config="configs/sft_standard.yaml"
+job_name="aomt_$(basename "$config" .yaml)"
+echo "Submitting job '$job_name' for: $config with multiple GPU types"
+sft_output=$(sbatch --job-name="$job_name" --gres=gpu:a100-80:1 scripts/submit_fsdp_training.sh "$config")
+sbatch --job-name="$job_name" --gres=gpu:a100-40:1 scripts/submit_fsdp_training.sh "$config"
+sbatch --job-name="$job_name" --gres=gpu:nv:1 scripts/submit_fsdp_training.sh "$config"
+last_job_id=$(echo "$sft_output" | awk '{print $4}')
+echo "sft_standard submitted with primary Job ID: $last_job_id"
+
+# --- Submit aomt_action_only (Depends on sft_standard) ---
+config="configs/aomt_action_only.yaml"
+job_name="aomt_$(basename "$config" .yaml)"
+echo "Submitting job '$job_name' for: $config (dependent on Job ID $last_job_id)"
+action_only_output=$(sbatch --job-name="$job_name" --dependency=afterok:"$last_job_id" --gres=gpu:a100-80:1 scripts/submit_fsdp_training.sh "$config")
+sbatch --job-name="$job_name" --dependency=afterok:"$last_job_id" --gres=gpu:a100-40:1 scripts/submit_fsdp_training.sh "$config"
+sbatch --job-name="$job_name" --dependency=afterok:"$last_job_id" --gres=gpu:nv:1 scripts/submit_fsdp_training.sh "$config"
+last_job_id=$(echo "$action_only_output" | awk '{print $4}')
+echo "aomt_action_only submitted with primary Job ID: $last_job_id"
+
+# --- Submit aomt_mixed (Depends on aomt_action_only) ---
+config="configs/aomt_mixed.yaml"
+job_name="aomt_$(basename "$config" .yaml)"
+echo "Submitting job '$job_name' for: $config (dependent on Job ID $last_job_id)"
+sbatch --job-name="$job_name" --dependency=afterok:"$last_job_id" --gres=gpu:a100-80:1 scripts/submit_fsdp_training.sh "$config"
+sbatch --job-name="$job_name" --dependency=afterok:"$last_job_id" --gres=gpu:a100-40:1 scripts/submit_fsdp_training.sh "$config"
+sbatch --job-name="$job_name" --dependency=afterok:"$last_job_id" --gres=gpu:nv:1 scripts/submit_fsdp_training.sh "$config"
+echo "aomt_mixed submitted."
+
+
+# --- 2. Submit Two-Stage Dependent Experiment (in parallel with the main chain) ---
 echo "
-Submitting ablation sweep job..."
-# This script is currently a placeholder, but in a real scenario
-# it would contain logic to launch multiple sbatch jobs.
-# For now, we just note that it would be run here.
-echo "Note: The ablation sweep would be launched via scripts/run_ablation_sweep.sh"
-
-
-# --- 3. Submit Two-Stage Dependent Experiment ---
-echo "
-Submitting two-stage Prefix SFT experiment with a 'shotgun' approach..."
+Submitting two-stage Prefix SFT experiment..."
 
 # Submit Stage 1 and capture its Job ID
 job1_name="aomt_prefix_sft_stage1"
@@ -64,7 +81,6 @@ sbatch --job-name="$job1_name" --gres=gpu:a100-40:1 scripts/submit_fsdp_training
 sbatch --job-name="$job1_name" --gres=gpu:nv:1 scripts/submit_fsdp_training.sh "$PREFIX_SFT_STAGE1_CONFIG"
 
 # We assume the first sbatch command is the one that provides the primary job id for dependency.
-# This is a simplification; a more robust script might query the job ID by name.
 job1_id=$(echo "$job1_output" | awk '{print $4}')
 
 if [ -z "$job1_id" ]; then

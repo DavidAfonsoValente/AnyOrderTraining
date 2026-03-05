@@ -2,7 +2,7 @@
 # Baseline 4: Full AOMT with mixed masking of Observation and Action units.
 name: aomt_mixed
 model: inclusionAI/LLaDA2.0-mini
-data_cache_path: "aomt/data/processed_dataset"
+data_cache_path: "data/processed_dataset"
 
 # --- Training Objective ---
 mask_mode: "mixed"

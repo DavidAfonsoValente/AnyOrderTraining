@@ -245,7 +245,11 @@ def run_training(config_path: str, is_distributed: bool):
     if tokenizer.mask_token is None: tokenizer.add_special_tokens({'mask_token': '[MASK]'})
 
     # Load Data
-    data_path = os.path.join(config.get("data_cache_path"), config.get("train_split", "train"))
+    # Determine the absolute path to the data cache, relative to this script's location
+    script_dir = os.path.dirname(__file__)
+    base_data_path = os.path.abspath(os.path.join(script_dir, '..', 'data', 'processed_dataset'))
+    data_path = os.path.join(base_data_path, config.get("train_split", "train"))
+    
     if not os.path.exists(data_path):
          raise FileNotFoundError(f"Processed dataset not found at {data_path}. Run parse_trajectories.py first.")
     processed_dataset = load_from_disk(data_path)
