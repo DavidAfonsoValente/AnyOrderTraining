@@ -18,36 +18,24 @@
 # These settings can be adjusted based on available cluster resources.
 # We default to a safe, single-GPU configuration.
 
-# Define the number of GPUs to request. This is now determined dynamically
-# from the Slurm environment to match the allocated resources.
-if [ -n "$SLURM_GPUS_ON_NODE" ]; then
-    NUM_GPUS="$SLURM_GPUS_ON_NODE"
-else
-    # Fallback if the variable is not set, defaults to 1
-    NUM_GPUS=1
-fi
+# Define the number of GPUs to request. This variable is used in the SBATCH
+# directive and to configure torchrun, ensuring consistency.
+NUM_GPUS=1
 
 #SBATCH --job-name=aomt_fsdp_training
 #SBATCH --output=slurm_logs/aomt_fsdp_%j.out
 #SBATCH --error=slurm_logs/aomt_fsdp_%j.err
 #SBATCH --partition=gpu-long
+#SBATCH --constraint=cuda80
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
+#SBATCH --gres=gpu:a100-80:1
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=64G
 #SBATCH --time=48:00:00
 
 # --- Script Body ---
 set -e # Exit on error
-
-# --- Auto-Cancellation for Shotgun Submission ---
-# The first job to run will cancel all other pending jobs with the same name.
-# This prevents wasting resources if multiple GPU types were available.
-# We add a small sleep to avoid race conditions where two jobs start simultaneously.
-echo "Job started. Waiting 5 seconds before cancelling pending duplicates..."
-sleep 5
-scancel --jobname="$SLURM_JOB_NAME" --state=PENDING --user="$SLURM_JOB_USER"
-echo "Cancellation command sent for pending jobs with name: $SLURM_JOB_NAME"
 
 # 1. Argument Check
 if [ -z "$1" ]; then

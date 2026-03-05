@@ -84,7 +84,7 @@ class BenchmarkUniformSampler(Sampler):
     """
     Samples elements uniformly from each benchmark, to handle imbalances.
     """
-    def __init__(self, dataset, num_replicas=None, rank=None):
+    def __init__(self, dataset: Dataset, num_replicas=None, rank=None):
         if num_replicas is None:
             if not dist.is_available():
                 num_replicas = 1
@@ -101,21 +101,25 @@ class BenchmarkUniformSampler(Sampler):
         self.rank = rank
         self.epoch = 0
 
-        # For SummarizedTrajectoryDataset, the underlying data isn't directly accessible
-        # so we need to handle this gracefully.
-        if hasattr(dataset, 'processed_dataset'):
-             env_data = dataset.processed_dataset['env']
-        else:
-             # Fallback for datasets without a direct processed_dataset attribute
-             # This might need adjustment depending on SummarizedTrajectoryDataset structure
-             env_data = [ex.get('env', 'unknown') for ex in dataset.examples]
-
         self.indices_by_env = defaultdict(list)
-        for idx, env in enumerate(env_data):
-            self.indices_by_env[env].append(idx)
+        
+        # This logic now correctly handles both AOMTDataset and SummarizedTrajectoryDataset
+        if isinstance(dataset, AOMTDataset):
+            # AOMTDataset has a direct reference to the processed dataset
+            env_data = dataset.processed_dataset['env']
+            for idx, env in enumerate(env_data):
+                self.indices_by_env[env].append(idx)
+        elif isinstance(dataset, SummarizedTrajectoryDataset):
+            # Summarized datasets have pre-built examples with env info
+            for idx, ex in enumerate(dataset.examples):
+                # This assumes the 'env' key was propagated by the builder fn
+                self.indices_by_env[ex.get('env', 'unknown')].append(idx)
 
         self.env_names = list(self.indices_by_env.keys())
-        self.max_len = max(len(indices) for indices in self.indices_by_env.values()) if self.indices_by_env else 0
+        if not self.env_names:
+            self.max_len = 0
+        else:
+            self.max_len = max(len(indices) for indices in self.indices_by_env.values())
         
         self.total_size = self.max_len * len(self.env_names)
         
@@ -240,7 +244,7 @@ def run_training(config_path: str, is_distributed: bool):
 
 
     # Setup Tokenizer
-    tokenizer = AutoTokenizer.from_pretrained(config["model"], low_cpu_mem_usage=True)
+    tokenizer = AutoTokenizer.from_pretrained(config["model"], trust_remote_code=True)
     if tokenizer.pad_token is None: tokenizer.add_special_tokens({'pad_token': tokenizer.eos_token})
     if tokenizer.mask_token is None: tokenizer.add_special_tokens({'mask_token': '[MASK]'})
 
@@ -266,17 +270,15 @@ def run_training(config_path: str, is_distributed: bool):
     else:
         dataset = AOMTDataset(processed_dataset, tokenizer, mode=mask_mode, mask_prob=config.get("mask_prob", 0.0))
     
-    # The BenchmarkUniformSampler needs access to the environment metadata.
-    # For AOMTDataset, it's in `processed_dataset`. For Summarized, it's not directly available.
-    # For simplicity, we'll base the sampler on the original processed_dataset for all cases.
-    sampler = BenchmarkUniformSampler(processed_dataset, num_replicas=world_size, rank=rank)
+    # Initialize the sampler with the final dataset object
+    sampler = BenchmarkUniformSampler(dataset, num_replicas=world_size, rank=rank)
     
     collator = AOMTDataCollator(tokenizer)
     dataloader = DataLoader(dataset, batch_size=config.get("per_device_batch_size", 2), collate_fn=collator, sampler=sampler, shuffle=False)
 
     # Initialize Model
     auto_wrap_policy = functools.partial(size_based_auto_wrap_policy, min_num_params=1_000_000)
-    model = AutoModelForCausalLM.from_pretrained(config["model"], torch_dtype=torch.bfloat16)
+    model = AutoModelForCausalLM.from_pretrained(config["model"], trust_remote_code=True, torch_dtype=torch.bfloat16)
     model.resize_token_embeddings(len(tokenizer))
 
     if is_distributed:
