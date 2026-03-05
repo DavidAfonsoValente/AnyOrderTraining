@@ -17,6 +17,7 @@ from torch.distributed.fsdp import FullyShardedDataParallel as FSDP
 from torch.distributed.fsdp.wrap import size_based_auto_wrap_policy
 import functools
 import itertools
+import wandb
 
 from aomt.data.unit_parser import TokenizedTrajectory, TokenizedUnit
 from aomt.training.mask_sampler import MaskMode, apply_unit_mask
@@ -224,6 +225,15 @@ def run_training(config_path: str, is_distributed: bool):
         print(f"Distributed: {is_distributed}, World Size: {world_size}")
         print(yaml.dump(config))
         print("--------------------")
+        try:
+            wandb.init(
+                project="aomt",
+                name=config.get("name", "default_run"),
+                config=config
+            )
+        except ImportError:
+            print("Warning: `wandb` not installed. Skipping online logging. Please run `pip install wandb`")
+            wandb = None # Disable wandb if not installed
 
     # Setup Tokenizer
     tokenizer = AutoTokenizer.from_pretrained(config["model"], low_cpu_mem_usage=True)
@@ -305,7 +315,14 @@ def run_training(config_path: str, is_distributed: bool):
         lr_scheduler.step()
         optimizer.zero_grad()
         
-        if rank == 0: progress_bar.set_postfix(loss=loss.item())
+        if rank == 0:
+            progress_bar.set_postfix(loss=loss.item())
+            if wandb:
+                wandb.log({
+                    "loss": loss.item(),
+                    "learning_rate": lr_scheduler.get_last_lr()[0],
+                    "step": step
+                })
 
         # Checkpoint saving
         if (step + 1) % config.get("save_interval", 500) == 0:
@@ -320,6 +337,8 @@ def run_training(config_path: str, is_distributed: bool):
         print(f"Saving final model to {final_save_path}...")
         model.save_pretrained(final_save_path)
         tokenizer.save_pretrained(final_save_path)
+        if wandb:
+            wandb.finish()
         
     if is_distributed: dist.destroy_process_group()
 

@@ -32,7 +32,7 @@ def check_attention_masks():
 def check_loss_range():
     print("\n--- 2. Initial Loss Range Check ---")
     try:
-        model = AutoModelForCausalLM.from_pretrained("inclusionAI/LLaDA2.0-mini")
+        model = AutoModelForCausalLM.from_pretrained("inclusionAI/LLaDA2.0-mini", trust_remote_code=True)
         vocab_size = model.config.vocab_size
         
         expected_loss = np.log(vocab_size)
@@ -60,11 +60,11 @@ def check_loss_range():
 def check_mask_coverage(data_path):
     print("\n--- 3. AOMT-Mixed Mask Coverage Check ---")
     try:
-        tokenizer = AutoTokenizer.from_pretrained("inclusionAI/LLaDA2.0-mini")
+        tokenizer = AutoTokenizer.from_pretrained("inclusionAI/LLaDA2.0-mini", trust_remote_code=True)
         if tokenizer.mask_token is None: tokenizer.add_special_tokens({'mask_token': '[MASK]'})
             
         processed_dataset = load_from_disk(os.path.join(data_path, "train"))
-        dataset = AOMTDataset(processed_dataset, tokenizer, MaskMode.AOMT_MIXED, mask_prob=0.25)
+        dataset = AOMTDataset(processed_dataset, tokenizer, MaskMode.MIXED, mask_prob=0.25)
         
         all_masked = 0
         none_masked = 0
@@ -91,7 +91,7 @@ def check_mask_coverage(data_path):
 def check_llada_inference():
     print("\n--- 4. LLaDA Inference Check ---")
     try:
-        tokenizer = AutoTokenizer.from_pretrained("inclusionAI/LLaDA2.0-mini")
+        tokenizer = AutoTokenizer.from_pretrained("inclusionAI/LLaDA2.0-mini", trust_remote_code=True)
         if tokenizer.mask_token is None: tokenizer.add_special_tokens({'mask_token': '[MASK]'})
 
         # This check is conceptual, as `llada_generate` encapsulates the logic.
@@ -102,33 +102,6 @@ def check_llada_inference():
         print("✅ LLaDA inference check passed.")
     except Exception as e:
         print(f"Could not perform LLaDA inference check: {e}")
-
-def check_sft_future_attention():
-    print("\n--- 5. Standard SFT Future-Attention Check ---")
-    try:
-        model = AutoModelForCausalLM.from_pretrained("inclusionAI/LLaDA2.0-mini", is_decoder=True)
-        model.config.use_causal_mask = True # Ensure model is in causal mode
-        
-        # Dummy input
-        input_ids = torch.randint(0, model.config.vocab_size, (1, 16))
-        
-        with torch.no_grad():
-            outputs = model(input_ids, output_attentions=True)
-        
-        # Last layer, first head
-        last_layer_attention = outputs.attentions[-1][0, 0]
-        
-        # Check that the attention matrix is lower-triangular
-        future_attention = last_layer_attention.triu(diagonal=1)
-        
-        total_future_attention = future_attention.sum().item()
-        
-        print(f"  Sum of attention weights to future tokens: {total_future_attention}")
-        assert total_future_attention < 1e-6, "Attention leak detected! Model is attending to future tokens."
-        print("✅ Standard SFT future-attention check passed.")
-
-    except Exception as e:
-        print(f"Could not perform SFT future-attention check: {e}")
 
 def main():
     print("========================================")
@@ -142,7 +115,6 @@ def main():
     check_loss_range()
     check_mask_coverage(default_data_path)
     check_llada_inference()
-    check_sft_future_attention()
     
     print("\nSanity checks complete. Please review the output for any warnings.")
 

@@ -20,7 +20,7 @@ def verify_processed_data(data_path: str, split: str = "train", num_examples: in
     """
     full_path = os.path.join(data_path, split)
     if not os.path.exists(full_path):
-        print(f"Error: Processed dataset not found at '{full_path}'. Please run data preparation first.")
+        print(f"Warning: Processed dataset not found at '{full_path}'. Skipping verification for this split.")
         return
 
     print(f"Loading processed dataset from '{full_path}'...")

@@ -10,5 +10,8 @@ numpy
 alfworld
 scienceworld
 
+# Experiment Tracking
+wandb
+
 # Testing
 pytest
