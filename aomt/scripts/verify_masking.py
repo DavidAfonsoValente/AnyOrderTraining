@@ -81,6 +81,8 @@ def verify_experiment_data(config_path: str, data_path: str, num_examples: int =
 
     print(f"Displaying {actual_num_examples} examples for mode '{mask_mode.name}':\n")
 
+    is_summarized_dataset = isinstance(dataset, SummarizedTrajectoryDataset)
+
     for i in range(actual_num_examples):
         print(f"--- Example {i+1} for {mask_mode.name} ---")
         
@@ -99,14 +101,33 @@ def verify_experiment_data(config_path: str, data_path: str, num_examples: int =
         
         print("\n  Decoded Example:")
         
-        # The entire sequence is usually short for summarized datasets, so we show it all
-        snippet_original = tokenizer.decode(target_ids)
-        snippet_masked = tokenizer.decode(input_ids)
+        if is_summarized_dataset:
+            # For summarized datasets, examples are short; show the whole thing.
+            snippet_original = tokenizer.decode(target_ids, skip_special_tokens=True)
+            snippet_masked = tokenizer.decode(input_ids, skip_special_tokens=True)
+            
+            print("\n  CONTEXT (Input to be Unmasked):")
+            print(f"  {snippet_masked}")
+            print("\n  TARGET (Ground Truth):")
+            print(f"  {snippet_original}")
 
-        print("\n  CONTEXT (Input to be Unmasked):")
-        print(f"  ...{snippet_masked}...")
-        print("\n  TARGET (Ground Truth):")
-        print(f"  ...{snippet_original}...")
+        else:
+            # For long AOMT trajectories, show a snippet around the mask.
+            if len(masked_indices) > 0:
+                start_idx = max(0, masked_indices[0] - 50)
+                end_idx = min(len(input_ids), masked_indices[-1] + 50)
+            else:
+                start_idx = 0
+                end_idx = 100
+
+            snippet_original = tokenizer.decode(target_ids[start_idx:end_idx], skip_special_tokens=True)
+            snippet_masked = tokenizer.decode(input_ids[start_idx:end_idx], skip_special_tokens=True)
+
+            print("\n  CONTEXT (Input to be Unmasked):")
+            print(f"  ...{snippet_masked}...")
+            print("\n  TARGET (Ground Truth):")
+            print(f"  ...{snippet_original}...")
+
         print("\n" + "-"*40)
 
 if __name__ == "__main__":
