@@ -16,11 +16,12 @@ import torch.distributed as dist
 from torch.distributed.fsdp import FullyShardedDataParallel as FSDP
 from torch.distributed.fsdp.wrap import size_based_auto_wrap_policy
 import functools
+import itertools
 
 from aomt.data.unit_parser import TokenizedTrajectory, TokenizedUnit
 from aomt.training.mask_sampler import MaskMode, apply_unit_mask
 from aomt.training.objectives import masked_unit_cross_entropy
-from aomt.training.collator import AOMTDataCollator, build_prefix_sft_examples
+from aomt.training.collator import AOMTDataCollator, build_prefix_sft_examples, build_prefix_sft_stage2_examples, build_standard_sft_examples
 from datasets import load_from_disk
 from collections import defaultdict
 from torch.utils.data import Sampler
@@ -75,7 +76,7 @@ class AOMTDataset(Dataset):
             "input_ids": masked_ids,
             "target_ids": traj.input_ids.clone(),
             "loss_mask": loss_mask,
-            "use_causal_mask": (self.mode == MaskMode.STANDARD_SFT),
+            "use_causal_mask": False,
         }
 
 class BenchmarkUniformSampler(Sampler):
@@ -99,10 +100,19 @@ class BenchmarkUniformSampler(Sampler):
         self.rank = rank
         self.epoch = 0
 
+        # For SummarizedTrajectoryDataset, the underlying data isn't directly accessible
+        # so we need to handle this gracefully.
+        if hasattr(dataset, 'processed_dataset'):
+             env_data = dataset.processed_dataset['env']
+        else:
+             # Fallback for datasets without a direct processed_dataset attribute
+             # This might need adjustment depending on SummarizedTrajectoryDataset structure
+             env_data = [ex.get('env', 'unknown') for ex in dataset.examples]
+
         self.indices_by_env = defaultdict(list)
-        for idx, env in enumerate(self.dataset['env']):
+        for idx, env in enumerate(env_data):
             self.indices_by_env[env].append(idx)
-        
+
         self.env_names = list(self.indices_by_env.keys())
         self.max_len = max(len(indices) for indices in self.indices_by_env.values()) if self.indices_by_env else 0
         
@@ -133,19 +143,35 @@ class BenchmarkUniformSampler(Sampler):
     def set_epoch(self, epoch):
         self.epoch = epoch
 
-class PrefixSFTDataset(Dataset):
+class SummarizedTrajectoryDataset(Dataset):
     """
-    A specialized PyTorch Dataset for the Prefix-SFT (ALEE-style) Stage 1.
+    A specialized PyTorch Dataset that creates many small examples from
+    each trajectory using a provided builder function. Used for Prefix-SFT.
     """
     def __init__(
         self,
-        tokenized_trajectories: list[TokenizedTrajectory],
-        tokenizer: AutoTokenizer
+        processed_dataset: torch.utils.data.Dataset,
+        tokenizer: AutoTokenizer,
+        build_fn: callable
     ):
         self.examples = []
-        for traj in tqdm(tokenized_trajectories):
-            self.examples.extend(build_prefix_sft_examples(traj, tokenizer))
-        print(f"Created {len(self.examples)} Prefix-SFT examples.")
+        
+        print(f"Building summarized trajectory dataset using {build_fn.__name__}...")
+        for item in tqdm(processed_dataset):
+            # Reconstruct the TokenizedTrajectory on the fly
+            unit_spans = [
+                TokenizedUnit(unit_type=type, token_start=start, token_end=end, unit_index=j)
+                for j, (type, start, end) in enumerate(zip(item["unit_spans_type"], item["unit_spans_start"], item["unit_spans_end"]))
+            ]
+            traj = TokenizedTrajectory(
+                input_ids=torch.tensor(item["input_ids"]),
+                unit_spans=unit_spans,
+                env=item["env"],
+                trajectory_id=item["id"],
+            )
+            self.examples.extend(build_fn(traj, tokenizer))
+            
+        print(f"Created {len(self.examples)} training examples.")
 
     def __len__(self):
         return len(self.examples)
@@ -163,7 +189,7 @@ def training_step(model, batch, device):
         if isinstance(val, torch.Tensor):
             batch[key] = val.to(device)
 
-    is_causal = batch["use_causal_mask"][0].item()
+    is_causal = batch["use_causal_mask"][0].item() if "use_causal_mask" in batch else False
     
     outputs = model(
         input_ids=batch["input_ids"],
@@ -210,10 +236,21 @@ def run_training(config_path: str, is_distributed: bool):
          raise FileNotFoundError(f"Processed dataset not found at {data_path}. Run parse_trajectories.py first.")
     processed_dataset = load_from_disk(data_path)
 
-    # Initialize Dataset, Sampler, DataLoader
+    # Initialize Dataset
     mask_mode = MaskMode(config["mask_mode"])
-    dataset = AOMTDataset(processed_dataset, tokenizer, mode=mask_mode, mask_prob=config.get("mask_prob", 0.0))
+
+    if mask_mode == MaskMode.PREFIX_SFT_STAGE1:
+        dataset = SummarizedTrajectoryDataset(processed_dataset, tokenizer, build_prefix_sft_examples)
+    elif mask_mode == MaskMode.PREFIX_SFT_STAGE2:
+        dataset = SummarizedTrajectoryDataset(processed_dataset, tokenizer, build_prefix_sft_stage2_examples)
+    elif mask_mode == MaskMode.STANDARD_SFT:
+        dataset = SummarizedTrajectoryDataset(processed_dataset, tokenizer, build_standard_sft_examples)
+    else:
+        dataset = AOMTDataset(processed_dataset, tokenizer, mode=mask_mode, mask_prob=config.get("mask_prob", 0.0))
     
+    # The BenchmarkUniformSampler needs access to the environment metadata.
+    # For AOMTDataset, it's in `processed_dataset`. For Summarized, it's not directly available.
+    # For simplicity, we'll base the sampler on the original processed_dataset for all cases.
     sampler = BenchmarkUniformSampler(processed_dataset, num_replicas=world_size, rank=rank)
     
     collator = AOMTDataCollator(tokenizer)
@@ -229,40 +266,53 @@ def run_training(config_path: str, is_distributed: bool):
     else:
         model = model.to(rank)
 
+    # For fair comparison, normalize training to a fixed number of steps
+    # based on the original dataset size and epochs.
+    # This correctly handles cases where the dataset is expanded (e.g., prefix SFT).
+    steps_per_epoch = len(processed_dataset) // (config.get("per_device_batch_size", 2) * world_size)
+    num_training_steps = int(steps_per_epoch * config["num_epochs"])
+
+    if rank == 0:
+        print(f"Original dataset size: {len(processed_dataset)}")
+        print(f"Effective dataset size for this mode: {len(dataset)}")
+        print(f"Normalizing training to {num_training_steps} total steps for fair comparison.")
+
     # Optimizer & Scheduler
     optimizer = torch.optim.AdamW(model.parameters(), lr=config["learning_rate"], weight_decay=config["weight_decay"])
-    lr_scheduler = get_scheduler(name=config.get("lr_schedule", "cosine"), optimizer=optimizer, num_warmup_steps=config.get("warmup_steps", 0), num_training_steps=len(dataloader) * config["num_epochs"])
+    lr_scheduler = get_scheduler(name=config.get("lr_schedule", "cosine"), optimizer=optimizer, num_warmup_steps=config.get("warmup_steps", 0), num_training_steps=num_training_steps)
 
     # Training Loop
     if rank == 0: print("Starting training...")
-    global_step = 0
     checkpoint_dir = f"./checkpoints/{config['name']}"
     os.makedirs(checkpoint_dir, exist_ok=True)
     
-    for epoch in range(config["num_epochs"]):
-        if rank == 0: print(f"\n--- Epoch {epoch+1}/{config['num_epochs']} ---")
-        sampler.set_epoch(epoch)
+    dataloader_iterator = itertools.cycle(dataloader)
+    progress_bar = tqdm(range(num_training_steps), desc="Training", disable=(rank != 0))
+
+    model.train()
+    for step in progress_bar:
+        # Manually set epoch for the sampler if it's a new "epoch" equivalent.
+        # This is an approximation to ensure sampler shuffling continues.
+        if step > 0 and step % steps_per_epoch == 0:
+            new_epoch = step // steps_per_epoch
+            sampler.set_epoch(new_epoch)
+
+        batch = next(dataloader_iterator)
+        loss = training_step(model, batch, rank)
+        loss.backward()
+        torch.nn.utils.clip_grad_norm_(model.parameters(), config.get("gradient_clip", 1.0))
+        optimizer.step()
+        lr_scheduler.step()
+        optimizer.zero_grad()
         
-        model.train()
-        progress_bar = tqdm(dataloader, desc=f"Epoch {epoch+1}", disable=(rank != 0))
+        if rank == 0: progress_bar.set_postfix(loss=loss.item())
 
-        for batch in progress_bar:
-            loss = training_step(model, batch, rank)
-            loss.backward()
-            torch.nn.utils.clip_grad_norm_(model.parameters(), config.get("gradient_clip", 1.0))
-            optimizer.step()
-            lr_scheduler.step()
-            optimizer.zero_grad()
-            
-            global_step += 1
-            if rank == 0: progress_bar.set_postfix(loss=loss.item())
-
-            # Checkpoint saving
-            if global_step % config.get("save_interval", 500) == 0:
-                save_path = os.path.join(checkpoint_dir, f"step_{global_step}")
-                if rank == 0: print(f"\nSaving checkpoint to {save_path}...")
-                model.save_pretrained(save_path)
-                tokenizer.save_pretrained(save_path)
+        # Checkpoint saving
+        if (step + 1) % config.get("save_interval", 500) == 0:
+            save_path = os.path.join(checkpoint_dir, f"step_{step+1}")
+            if rank == 0: print(f"\nSaving checkpoint to {save_path}...")
+            model.save_pretrained(save_path)
+            tokenizer.save_pretrained(save_path)
     
     if rank == 0:
         print("\n--- Training Complete ---")

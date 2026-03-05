@@ -13,6 +13,7 @@ class MaskMode(Enum):
     """
     STANDARD_SFT = "standard_sft"
     PREFIX_SFT_STAGE1 = "prefix_sft_stage1"
+    PREFIX_SFT_STAGE2 = "prefix_sft_stage2"
     ACTION_ONLY = "action_only"
     MIXED = "mixed"
 
@@ -36,10 +37,14 @@ def _select_units_to_mask(
         List[TokenizedUnit]: A list of the specific units that should be masked.
     """
     if mode == MaskMode.STANDARD_SFT:
-        # For standard SFT, the loss is calculated on all action tokens.
-        # The causal attention mask in the model prevents looking ahead.
-        # Here, we identify all action units as targets for the loss.
-        return [u for u in units if u.unit_type == "act"]
+        # For diffusion-based SFT, we mask the final action and predict it.
+        # Find the last unit with type "act" in the trajectory.
+        last_action_unit = None
+        for u in reversed(units):
+            if u.unit_type == "act":
+                last_action_unit = u
+                break
+        return [last_action_unit] if last_action_unit else []
 
     elif mode == MaskMode.PREFIX_SFT_STAGE1:
         # This mode is handled by a special collator (`build_prefix_sft_examples`)
@@ -47,6 +52,12 @@ def _select_units_to_mask(
         # This function should not be called directly for Stage 1.
         raise NotImplementedError(
             "PREFIX_SFT_STAGE1 masking is handled by the collator, not the sampler."
+        )
+
+    elif mode == MaskMode.PREFIX_SFT_STAGE2:
+        # This mode is also handled by a special collator.
+        raise NotImplementedError(
+            "PREFIX_SFT_STAGE2 masking is handled by the collator, not the sampler."
         )
 
     elif mode == MaskMode.ACTION_ONLY:
@@ -116,11 +127,9 @@ def apply_unit_mask(
     # Apply the mask to the selected units
     for unit in units_to_mask:
         if unit.token_start < unit.token_end: # Ensure span is valid
-            # In standard SFT, we don't replace with [MASK] tokens. We just
-            # identify which tokens to compute loss on. The model uses a causal
-            # mask to prevent cheating.
-            if mode != MaskMode.STANDARD_SFT:
-                input_ids[unit.token_start:unit.token_end] = mask_token_id
+            # For all diffusion-based modes, we replace the target tokens
+            # with the mask token.
+            input_ids[unit.token_start:unit.token_end] = mask_token_id
             
             # The loss mask is True for all tokens within the targeted unit.
             loss_mask[unit.token_start:unit.token_end] = True

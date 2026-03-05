@@ -11,13 +11,21 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..',
 
 from datasets import load_from_disk
 from transformers import AutoTokenizer
-from aomt.training.trainer import AOMTDataset
+from tqdm import tqdm
+
+# Import all the necessary components from the training pipeline
+from aomt.training.trainer import AOMTDataset, SummarizedTrajectoryDataset
 from aomt.training.mask_sampler import MaskMode
+from aomt.training.collator import (
+    build_prefix_sft_examples,
+    build_prefix_sft_stage2_examples,
+    build_standard_sft_examples
+)
 
 def verify_experiment_data(config_path: str, data_path: str, num_examples: int = 2):
     """
     Loads a specific experiment configuration and visualizes how the data
-    will be masked for that experiment.
+    will be masked for that experiment, now handling all dataset types.
 
     Args:
         config_path (str): Path to the YAML experiment config file.
@@ -34,7 +42,6 @@ def verify_experiment_data(config_path: str, data_path: str, num_examples: int =
 
     model_name = config.get("model", "inclusionAI/LLaDA2.0-mini")
     mask_mode_str = config.get("mask_mode", "standard_sft")
-    mask_prob = config.get("mask_prob", 0.0)
     
     try:
         mask_mode = MaskMode(mask_mode_str)
@@ -42,18 +49,11 @@ def verify_experiment_data(config_path: str, data_path: str, num_examples: int =
         print(f"Error: Invalid mask_mode '{mask_mode_str}' in config.")
         return
 
-    # Handle the special case for PREFIX_SFT_STAGE1, which is handled by the collator
-    if mask_mode == MaskMode.PREFIX_SFT_STAGE1:
-        print(f"Info: '{mask_mode.name}' masking is handled by the data collator, not the sampler.")
-        print("Skipping sampler-based visualization for this config.")
-        print("\n" + "-"*40)
-        return
-
-
     # 2. Load Tokenizer and Processed Data
     print(f"Loading tokenizer '{model_name}'...")
     tokenizer = AutoTokenizer.from_pretrained(model_name, low_cpu_mem_usage=True)
     if tokenizer.mask_token is None:
+        # Add mask token if it doesn't exist. For LLaMA, it's often not set.
         tokenizer.add_special_tokens({'mask_token': '[MASK]'})
         print("Added MASK token '[MASK]' to tokenizer.")
 
@@ -61,19 +61,30 @@ def verify_experiment_data(config_path: str, data_path: str, num_examples: int =
     processed_dataset = load_from_disk(os.path.join(data_path, "train"))
     print("Data loaded.")
 
-    # 3. Create AOMTDataset for the specific strategy
-    dataset = AOMTDataset(
-        processed_dataset=processed_dataset,
-        tokenizer=tokenizer,
-        mode=mask_mode,
-        mask_prob=mask_prob if mask_prob is not None else 0.0
-    )
-    
-    print(f"Displaying {num_examples} examples with mask_prob={dataset.mask_prob}:\n")
+    # 3. Initialize the correct Dataset based on the mask_mode
+    # This logic now mirrors the main training script.
+    if mask_mode == MaskMode.PREFIX_SFT_STAGE1:
+        dataset = SummarizedTrajectoryDataset(processed_dataset, tokenizer, build_prefix_sft_examples)
+    elif mask_mode == MaskMode.PREFIX_SFT_STAGE2:
+        dataset = SummarizedTrajectoryDataset(processed_dataset, tokenizer, build_prefix_sft_stage2_examples)
+    elif mask_mode == MaskMode.STANDARD_SFT:
+        dataset = SummarizedTrajectoryDataset(processed_dataset, tokenizer, build_standard_sft_examples)
+    else: # For MIXED, ACTION_ONLY, etc.
+        dataset = AOMTDataset(processed_dataset, tokenizer, mode=mask_mode, mask_prob=config.get("mask_prob", 0.0))
 
-    for i in range(num_examples):
+    # For summarized datasets, num_examples might be larger than the dataset if a trajectory yields few examples
+    actual_num_examples = min(num_examples, len(dataset))
+    if actual_num_examples == 0:
+        print("\nWarning: No examples were generated for this configuration. Cannot display anything.")
+        print("-" * 40)
+        return
+
+    print(f"Displaying {actual_num_examples} examples for mode '{mask_mode.name}':\n")
+
+    for i in range(actual_num_examples):
         print(f"--- Example {i+1} for {mask_mode.name} ---")
         
+        # __getitem__ returns a dict with pre-masked inputs for all dataset types now
         item = dataset[i]
         input_ids = item['input_ids']
         target_ids = item['target_ids']
@@ -82,26 +93,20 @@ def verify_experiment_data(config_path: str, data_path: str, num_examples: int =
         masked_indices = torch.where(input_ids == tokenizer.mask_token_id)[0]
         loss_indices = torch.where(loss_mask == 1)[0]
         
-        print(f"  Original Sequence Length: {len(target_ids)}")
+        print(f"  Sequence Length: {len(target_ids)}")
         print(f"  Number of Masked Tokens: {len(masked_indices)}")
         print(f"  Number of Tokens in Loss Mask: {len(loss_indices)}")
         
-        print("\n  Decoded Snippet (showing effect of masking):")
+        print("\n  Decoded Example:")
         
-        if len(masked_indices) > 0:
-            start_idx = max(0, masked_indices[0] - 30)
-            end_idx = min(len(input_ids), masked_indices[-1] + 30)
-        else:
-            start_idx = 0
-            end_idx = 60
+        # The entire sequence is usually short for summarized datasets, so we show it all
+        snippet_original = tokenizer.decode(target_ids)
+        snippet_masked = tokenizer.decode(input_ids)
 
-        snippet_original = tokenizer.decode(target_ids[start_idx:end_idx])
-        snippet_masked = tokenizer.decode(input_ids[start_idx:end_idx])
-
-        print("\n  ORIGINAL:")
-        print(f"  ...{snippet_original}...")
-        print("\n  MASKED:")
+        print("\n  CONTEXT (Input to be Unmasked):")
         print(f"  ...{snippet_masked}...")
+        print("\n  TARGET (Ground Truth):")
+        print(f"  ...{snippet_original}...")
         print("\n" + "-"*40)
 
 if __name__ == "__main__":
