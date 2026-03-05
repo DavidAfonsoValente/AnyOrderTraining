@@ -17,7 +17,7 @@
 # #!/bin/sh
 # #SBATCH --job-name=aomt_training
 # #SBATCH --output=slurm_logs/aomt_train_%j.out
-# #SBATCH --gpus=a100:1
+# #SBATCH --gpus=a100:4
 # #SBATCH --time=24:00:00
 # #SBATCH --mem=200G
 # #SBATCH --cpus-per-task=16
