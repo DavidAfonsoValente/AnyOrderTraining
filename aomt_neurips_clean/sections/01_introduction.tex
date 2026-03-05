@@ -58,6 +58,8 @@ with ablations and robustness analysis.
     Standard SFT and Prefix SFT (offline IWM) each fix one training order.
     \aomt{} resamples an arbitrary unit-level mask each step, exposing the same
     trajectory under many context/target assignments across epochs.
+    For clarity, the diagram shows a simplified schematic; our SFT baselines
+    use sample-efficient slicing with full history (see Sec.~\ref{sec:experiments}).
     Inference is always next-action generation.
   }
   \label{fig:method_overview}

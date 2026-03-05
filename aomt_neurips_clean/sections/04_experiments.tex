@@ -21,16 +21,18 @@ all methods train on identical data.
 
 \paragraph{Baselines.}
 \textbf{Zero-shot LLaDA~2.0-mini}: untuned base model.
-\textbf{Standard SFT}: next-action prediction with causal mask---the degenerate
-limit of \aomt{} and primary baseline.
-\textbf{Prefix SFT (offline IWM)}: ALEE's IWM objective
-\citep{zhang2025alee} on offline data only (Stage~1: $-\log p_\theta(O_{t+1} \mid
-O_t, A_t)$; Stage~2: standard SFT), isolating the IWM objective from ALEE's
-data-collection contribution.
-\textbf{\aomt{}-Action-Only}: mask restricted to action units, isolating
-bidirectional context from world-model training.
-\textbf{\aomt{}-Mixed} (full method): each unit masked independently with
-probability $p$, jointly training policy and implicit world model.
+\textbf{Standard SFT}: a sample-efficient baseline that mimics autoregressive
+next-action prediction. Each trajectory is sliced into multiple examples,
+where each action $A_t$ is masked and predicted from its full causal history
+$\{O_0, A_0, \ldots, O_t\}$.
+\textbf{Prefix SFT (offline IWM)}: ALEE's IWM objective adapted to an offline,
+two-stage prefix-conditioning task.
+Stage~1 (IWM) predicts $O_{t+1}$ from the history and $(O_t, A_t)$.
+Stage~2 (Policy SFT) is then fine-tuned to predict $A_t$ from the history and $O_t$.
+\textbf{\aomt{}-Action-Only}: mask restricted to action units, with the full
+trajectory as bidirectional context.
+\textbf{\aomt{}-Mixed} (full method): each action and observation unit
+(excluding the initial objective) is masked independently with probability $p$.
 ETO \citep{song2024eto}, IPR \citep{zhang2024ipr}, and Early Experience IWM
 \citep{zhang2025alee} are cross-paradigm references requiring rollouts
 (and rewards for ETO/IPR).
@@ -41,8 +43,10 @@ active parameters (MoE). Trajectories are tokenised as flat sequences with
 separator tokens; unit spans are recorded at preprocessing so the mask sampler
 enforces whole-unit masking. Hyperparameters: lr $2.5\times10^{-5}$ (cosine
 decay to $2.5\times10^{-6}$), 50 warmup steps, weight decay 0.1, gradient
-clip~1.0, batch size~64, sequence length~2048, bf16. Standard SFT and Prefix
-SFT train for 3 epochs; \aomt{} variants for 5. Mask probability $p$ is swept
+clip~1.0, batch size~64, sequence length~2048, bf16. For a fair comparison, all
+experiments are trained for the same total number of gradient updates,
+normalised against 3 epochs over the original unprocessed dataset.
+Mask probability $p$ is swept
 over $\{0.15, 0.25, 0.40, 0.50\}$ on ALFWorld and transferred to other
 benchmarks. Inference: iterative unmasking, temperature~0.0, block length~32,
 32 decoding steps \citep{bie2025llada20}.

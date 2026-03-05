@@ -7,23 +7,15 @@
 
 \begin{proof}[Proof of Proposition~\ref{prop:subsumption}]
 \textbf{(i) Standard SFT.}
-Fix $m$ to always mask exactly one action unit $A_t$, with context
-$\Ccal(m) = \{O_0, A_0, \ldots, O_t\}$ and a causal attention mask preventing
-any future unit from contributing to the reconstruction of $A_t$.
-Substituting into Eq.~\eqref{eq:aomt}:
-\[
-  \Lcal_{\text{AOMT}}(\tau,m) = -\log p_\theta(A_t \mid O_0, A_0, \ldots, O_t),
-\]
-which is exactly the standard SFT loss summed over $t = 0,\ldots,T-1$.
+Standard SFT is simulated on a bidirectional model by constraining the sampling. For each timestep $t$ in a trajectory, we create a single training example where the mask $m$ is fixed to mask exactly one action unit $A_t$, and the context $\Ccal(m)$ consists of all preceding units $\{O_0, A_0, \ldots, O_t\}$. This process is repeated for all actions in the trajectory, creating a dataset of sliced examples that perfectly mimics the loss calculation of an autoregressive model, where $\Lcal = -\sum_t \log p_\theta(A_t \mid O_0, \ldots, O_t)$.
 
 \textbf{(ii) Offline ALEE-IWM.}
-Fix $m$ to always mask $O_{t+1}$, with context $\Ccal(m) = \{O_t, A_t\}$
-(local context only).
+Fix $m$ to always mask $O_{t+1}$, with context $\Ccal(m) = \{O_0, A_0, \ldots, O_t, A_t\}$---i.e., the full causal history.
 Substituting into Eq.~\eqref{eq:aomt}:
 \[
-  \Lcal_{\text{AOMT}}(\tau,m) = -\log p_\theta(O_{t+1} \mid O_t, A_t),
+  \Lcal_{\text{AOMT}}(\tau,m) = -\log p_\theta(O_{t+1} \mid O_0, \ldots, A_t),
 \]
-which is the ALEE-IWM loss restricted to the offline expert corpus.
+which is the ALEE-IWM loss on the full history, restricted to the offline expert corpus.
 \aomt{} with an unconstrained Bernoulli($p$) sampler strictly generalises both
 by allowing any subset of units to be masked and using full bidirectional
 attention over all context units.
