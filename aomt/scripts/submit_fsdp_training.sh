@@ -73,7 +73,7 @@ mkdir -p slurm_logs
 # torchrun will automatically use these SLURM environment variables if they are set,
 # but we can also set them explicitly for clarity.
 export MASTER_ADDR=$(scontrol show hostnames "$SLURM_JOB_NODELIST" | head -n 1)
-export MASTER_PORT=29500 # A free port
+export MASTER_PORT=$(shuf -i 20000-65500 -n 1) # Select a random free port
 export WORLD_SIZE=$SLURM_NPROCS
 export RANK=$SLURM_PROCID
 
