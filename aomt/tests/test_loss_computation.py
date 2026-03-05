@@ -60,7 +60,7 @@ class TestLossComputation(unittest.TestCase):
         """
         print("\nRunning test: test_zero_mask_returns_zero_loss")
         zero_mask = torch.zeros(self.batch_size, self.seq_len, dtype=torch.bool)
-                loss = masked_unit_cross_entropy(self.logits, self.target_ids, zero_mask)
-                self.assertEqual(loss.item(), 0.0)
+        loss = masked_unit_cross_entropy(self.logits, self.target_ids, zero_mask)
+        self.assertEqual(loss.item(), 0.0)
                 print("Test passed.")
         
