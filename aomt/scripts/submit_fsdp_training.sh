@@ -24,9 +24,9 @@
 #SBATCH --partition=gpu-long
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
-#SBATCH --gpus-per-task=4
-#SBATCH --cpus-per-task=32
-#SBATCH --mem=256G
+#SBATCH --gpus-per-task=1
+#SBATCH --cpus-per-task=8
+#SBATCH --mem=64G
 #SBATCH --time=48:00:00
 
 # --- Script Body ---
