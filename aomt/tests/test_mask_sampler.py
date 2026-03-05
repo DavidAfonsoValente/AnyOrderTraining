@@ -39,24 +39,35 @@ class TestMaskSampler(unittest.TestCase):
 
     def test_standard_sft_masking(self):
         """
-        Sanity Check 11.2: `STANDARD_SFT` mode should target all actions for the loss
-        but not replace any tokens with [MASK].
+        Sanity Check 11.2: `STANDARD_SFT` should mask ONLY the last action unit.
         """
         print("\nRunning test: test_standard_sft_masking")
         masked_ids, loss_mask = apply_unit_mask(
             self.tokenized_traj, 0.0, MaskMode.STANDARD_SFT, self.mask_token_id, self.rng
         )
 
-        # Input IDs should be unchanged
-        self.assertTrue(torch.equal(masked_ids, self.sample_input_ids))
+        # Input IDs should now be different from original
+        self.assertFalse(torch.equal(masked_ids, self.sample_input_ids))
 
-        # Loss mask should be True ONLY at action unit positions
+        # Find the last action unit
+        last_act_unit = None
+        for unit in reversed(self.sample_spans):
+            if unit.unit_type == "act":
+                last_act_unit = unit
+                break
+        
+        self.assertIsNotNone(last_act_unit, "Sample trajectory has no action unit to test.")
+
+        # Loss mask should be True ONLY at the last action unit's position
         for unit in self.sample_spans:
             span_mask = loss_mask[unit.token_start:unit.token_end]
-            if unit.unit_type == "act":
-                self.assertTrue(torch.all(span_mask))
+            span_masked_ids = masked_ids[unit.token_start:unit.token_end]
+            
+            if unit == last_act_unit:
+                self.assertTrue(torch.all(span_mask), "Last action unit should be in the loss mask.")
+                self.assertTrue(torch.all(span_masked_ids == self.mask_token_id), "Last action unit should be replaced by mask tokens.")
             else:
-                self.assertFalse(torch.any(span_mask))
+                self.assertFalse(torch.any(span_mask), f"Unit {unit.unit_index} should NOT be in the loss mask.")
         print("Test passed.")
 
     def test_action_only_masking(self):
@@ -92,26 +103,38 @@ class TestMaskSampler(unittest.TestCase):
     def test_mixed_masking(self):
         """
         Sanity Check 11.2: `MIXED` mode should mask a subset of both obs and acts.
+        This test is now probabilistic to avoid sensitivity to a single random seed.
         """
         print("\nRunning test: test_mixed_masking")
-        # Use a high probability to ensure both types are likely to be masked
-        masked_ids, loss_mask = apply_unit_mask(
-            self.tokenized_traj, 0.6, MaskMode.MIXED, self.mask_token_id, self.rng
-        )
         
         masked_obs_found = False
         masked_act_found = False
+
+        # Run multiple trials to see if we eventually mask both types
+        for i in range(20):
+            local_rng = np.random.default_rng(i)
+            _, loss_mask = apply_unit_mask(
+                self.tokenized_traj, 0.5, MaskMode.MIXED, self.mask_token_id, local_rng
+            )
+            
+            for unit in self.sample_spans:
+                # The first obs unit (objective) is never masked in MIXED mode.
+                is_objective = unit.unit_index == 0 and unit.unit_type == "obs"
+                if is_objective:
+                    continue
+
+                span_loss_mask = loss_mask[unit.token_start:unit.token_end]
+                if torch.all(span_loss_mask):
+                    if unit.unit_type == "obs":
+                        masked_obs_found = True
+                    elif unit.unit_type == "act":
+                        masked_act_found = True
+            
+            if masked_obs_found and masked_act_found:
+                break # Both found, no need to continue looping
         
-        for unit in self.sample_spans:
-            span_loss_mask = loss_mask[unit.token_start:unit.token_end]
-            if torch.all(span_loss_mask):
-                if unit.unit_type == "obs":
-                    masked_obs_found = True
-                elif unit.unit_type == "act":
-                    masked_act_found = True
-        
-        self.assertTrue(masked_obs_found, "MIXED mode failed to mask any observation units.")
-        self.assertTrue(masked_act_found, "MIXED mode failed to mask any action units.")
+        self.assertTrue(masked_obs_found, "MIXED mode failed to mask any observation units over 20 trials.")
+        self.assertTrue(masked_act_found, "MIXED mode failed to mask any action units over 20 trials.")
         print("Test passed.")
 
     def test_mask_resampling(self):

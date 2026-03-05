@@ -72,7 +72,7 @@ To ensure the core logic is functioning correctly, you can run the provided unit
 
 ```bash
 source venv/bin/activate
-pytest aomt/tests/
+srun pytest aomt/tests/
 ```
 
 ## 3. End-to-End Workflow
