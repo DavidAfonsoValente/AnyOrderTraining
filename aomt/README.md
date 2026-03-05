@@ -116,10 +116,11 @@ This will loop through each of your experiment configs (e.g., `sft_standard.yaml
 Next, submit all training jobs to the Slurm cluster. The `run_all_experiments.sh` script will submit the main baseline jobs in parallel and correctly handle the dependency for the two-stage Prefix-SFT experiment. Training runs will automatically log to WandB for online monitoring.
 
 ```bash
-# This script internally requests SLURM resources for each job it submits.
-# You typically run this from a login node, or within a small, short-lived salloc.
-source venv/bin/activate # Activate venv if needed for submitting script
-srun ./scripts/run_all_experiments.sh
+# This script uses 'sbatch' internally to submit jobs.
+# You typically run this from a login node (no salloc needed around it).
+# Activate your venv if needed for submitting script:
+source venv/bin/activate
+./scripts/run_all_experiments.sh
 ```
 
 This will queue all the necessary training jobs. You can monitor their progress with `squeue -u $USER` and online via your WandB dashboard. Checkpoints for each experiment will be saved to the `checkpoints/` directory.

@@ -21,9 +21,10 @@
 #SBATCH --job-name=aomt_fsdp_training
 #SBATCH --output=slurm_logs/aomt_fsdp_%j.out
 #SBATCH --error=slurm_logs/aomt_fsdp_%j.err
+#SBATCH --partition=gpu-long
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
-#SBATCH --gpus-per-task=a100:4
+#SBATCH --gpus-per-task=4
 #SBATCH --cpus-per-task=32
 #SBATCH --mem=256G
 #SBATCH --time=48:00:00
