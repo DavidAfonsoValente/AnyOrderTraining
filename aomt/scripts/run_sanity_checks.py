@@ -24,13 +24,15 @@ def check_attention_masks():
     assert torch.all(causal_mask.diag() == 1), "Diagonal of causal mask should be 1"
     assert torch.all(causal_mask.triu(diagonal=1) == 0), "Upper triangle of causal mask should be 0"
     
-    print("\nBidirectional Mask (all ones):")
+    print("
+Bidirectional Mask (all ones):")
     print(bidirectional_mask)
     assert torch.all(bidirectional_mask == 1), "Bidirectional mask should be all 1s"
     print("✅ Masks look correct.")
 
 def check_loss_range():
-    print("\n--- 2. Initial Loss Range Check ---")
+    print("
+--- 2. Initial Loss Range Check ---")
     try:
         model = AutoModelForCausalLM.from_pretrained("inclusionAI/LLaDA2.0-mini", trust_remote_code=True)
         vocab_size = model.config.vocab_size
@@ -60,7 +62,8 @@ def check_loss_range():
 
 
 def check_mask_coverage(data_path):
-    print("\n--- 3. AOMT-Mixed Mask Coverage Check ---")
+    print("
+--- 3. AOMT-Mixed Mask Coverage Check ---")
     try:
         tokenizer = AutoTokenizer.from_pretrained("inclusionAI/LLaDA2.0-mini", trust_remote_code=True)
         if tokenizer.mask_token is None: tokenizer.add_special_tokens({'mask_token': '[MASK]'})
@@ -94,9 +97,12 @@ def check_mask_coverage(data_path):
         assert none_masked < n_samples, "Masking appears to have failed; all tested trajectories were unmasked."
         
         print("✅ Mask coverage check passed.")
+    except Exception as e:
+        print(f"Could not perform mask coverage check: {e}")
 
 def check_llada_inference():
-    print("\n--- 4. LLaDA Inference Check ---")
+    print("
+--- 4. LLaDA Inference Check ---")
     try:
         tokenizer = AutoTokenizer.from_pretrained("inclusionAI/LLaDA2.0-mini", trust_remote_code=True)
         if tokenizer.mask_token is None: tokenizer.add_special_tokens({'mask_token': '[MASK]'})
@@ -123,7 +129,8 @@ def main():
     check_mask_coverage(default_data_path)
     check_llada_inference()
     
-    print("\nSanity checks complete. Please review the output for any warnings.")
+    print("
+Sanity checks complete. Please review the output for any warnings.")
 
 if __name__ == "__main__":
     main()
