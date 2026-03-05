@@ -7,10 +7,10 @@ name: prefix_sft_stage2
 model: "checkpoints/prefix_sft_stage1/final_checkpoint"
 
 # --- Training Objective ---
-# This stage is identical to standard SFT, just starting from a different checkpoint.
-mask_mode: "standard_sft"
+# This stage fine-tunes the IWM model on a policy objective.
+mask_mode: "prefix_sft_stage2"
 mask_prob: null
-use_causal_mask: true # Switch back to causal attention for action prediction
+use_causal_mask: false # Causal context is handled by data prep
 
 # --- dFactory Training Defaults ---
 learning_rate: 2.5e-5
@@ -28,7 +28,7 @@ num_epochs: 3
 
 # --- Evaluation ---
 # Evaluate the final, task-ready model.
-eval_nll_obs: true # Can still be evaluated on a bidirectional copy of the model
+eval_nll_obs: false # Causal policy models cannot compute this
 eval_task: true
 eval_splits: ["seen", "unseen"]
 noise_fractions: [0.0, 0.1, 0.2, 0.3]

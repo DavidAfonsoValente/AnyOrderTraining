@@ -4,9 +4,6 @@ name: prefix_sft_stage1
 model: inclusionAI/LLaDA2.0-mini
 
 # --- Training Objective ---
-# The `collator` field tells the training script to use the specialized
-# `build_prefix_sft_examples` function to create (O_t, A_t) -> O_{t+1} pairs.
-collator: "prefix_sft_stage1"
 mask_mode: "prefix_sft_stage1"
 use_causal_mask: false # Use bidirectional attention for this objective
 

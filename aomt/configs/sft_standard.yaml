@@ -6,7 +6,7 @@ model: inclusionAI/LLaDA2.0-mini
 # --- Training Objective ---
 mask_mode: "standard_sft"
 mask_prob: null  # Not applicable; all actions are always targeted
-use_causal_mask: true # CRITICAL: This enforces left-to-right attention
+use_causal_mask: false # Causal context is handled by data prep for bidirectional models
 
 # --- dFactory Training Defaults (as per spec) ---
 learning_rate: 2.5e-5
