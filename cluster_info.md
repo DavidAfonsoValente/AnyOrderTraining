@@ -179,3 +179,40 @@ Contributed Nodes from Research Grants (not managed by Slurm)
 cgpa0 - cgpa3	4	Ubuntu	2x Intel Xeon Silver 4214	128GB	960GB SSD & 8TB HDD	1GbE	4x NVIDIA RTX2080	2020	Asus
 cgpa4-10	7	Ubuntu	2x Intel Xeon Silver 4214R	128GB	960GB SSD & 8TB HDD	1GbE	4x NVIDIA A5000	2021	Asus
 cgpb0	1	Ubuntu	2x Intel Xeon Silver 4210	256GB	3.2TB SSD	10GbE	2x NVIDIA Tesla V100 GPU	2020	HPE
+
+GPU
+SoC Compute Cluster has several types of GPUs available. This page provides information on how you can use these GPUs.
+
+GPU Hardware
+The following types of GPUs are currently available.
+
+GPU Type	Quantity	Slurm GPU Name	Slurm Feature Name
+NVIDIA Tesla V100	58	nv	cuda70, v100
+NVIDIA Titan V	nv	cuda70, titanv
+NVIDIA Titan RTX	nv	cuda75, titanrtx
+NVIDIA Tesla T4	nv	cuda75 t4
+NVIDIA A100 with 40GB	30	a100-40	cuda80, a100
+NVIDIA A100 with 80GB	10	a100-80	cuda80, a100
+NVIDIA H100 with 47GB	50	h100-47	cuda90, h100
+NVIDIA H100 with 96GB	20	h100-96	cuda90, h100
+NVIDIA H200	4	h200-141	cuda90, h200
+AMD MI50	16	amd	mi50
+The Slurm GPU Name is used to choose from categories of GPUs, and the Slurm Feature Name provides additional control of GPU selection within those categories.
+
+Selecting GPUs
+Apart from requesting GPUs, you also need to specify the GPU type required for your job. If you do not specify a type, then the 'nv' GPU type will be used. This means that any node with a 'nv' GPU type will be considered for your job.
+
+The 'nv' GPU type covers all the NVIDIA GPUs apart from the newer A100 GPUs that are identified differently due to different quota limits. If you need to choose a specific CUDA level within the different families of 'nv' GPU, you can use the Slurm Feature Name. E.g. if you only want cuda 7.5 nodes, then you can use the command:
+
+sbatch --gres=gpu:nv:1 -C cuda75
+You cannot specify more than one GPU type for a job. If you want to consider more than one GPU type for your job, then you'll have to submit your job multiple times using different GPU types, then cancel the remanining jobs after the first one runs. You can do this by using the same job name for the multple jobs:
+
+sbatch -J gpujob --gres=gpu:nv:1 job.sh
+sbatch -J gpujob --gres=gpu:a100-40:1 job.sh
+sbatch -J gpujob --gres=gpu:h100-47:1 job.sh
+And then in the job.sh script, cancel all remaining jobs:
+
+#!bin/sh
+
+scancel -J gpujob --state=PENDING
+Whichever job runs first, be it for 'nv', 'a100-40', or 'a100-80', will cancel the other jobs. (This is a simplistic example. Do consider a possible race condition where more than one job begins running before scancel gets the chance to cancel all other jobs. You may need to do additional checks.)

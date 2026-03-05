@@ -20,16 +20,16 @@
 
 # Define the number of GPUs to request. This variable is used in the SBATCH
 # directive and to configure torchrun, ensuring consistency.
-# NOTE: The gpu-long partition only appears to have single-GPU nodes.
 NUM_GPUS=1
 
 #SBATCH --job-name=aomt_fsdp_training
 #SBATCH --output=slurm_logs/aomt_fsdp_%j.out
 #SBATCH --error=slurm_logs/aomt_fsdp_%j.err
 #SBATCH --partition=gpu-long
+#SBATCH --constraint=cuda80
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
-#SBATCH --gpus=a100:1
+#SBATCH --gres=gpu:a100-80:1
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=64G
 #SBATCH --time=48:00:00
