@@ -1,76 +1,82 @@
 # Any-Order Motion Transformer (AOMT)
 
-This repository contains the implementation for training and evaluating the Any-Order Motion Transformer, a model for learning robotic manipulation policies.
+This repository contains the implementation for training and evaluating the Any-Order Motion Transformer, a model for learning robotic manipulation policies from demonstrations.
+
+This guide provides the canonical workflow for setting up the environment, verifying the setup, and running the full experiment suite.
+
+---
 
 ## 1. Setup
 
-These steps should be performed on the cluster's login node (e.g., `xlogin1`).
+The setup process is now automated. The script will check for submodules, set up the Python environment, install dependencies, download the model, and prepare the datasets.
 
-### Step 1.1: Clone Repository
-
-Clone this repository and its submodules (`dFactory`/`VeOmni`).
+From the repository's root directory (`aomt/`), make the script executable and run it:
 
 ```bash
-git clone --recurse-submodules <repository_url>
-cd aomt
+chmod +x setup.sh
+./setup.sh
 ```
 
-### Step 1.2: Create Virtual Environment
+The script will guide you through the final step of setting a required environment variable in your shell profile (e.g., `~/.bashrc`). Once you have done that, the setup is complete.
 
-Create and activate a Python virtual environment.
+---
 
-```bash
-python3 -m venv venv
-source venv/bin/activate
-```
+## 2. Verification and Testing
 
-### Step 1.3: Install Dependencies
+Before submitting resource-intensive jobs, run the provided tests to verify your setup and the correctness of the implementation.
 
-Install the required Python packages.
+### Step 2.1: Run the Automated Test Suite
 
-```bash
-pip install -r requirements.txt
-```
-
-### Step 1.4: Download Pre-trained Model
-
-The training framework requires the pre-trained `LLaDA2.0-mini` model to be present locally. Run the provided download script. This will download the model into `aomt/models/LLaDA2.0-mini/`.
-
-```bash
-python3 dFactory/scripts/download_hf_model.py --repo_id inclusionAI/LLaDA2.0-mini --local_dir ./models
-```
-
-### Step 1.5: Prepare the Dataset
-
-Parse the raw trajectory data into the processed format used for training. This script only needs to be run once.
-
-```bash
-python3 data/parse_trajectories.py
-```
-
-## 2. Running Tests
-
-Before launching a full-scale experiment, run the complete test suite to verify that all components are working correctly. This includes unit tests and an end-to-end integration test.
-
-Execute this command from the `aomt/` directory:
+Execute the full test suite from the `aomt/` directory. This runs all unit tests and a vital integration test to ensure the training pipeline is configured correctly from end to end.
 
 ```bash
 python3 -m unittest discover tests
 ```
 
+### Step 2.2: Sanity-Check Data (Optional)
+
+To see how the data is prepared for each training run, use the `visualize_experiments.sh` script. This will loop through the experiment configs and show you a few examples of the exact masked data the model will see during training, making it easy to confirm each experiment is set up as intended.
+
+```bash
+# Recommended to run within a Slurm allocation
+./scripts/visualize_experiments.sh
+```
+
+---
+
 ## 3. Running Experiments
 
-Submit all training jobs to the Slurm cluster. The master script will queue all baseline experiments and correctly handle dependencies for the multi-stage jobs.
+The training workflow is orchestrated by `run_all_experiments.sh`, which submits jobs to the Slurm cluster.
+
+### Understanding `run_all_experiments.sh`
+
+This script is the main entry point for training. It is designed to be run from the login node. Inside this script, you can configure which experiments to run:
+
+*   The `CONFIG_CHAIN` array lists the baseline experiments that will be submitted to run in parallel.
+*   The script also automatically manages the two-stage `Prefix-SFT` experiment, ensuring Stage 2 only runs after Stage 1 has completed successfully.
+
+You can edit the `CONFIG_CHAIN` array in `run_all_experiments.sh` to add, remove, or reorder the training jobs.
+
+### Submitting the Jobs
+
+From the `aomt/` directory, execute the script:
 
 ```bash
 ./scripts/run_all_experiments.sh
 ```
 
-You can monitor the status of your jobs using:
-```bash
-squeue -u $USER
-```
+You can monitor the status of your jobs with `squeue -u $USER`. Checkpoints for each experiment will be saved to the `checkpoints/` directory.
 
-## 4. Evaluation
+---
 
-After your training jobs are complete, you can run the evaluation suite on the generated checkpoints located in the `checkpoints/` directory using the scripts in `aomt/scripts/` (e.g., `run_full_eval.py`).
+## 4. Evaluation and Analysis
+
+Once training is complete, use the following scripts to evaluate model performance. These are typically run within an interactive Slurm session (`salloc ...`).
+
+*   **`scripts/run_zeroshot_eval.sh`**: Establishes a performance baseline for the un-tuned, pre-trained model.
+*   **`run_full_eval.py`**: Runs the full evaluation suite (NLL, task, robustness) on a specific trained checkpoint.
+    ```bash
+    # Example usage:
+    python3 run_full_eval.py --checkpoint_path checkpoints/aomt_mixed
+    ```
+*   **`analysis/summarize_results.py`**: After running evaluations, this script scans all `results.json` files and prints a comparative summary table of the key metrics.
