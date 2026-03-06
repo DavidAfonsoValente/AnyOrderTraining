@@ -25,7 +25,7 @@ CONFIG_FILE=$1
 
 echo "--- Activating Environment ---"
 source venv/bin/activate
-export PYTHONPATH="$(pwd)/dFactory:$PYTHONPATH"
+export PYTHONPATH="$(pwd):$(pwd)/dFactory:$PYTHONPATH"
 
 echo "--- Launching dFactory Training ---"
 # Explicitly set the number of processes to match the GPUs we requested
