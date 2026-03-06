@@ -1,21 +1,19 @@
 # aomt/data/parse_trajectories.py
-import sys
 import os
 import argparse
-from datasets import load_from_disk, Features, Value, Sequence
+from datasets import load_from_disk
 from transformers import AutoTokenizer
+from tqdm import tqdm
 
-# Add the project root to the Python path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
-from aomt.data.unit_parser import (
+# Use relative import because this script is run as a module within the 'aomt' package
+from .unit_parser import (
     parse_conversation_to_trajectory,
     tokenize_trajectory
 )
 
 # --- Constants ---
-DEFAULT_DATASET_PATH = "./data/dataset_cache"
-DEFAULT_CACHE_PATH = "./data/processed_dataset"
+DEFAULT_DATASET_PATH = "data/dataset_cache"
+DEFAULT_CACHE_PATH = "data/processed_dataset"
 DEFAULT_MODEL_NAME = "models/LLaDA2.0-mini"
 DEFAULT_MAX_LENGTH = 2048
 
@@ -25,13 +23,11 @@ def process_and_cache_dataset(
     model_path: str,
     max_length: int,
     split: str = "train",
-    num_proc: int = 1 # Disabling multiprocessing to prevent memory issues
+    num_proc: int = 1
 ):
     """
-    Loads a raw dataset, processes it using map for memory efficiency,
-    and saves the result to disk in Arrow format.
+    Loads a raw dataset, processes it, and saves the result to disk.
     """
-    # 1. Setup paths and check if work is already done
     save_path = os.path.join(cache_path, split)
     if os.path.exists(save_path):
         print(f"Processed dataset for split '{split}' already exists at '{save_path}'. Skipping processing.")
@@ -39,7 +35,6 @@ def process_and_cache_dataset(
 
     os.makedirs(cache_path, exist_ok=True)
 
-    # 2. Load tokenizer and raw dataset
     print(f"Loading tokenizer from local path '{model_path}'...")
     tokenizer = AutoTokenizer.from_pretrained(model_path)
     if tokenizer.eos_token is None:
@@ -52,53 +47,16 @@ def process_and_cache_dataset(
         print(f"Error: Split '{split}' not found in the dataset at '{dataset_path}'. Skipping.")
         return
 
-    # 3. Define the processing function for map
-    def process_and_tokenize_batch(batch):
-        """Processes a batch of examples for the .map() function."""
-        processed_examples = {
-            "input_ids": [], "unit_spans_type": [], "unit_spans_start": [], "unit_spans_end": [], "env": [], "id": []
-        }
-        for i in range(len(batch["id"])):
-            example = {key: value[i] for key, value in batch.items()}
-            try:
-                parsed_traj = parse_conversation_to_trajectory(example)
-                tokenized_traj = tokenize_trajectory(parsed_traj, tokenizer, max_length)
-
-                if tokenized_traj:
-                    processed_examples["input_ids"].append(tokenized_traj.input_ids)
-                    processed_examples["unit_spans_type"].append([s.unit_type for s in tokenized_traj.unit_spans])
-                    processed_examples["unit_spans_start"].append([s.token_start for s in tokenized_traj.unit_spans])
-                    processed_examples["unit_spans_end"].append([s.token_end for s in tokenized_traj.unit_spans])
-                    processed_examples["env"].append(tokenized_traj.env)
-                    processed_examples["id"].append(tokenized_traj.trajectory_id)
-
-            except (ValueError, KeyError) as e:
-                print(f"Skipping example {example.get('id', 'N/A')} due to error: {e}")
-                continue
-        return processed_examples
-
-    # 4. Define the features for the new dataset
-    output_features = Features({
-        'input_ids': Sequence(feature=Value(dtype='int64')),
-        'unit_spans_type': Sequence(feature=Value(dtype='string')),
-        'unit_spans_start': Sequence(feature=Value(dtype='int32')),
-        'unit_spans_end': Sequence(feature=Value(dtype='int32')),
-        'env': Value(dtype='string'),
-        'id': Value(dtype='string'),
-    })
-
-    # 5. Process the data using map
-    print(f"Processing {len(raw_dataset)} examples from the '{split}' split using map...")
+    print(f"Processing {len(raw_dataset)} examples from the '{split}' split...")
     processed_dataset = raw_dataset.map(
-        process_and_tokenize_batch,
-        batched=True,
-        batch_size=100,
+        lambda example: tokenize_trajectory(parse_conversation_to_trajectory(example), tokenizer, max_length),
         num_proc=num_proc,
         remove_columns=raw_dataset.column_names,
-        features=output_features
+        load_from_cache_file=False # Ensure fresh processing
     )
+    # Filter out None results from truncation
+    processed_dataset = processed_dataset.filter(lambda x: x is not None)
     
-    # 6. Save to disk
     print(f"Saving processed dataset to '{save_path}'...")
     processed_dataset.save_to_disk(save_path)
     print("Caching complete.")
@@ -107,14 +65,12 @@ def process_and_cache_dataset(
 def main():
     parser = argparse.ArgumentParser(description="Parse and tokenize agent trajectories.")
     
-    script_dir = os.path.dirname(__file__)
-
     parser.add_argument(
-        "--dataset_path", type=str, default=os.path.join(script_dir, 'dataset_cache'),
+        "--dataset_path", type=str, default=DEFAULT_DATASET_PATH,
         help="Path to the downloaded Hugging Face dataset directory."
     )
     parser.add_argument(
-        "--cache_path", type=str, default=os.path.join(script_dir, 'processed_dataset'),
+        "--cache_path", type=str, default=DEFAULT_CACHE_PATH,
         help="Directory to save the processed Arrow dataset."
     )
     parser.add_argument(
