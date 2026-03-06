@@ -52,14 +52,16 @@ echo "Virtual environment activated."
 
 # --- 4. Set PYTHONPATH ---
 echo "[4/6] Exporting Python path..."
-# This makes 'from aomt...' and 'from veomni...' imports work correctly.
-export PYTHONPATH="${TOP_LEVEL_DIR}:${PWD}/dFactory:${PYTHONPATH}"
+# This makes 'from aomt...' imports work correctly.
+export PYTHONPATH="${TOP_LEVEL_DIR}:${PYTHONPATH}"
 echo "PYTHONPATH set."
 
 # --- 5. Install Python Dependencies ---
 echo "[5/6] Installing Python packages from requirements.txt..."
 pip install --upgrade pip
 pip install -r requirements.txt
+echo "Installing VeOmni dependency in editable mode..."
+pip install -e dFactory/VeOmni
 
 # --- 6. Download Pre-trained Model ---
 echo "[6/6] Checking for and downloading pre-trained model..."
