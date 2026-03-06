@@ -49,14 +49,15 @@ Next, the raw data must be processed. This is a memory-intensive task and **must
 
 1.  **Request an interactive Slurm session:**
     ```bash
-    # Request a node with sufficient memory for 1 hour
+    # Request a node with sufficient memory and a GPU for 1 hour
     salloc --time=1:00:00 --mem=128G --gpus=1 --ntasks=1
     ```
 
 2.  **Run the data preparation script:**
     Once your job starts and you are on a compute node prompt, run the script:
     ```bash
-    # This will now run on the compute node
+    # Activate the environment and run the script
+    source venv/bin/activate
     ./scripts/prepare_data.sh
     ```
 
@@ -88,11 +89,12 @@ For a deeper sanity check, you can also run the visualization script within a Sl
 
 ```bash
 # First, get an interactive session on a compute node
-salloc --time=0:15:00 --mem=16G --gpus=1 --ntasks=1
+salloc --time=0:15:00 --mem=32G --gpus=1 --ntasks=1
 
 # Once the job starts, run the script
 source venv/bin/activate
 ./scripts/visualize_experiments.sh
+# This script now automatically shows one example from each environment (alfworld, scienceworld, webshop) per config.
 
 # Exit the allocation when done
 exit

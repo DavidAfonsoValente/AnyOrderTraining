@@ -7,7 +7,7 @@ import yaml
 import argparse
 
 # Add the project root to the Python path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from datasets import load_from_disk
 from transformers import AutoTokenizer
@@ -22,15 +22,10 @@ from aomt.training.collator import (
     build_standard_sft_examples
 )
 
-def verify_experiment_data(config_path: str, data_path: str, num_examples: int = 2):
+def verify_experiment_data(config_path: str, data_path: str):
     """
-    Loads a specific experiment configuration and visualizes how the data
-    will be masked for that experiment, now handling all dataset types.
-
-    Args:
-        config_path (str): Path to the YAML experiment config file.
-        data_path (str): Path to the processed dataset directory.
-        num_examples (int): Number of examples to show.
+    Loads a specific experiment configuration and visualizes one example from each
+    of the core environments (alfworld, scienceworld, webshop).
     """
     print(f"\n========================================")
     print(f"  Verifying Experiment Config: {os.path.basename(config_path)}")
@@ -40,7 +35,8 @@ def verify_experiment_data(config_path: str, data_path: str, num_examples: int =
     with open(config_path, 'r') as f:
         config = yaml.safe_load(f)
 
-    model_name = config.get("model", "inclusionAI/LLaDA2.0-mini")
+    # Use the local model path from the updated configs
+    model_path = config.get("model", {}).get("tokenizer_path", "models/LLaDA2.0-mini")
     mask_mode_str = config.get("mask_mode", "standard_sft")
     
     try:
@@ -50,19 +46,16 @@ def verify_experiment_data(config_path: str, data_path: str, num_examples: int =
         return
 
     # 2. Load Tokenizer and Processed Data
-    print(f"Loading tokenizer '{model_name}'...")
-    tokenizer = AutoTokenizer.from_pretrained(model_name, low_cpu_mem_usage=True)
+    print(f"Loading tokenizer from '{model_path}'...")
+    tokenizer = AutoTokenizer.from_pretrained(model_path, low_cpu_mem_usage=True)
     if tokenizer.mask_token is None:
-        # Add mask token if it doesn't exist. For LLaMA, it's often not set.
         tokenizer.add_special_tokens({'mask_token': '[MASK]'})
-        print("Added MASK token '[MASK]' to tokenizer.")
 
     print(f"Loading processed 'train' data from '{data_path}/train'...")
     processed_dataset = load_from_disk(os.path.join(data_path, "train"))
     print("Data loaded.")
 
     # 3. Initialize the correct Dataset based on the mask_mode
-    # This logic now mirrors the main training script.
     if mask_mode == MaskMode.PREFIX_SFT_STAGE1:
         dataset = SummarizedTrajectoryDataset(processed_dataset, tokenizer, build_prefix_sft_examples)
     elif mask_mode == MaskMode.PREFIX_SFT_STAGE2:
@@ -72,72 +65,87 @@ def verify_experiment_data(config_path: str, data_path: str, num_examples: int =
     else: # For MIXED, ACTION_ONLY, etc.
         dataset = AOMTDataset(processed_dataset, tokenizer, mode=mask_mode, mask_prob=config.get("mask_prob", 0.0))
 
-    # For summarized datasets, num_examples might be larger than the dataset if a trajectory yields few examples
-    actual_num_examples = min(num_examples, len(dataset))
-    if actual_num_examples == 0:
+    if not dataset:
         print("\nWarning: No examples were generated for this configuration. Cannot display anything.")
-        print("-" * 40)
         return
 
-    print(f"Displaying {actual_num_examples} examples for mode '{mask_mode.name}':\n")
+    print(f"\nSearching for one example from each environment for mode '{mask_mode.name}':\n")
+    
+    # 4. Find and display one example per environment
+    target_envs = {"alfworld", "scienceworld", "webshop"}
+    found_envs = set()
+    is_summarized = isinstance(dataset, SummarizedTrajectoryDataset)
 
-    is_summarized_dataset = isinstance(dataset, SummarizedTrajectoryDataset)
+    for i in range(len(dataset)):
+        # Stop if we've found one of each
+        if len(found_envs) == len(target_envs):
+            break
 
-    for i in range(actual_num_examples):
-        print(f"--- Example {i+1} for {mask_mode.name} ---")
+        example_data = dataset[i]
         
-        # __getitem__ returns a dict with pre-masked inputs for all dataset types now
-        item = dataset[i]
-        input_ids = item['input_ids']
-        target_ids = item['target_ids']
-        loss_mask = item['loss_mask']
-        
-        masked_indices = torch.where(input_ids == tokenizer.mask_token_id)[0]
-        loss_indices = torch.where(loss_mask == 1)[0]
-        
-        print(f"  Sequence Length: {len(target_ids)}")
-        print(f"  Number of Masked Tokens: {len(masked_indices)}")
-        print(f"  Number of Tokens in Loss Mask: {len(loss_indices)}")
-        
-        print("\n  Decoded Example:")
-        
-        if is_summarized_dataset:
-            # For summarized datasets, examples are short; show the whole thing.
-            # Set skip_special_tokens to False to make [MASK] and other tokens visible.
-            snippet_original = tokenizer.decode(target_ids, skip_special_tokens=False)
-            snippet_masked = tokenizer.decode(input_ids, skip_special_tokens=False)
-            
-            print("\n  CONTEXT (Input to be Unmasked):")
-            print(f"  {snippet_masked}")
-            print("\n  TARGET (Ground Truth):")
-            print(f"  {snippet_original}")
-
+        # Determine the environment for the current example
+        env = "unknown"
+        if is_summarized:
+            # Summarized examples have 'env' in their dictionary
+            env = example_data.get('env', 'unknown')
         else:
-            # For long AOMT trajectories, show a snippet around the mask.
-            if len(masked_indices) > 0:
-                start_idx = max(0, masked_indices[0] - 50)
-                end_idx = min(len(input_ids), masked_indices[-1] + 50)
-            else:
-                start_idx = 0
-                end_idx = 100
+            # AOMTDataset needs to look up the env from the original processed_dataset
+            env = dataset.processed_dataset[i]['env']
 
-            snippet_original = tokenizer.decode(target_ids[start_idx:end_idx], skip_special_tokens=True)
-            snippet_masked = tokenizer.decode(input_ids[start_idx:end_idx], skip_special_tokens=True)
+        if env in target_envs and env not in found_envs:
+            print(f"--- Example for env='{env}' ---")
+            
+            input_ids = example_data['input_ids']
+            target_ids = example_data['target_ids']
+            loss_mask = example_data['loss_mask']
+            
+            masked_indices = torch.where(input_ids == tokenizer.mask_token_id)[0]
+            
+            print(f"  Sequence Length: {len(target_ids)}")
+            print(f"  Number of Masked Tokens: {len(masked_indices)}")
+            
+            print("\n  Decoded Example:")
+            
+            # For summarized datasets or short sequences, show the whole thing
+            if is_summarized or len(input_ids) < 300:
+                snippet_original = tokenizer.decode(target_ids, skip_special_tokens=False)
+                snippet_masked = tokenizer.decode(input_ids, skip_special_tokens=False)
+                print("\n  INPUT (masked):")
+                print(f"  {snippet_masked}")
+                print("\n  TARGET (ground truth):")
+                print(f"  {snippet_original}")
+            else: # For long trajectories, show a snippet around the first mask
+                if len(masked_indices) > 0:
+                    start_idx = max(0, masked_indices[0] - 100)
+                    end_idx = min(len(input_ids), masked_indices[0] + 100)
+                else: # No masks found, just show the beginning
+                    start_idx, end_idx = 0, 200
 
-            print("\n  CONTEXT (Input to be Unmasked):")
-            print(f"  ...{snippet_masked}...")
-            print("\n  TARGET (Ground Truth):")
-            print(f"  ...{snippet_original}...")
+                snippet_original = tokenizer.decode(target_ids[start_idx:end_idx], skip_special_tokens=True)
+                snippet_masked = tokenizer.decode(input_ids[start_idx:end_idx], skip_special_tokens=True)
 
-        print("\n" + "-"*40)
+                print("\n  INPUT (masked snippet):")
+                print(f"  ...{snippet_masked}...")
+                print("\n  TARGET (ground truth snippet):")
+                print(f"  ...{snippet_original}...")
+
+            found_envs.add(env)
+            print("\n" + "-"*40)
+
+    if not found_envs:
+        print("Could not find any examples for the target environments in the dataset.")
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Visualize training data for a specific experiment config.")
     parser.add_argument("--config", type=str, required=True, help="Path to the experiment YAML config file.")
     
-    script_dir = os.path.dirname(__file__)
+    # Correctly locate the data directory relative to this script's location
+    script_dir = os.path.dirname(os.path.abspath(__file__))
     default_data_path = os.path.join(script_dir, '../data/processed_dataset')
+    
+    parser.add_argument("--data_path", type=str, default=default_data_path, help="Path to the processed dataset directory.")
     
     args = parser.parse_args()
     
-    verify_experiment_data(args.config, default_data_path)
+    verify_experiment_data(args.config, args.data_path)
