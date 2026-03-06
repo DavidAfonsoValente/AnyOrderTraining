@@ -1,4 +1,4 @@
-# Any-Order Masked Training (AOMT)
+# Any-Order Motion Transformer (AOMT)
 
 ## 1. Project Overview
 
@@ -31,16 +31,43 @@ aomt/
 
 ## 3. Environment Setup
 
-The setup process is automated via a single script. It will check for submodules, create a virtual environment, install dependencies, download the required model, and prepare the datasets.
+The setup is a two-phase process that separates lightweight tasks (run on a login node) from memory-intensive tasks (run on a compute node).
 
-From the repository's root directory (`aomt/`), make the script executable and run it. This should be done on a login node (e.g., `xlogin1`).
+### Phase 1: Initial Setup (on Login Node)
+
+First, run the `setup.sh` script from the `aomt/` directory. This will handle checking for submodules, setting up the Python environment, installing dependencies, and downloading the pre-trained model.
 
 ```bash
+# To be run on a login node (e.g., xlogin1)
 chmod +x setup.sh
 ./setup.sh
 ```
 
-The script will guide you through the final step of setting the required `ALFWORLD_DATA` environment variable in your shell profile (e.g., `~/.bashrc`). Once you have done that, the setup is complete.
+### Phase 2: Data Preparation (on Compute Node)
+
+Next, the raw data must be processed. This is a memory-intensive task and **must be run on a compute node**.
+
+1.  **Request an interactive Slurm session:**
+    ```bash
+    # Request a node with sufficient memory for 1 hour
+    salloc --time=1:00:00 --mem=32G --ntasks=1
+    ```
+
+2.  **Run the data preparation script:**
+    Once your job starts and you are on a compute node prompt, run the script:
+    ```bash
+    # This will now run on the compute node
+    ./scripts/prepare_data.sh
+    ```
+
+3.  **Set the Environment Variable:**
+    The final step is to set the `ALFWORLD_DATA` environment variable. Add the following line to your `~/.bashrc` or `~/.zshrc` file on the login node.
+    ```bash
+    export ALFWORLD_DATA="$(pwd)/data/alfworld"
+    ```
+    *(Note: Ensure `$(pwd)` resolves to the absolute path to your `aomt` directory.)*
+
+After completing these phases, your environment is fully configured.
 
 ---
 
