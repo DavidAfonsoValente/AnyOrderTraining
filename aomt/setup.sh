@@ -9,13 +9,16 @@ echo "--- AOMT Environment Setup ---"
 # The Top Level Directory (containing 'aomt') needs to be on the Python path.
 TOP_LEVEL_DIR=$(dirname "$(pwd)")
 
-# --- 1. Check for Submodules ---
-echo "[1/6] Checking for Git submodules..."
-if [ ! -f "dFactory/README.md" ]; then
-    echo "ERROR: dFactory submodule not found. Please clone with '--recurse-submodules'."
+# --- 1. Initialize Git Submodules ---
+echo "[1/6] Initializing Git submodules..."
+git submodule update --init --recursive
+
+if [ ! -f "dFactory/VeOmni/README.md" ]; then
+    echo "ERROR: VeOmni submodule not found after initialization."
+    echo "Please ensure that 'dFactory' is a submodule and that it contains the 'VeOmni' submodule."
     exit 1
 fi
-echo "Submodules appear to be correctly initialized."
+echo "Submodules initialized successfully."
 
 # --- 2. Create Framework Symlink ---
 echo "[2/6] Creating framework compatibility symlink..."
