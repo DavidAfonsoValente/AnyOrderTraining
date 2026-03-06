@@ -14,7 +14,7 @@ if ! command -v uv &> /dev/null; then
 fi
 echo "uv is installed."
 
-# --- 2. Manually Clone dFactory and VeOmni ---
+# --- 2. Manually Clone dFactory and its submodules ---
 echo "[2/6] Cloning dFactory and its submodules..."
 DFACTORY_DIR="dFactory"
 if [ ! -d "$DFACTORY_DIR/.git" ]; then
@@ -35,8 +35,10 @@ if [ ! -f "$VEOMNI_DIR/pyproject.toml" ]; then
     echo "ERROR: dFactory/VeOmni/pyproject.toml not found. Cloning may have failed."
     exit 1
 fi
-# Use a temporary file for sed compatibility between GNU and BSD/macOS
+# Patch Python version requirement
 sed 's/requires-python = ">=3.11, <3.12"/requires-python = ">=3.11"/' "$VEOMNI_DIR/pyproject.toml" > "$VEOMNI_DIR/pyproject.toml.tmp" && mv "$VEOMNI_DIR/pyproject.toml.tmp" "$VEOMNI_DIR/pyproject.toml"
+# Patch flash-attn hardcoded URL
+sed 's/url = "https:\/\/github.com\/mjun0812\/flash-attention-prebuild-wheels/url_commented = "# https:\/\/github.com\/mjun0812\/flash-attention-prebuild-wheels/' "$VEOMNI_DIR/pyproject.toml" > "$VEOMNI_DIR/pyproject.toml.tmp" && mv "$VEOMNI_DIR/pyproject.toml.tmp" "$VEOMNI_DIR/pyproject.toml"
 echo "Patching complete."
 
 # --- 4. Setup Environment with uv ---
