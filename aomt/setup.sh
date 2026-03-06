@@ -1,9 +1,13 @@
 #!/bin/bash
 # AOMT Environment Setup Script
-# This script prepares the complete environment for running AOMT experiments.
 set -e
 
 echo "--- AOMT Environment Setup ---"
+
+# --- Robust Path Setup ---
+# This script assumes it is being run from the 'aomt' directory.
+# The Top Level Directory (containing 'aomt') needs to be on the Python path.
+TOP_LEVEL_DIR=$(dirname "$(pwd)")
 
 # --- 1. Check for Submodules ---
 echo "[1/6] Checking for Git submodules..."
@@ -33,18 +37,21 @@ fi
 source "${VENV_DIR}/bin/activate"
 echo "Virtual environment activated."
 
-# --- 4. Install Python Dependencies ---
-echo "[4/6] Installing Python packages from requirements.txt..."
+# --- 4. Set PYTHONPATH ---
+echo "[4/6] Exporting Python path..."
+# This makes 'from aomt...' and 'from veomni...' imports work correctly.
+export PYTHONPATH="${TOP_LEVEL_DIR}:${PWD}/dFactory:${PYTHONPATH}"
+echo "PYTHONPATH set."
+
+# --- 5. Install Python Dependencies ---
+echo "[5/6] Installing Python packages from requirements.txt..."
 pip install --upgrade pip
 pip install -r requirements.txt
 
-# --- 5. Download Pre-trained Model ---
-echo "[5/6] Checking for and downloading pre-trained model..."
-# Run as a module to ensure imports work
+# --- 6. Download Pre-trained Model ---
+echo "[6/6] Checking for and downloading pre-trained model..."
 python3 -m aomt.data.download
 
-# --- 6. Final Instructions ---
-echo "[6/6] Finalizing setup..."
 echo -e "\n--- Environment setup complete! ---"
 echo
 echo "IMPORTANT: The next steps for data preparation and running experiments are in the README.md."
