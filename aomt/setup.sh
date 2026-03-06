@@ -59,6 +59,8 @@ echo "PYTHONPATH set."
 # --- 5. Install Python Dependencies ---
 echo "[5/6] Installing Python packages from requirements.txt..."
 pip install --upgrade pip
+echo "Purging pip cache to ensure fresh dependency resolution..."
+pip cache purge
 pip install -r requirements.txt
 echo "Installing VeOmni dependency in editable mode..."
 pip install -e dFactory/VeOmni --no-cache-dir
