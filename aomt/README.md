@@ -78,7 +78,7 @@ This section describes the full workflow, from verifying the setup to analyzing 
 
 ### Step 4.1: Verification and Testing
 
-Before submitting resource-intensive jobs, run the automated test suite script. This will activate the correct environment, set the necessary paths, and run all unit and integration tests to verify your setup.
+Before submitting jobs, run the automated test suite. The script handles all environment and path setup internally.
 
 ```bash
 # Run from the aomt/ directory on a login node

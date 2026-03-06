@@ -23,15 +23,25 @@ if [ -z "$1" ]; then
 fi
 CONFIG_FILE=$1
 
+# --- Robust Path Setup ---
+# sbatch starts in the CWD of the caller. We assume this is the 'aomt' directory.
+PROJECT_ROOT=$(pwd)
+TOP_LEVEL_DIR=$(dirname "$PROJECT_ROOT")
+
 echo "--- Activating Environment ---"
-source venv/bin/activate
-export PYTHONPATH="$(pwd):$(pwd)/dFactory:$PYTHONPATH"
+source "${PROJECT_ROOT}/venv/bin/activate"
+
+# Set the PYTHONPATH to include the top-level directory AND the dFactory submodule.
+export PYTHONPATH="${TOP_LEVEL_DIR}:${PROJECT_ROOT}/dFactory:${PYTHONPATH}"
+
 
 echo "--- Launching dFactory Training ---"
 # Explicitly set the number of processes to match the GPUs we requested
-# by prepending the variable to the command.
-NPROC_PER_NODE=2 ./dFactory/train.sh \
-    training/trainer.py \
+export NPROC_PER_NODE=2
+
+# Use absolute paths to be safe.
+"${PROJECT_ROOT}/dFactory/train.sh" \
+    "${PROJECT_ROOT}/training/trainer.py" \
     --config "$CONFIG_FILE" \
     --distributed
 

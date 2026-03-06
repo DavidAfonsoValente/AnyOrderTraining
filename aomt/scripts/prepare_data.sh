@@ -2,23 +2,22 @@
 #
 # Master Data Preparation Script
 #
-# This script automates the data setup process. It should be run once
-# after the initial environment setup, inside a Slurm allocation.
-#
 set -e # Exit on error
 
 # --- Robust Path Setup ---
 # Get the absolute path to the directory containing this script.
 SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &> /dev/null && pwd)
-# The project root is one level up from the 'scripts' directory.
+# The project root ('aomt') is one level up from the 'scripts' directory.
 PROJECT_ROOT=$(dirname "$SCRIPT_DIR")
-cd "$PROJECT_ROOT" # Ensure we are running from the 'aomt' directory
+# The top-level directory (containing 'aomt') is one level up from the project root.
+TOP_LEVEL_DIR=$(dirname "$PROJECT_ROOT")
 
 # Activate virtual environment
-source "venv/bin/activate"
+source "${PROJECT_ROOT}/venv/bin/activate"
 
-# Add the project root ('aomt') and dFactory to the Python path
-export PYTHONPATH="${PROJECT_ROOT}:${PROJECT_ROOT}/dFactory:${PYTHONPATH}"
+# Set the PYTHONPATH to include the top-level directory AND the dFactory submodule.
+# This makes 'from aomt...' and 'from veomni...' imports work correctly.
+export PYTHONPATH="${TOP_LEVEL_DIR}:${PROJECT_ROOT}/dFactory:${PYTHONPATH}"
 
 echo "========================================"
 echo "      AOMT Data Preparation"
@@ -26,20 +25,20 @@ echo "========================================"
 
 # --- Step 1: Download Raw Dataset ---
 echo "\n[1/4] Checking for and downloading raw dataset..."
-python3 "data/download.py"
+python3 "${PROJECT_ROOT}/data/download.py"
 
 # --- Step 2: Process 'train' split ---
 echo "\n[2/4] Processing 'train' split..."
-python3 "data/parse_trajectories.py" --split train
+python3 "${PROJECT_ROOT}/data/parse_trajectories.py" --split train
 
 # --- Step 3: Process 'test' split ---
 echo "\n[3/4] Processing 'test' split..."
-python3 "data/parse_trajectories.py" --split test
+python3 "${PROJECT_ROOT}/data/parse_trajectories.py" --split test
 
 # --- Step 4: Verify Processed Data ---
 echo "\n[4/4] Verifying processed data..."
-chmod +x "scripts/verify_data.py"
-"scripts/verify_data.py"
+chmod +x "${PROJECT_ROOT}/scripts/verify_data.py"
+"${PROJECT_ROOT}/scripts/verify_data.py"
 
 echo "\n========================================"
 echo "      Data preparation complete."
