@@ -65,9 +65,11 @@ echo "[5/5] Creating helper script 'activate_env.sh'..."
 TOP_LEVEL_DIR=$(dirname "$(pwd)")
 VEOMNI_PATH_REL_AOMT="dFactory/VeOmni"
 echo "#!/bin/bash" > activate_env.sh
-echo "# This script loads the correct python module and activates the virtual environment." >> activate_env.sh
+echo "# This script loads the correct python module, sets memory limits, and activates the virtual environment." >> activate_env.sh
 echo "echo 'Attempting to load Python 3.11 module...'" >> activate_env.sh
 echo "module load python/3.11 || true" >> activate_env.sh
+echo "echo 'Setting memory limit to unlimited...'" >> activate_env.sh
+echo "ulimit -m unlimited" >> activate_env.sh
 echo "echo 'Activating uv environment at ${PWD}/${VEOMNI_PATH_REL_AOMT}/.venv...'" >> activate_env.sh
 echo "source ${PWD}/${VEOMNI_PATH_REL_AOMT}/.venv/bin/activate" >> activate_env.sh
 echo "export PYTHONPATH=${TOP_LEVEL_DIR}:\${PYTHONPATH}" >> activate_env.sh
