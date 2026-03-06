@@ -21,6 +21,9 @@ SCRIPTS_DIR="$PROJECT_ROOT/scripts"
 # Activate virtual environment
 source "$PROJECT_ROOT/venv/bin/activate"
 
+# Add current directory (aomt) and dFactory to python path
+export PYTHONPATH="$(pwd):$PROJECT_ROOT/dFactory:$PYTHONPATH"
+
 echo "========================================"
 echo "      AOMT Data Preparation"
 echo "========================================"
