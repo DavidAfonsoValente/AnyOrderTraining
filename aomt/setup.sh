@@ -15,46 +15,8 @@ if ! command -v "$PYTHON_EXEC" &> /dev/null; then
 fi
 echo "Found compatible Python executable: $PYTHON_EXEC"
 
-# --- Robust Path Setup ---
-# This script assumes it is being run from the 'aomt' directory.
-# The Top Level Directory (containing 'aomt') needs to be on the Python path.
-TOP_LEVEL_DIR=$(dirname "$(pwd)")
-
-# --- 2. Initialize Git Submodules & VeOmni ---
-echo "[2/7] Initializing Git submodules and VeOmni..."
-git submodule sync
-git submodule update --init # Not recursive, VeOmni is handled manually
-
-# Manually clone VeOmni into dFactory, as it's not a formal submodule upstream
-VEOMNI_DIR="dFactory/VeOmni"
-if [ ! -d "$VEOMNI_DIR/.git" ]; then
-    echo "Cloning VeOmni repository into dFactory..."
-    # Remove directory if it exists but is not a git repo
-    rm -rf "$VEOMNI_DIR"
-    git clone https://github.com/ByteDance-Seed/VeOmni.git "$VEOMNI_DIR"
-else
-    echo "VeOmni repository already exists."
-fi
-
-if [ ! -f "dFactory/VeOmni/README.md" ]; then
-    echo "ERROR: VeOmni could not be cloned into dFactory."
-    exit 1
-fi
-echo "Submodules and VeOmni initialized successfully."
-
-# --- 3. Create Framework Symlink ---
-echo "[3/7] Creating framework compatibility symlink..."
-(cd "dFactory" && {
-    if [ ! -e "veomni" ]; then
-        ln -s VeOmni veomni
-        echo "'veomni' symlink created to handle case-sensitivity."
-    else
-        echo "'veomni' symlink already exists."
-    fi
-})
-
-# --- 4. Setup Virtual Environment ---
-echo "[4/7] Setting up Python 3.11 virtual environment..."
+# --- 2. Setup Virtual Environment ---
+echo "[2/7] Setting up Python 3.11 virtual environment..."
 VENV_DIR="venv"
 VENV_PYTHON="${VENV_DIR}/bin/python"
 NEEDS_RECREATE=false
@@ -76,6 +38,43 @@ fi
 source "${VENV_DIR}/bin/activate"
 echo "Virtual environment activated."
 
+# --- Robust Path Setup ---
+# This script assumes it is being run from the 'aomt' directory.
+# The Top Level Directory (containing 'aomt') needs to be on the Python path.
+TOP_LEVEL_DIR=$(dirname "$(pwd)")
+
+# --- 3. Initialize Git Submodules & VeOmni ---
+echo "[3/7] Initializing Git submodules and VeOmni..."
+git submodule sync
+git submodule update --init # Not recursive, VeOmni is handled manually
+
+# Manually clone VeOmni into dFactory, as it's not a formal submodule upstream
+VEOMNI_DIR="dFactory/VeOmni"
+if [ ! -d "$VEOMNI_DIR/.git" ]; then
+    echo "Cloning VeOmni repository into dFactory..."
+    # Remove directory if it exists but is not a git repo
+    rm -rf "$VEOMNI_DIR"
+    git clone https://github.com/ByteDance-Seed/VeOmni.git "$VEOMNI_DIR"
+else
+    echo "VeOmni repository already exists."
+fi
+
+if [ ! -f "dFactory/VeOmni/README.md" ]; then
+    echo "ERROR: VeOmni could not be cloned into dFactory."
+    exit 1
+fi
+echo "Submodules and VeOmni initialized successfully."
+
+# --- 4. Create Framework Symlink ---
+echo "[4/7] Creating framework compatibility symlink..."
+(cd "dFactory" && {
+    if [ ! -e "veomni" ]; then
+        ln -s VeOmni veomni
+        echo "'veomni' symlink created to handle case-sensitivity."
+    else
+        echo "'veomni' symlink already exists."
+    fi
+})
 
 # --- 5. Set PYTHONPATH ---
 echo "[5/7] Exporting Python path..."
