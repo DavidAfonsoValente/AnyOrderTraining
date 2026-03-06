@@ -27,26 +27,14 @@ echo "========================================"
 echo "    Submitting All AOMT Experiments"
 echo "========================================"
 
-# --- 1. Submit Main Experiments in a Dependency Chain ---
-last_job_id=""
+# --- 1. Submit Main Experiments in Parallel ---
 echo "
-Submitting main experiments in a dependency chain..."
+Submitting main experiments in parallel..."
 
 for config in "${CONFIG_CHAIN[@]}"; do
     job_name="aomt_$(basename "$config" .yaml)"
     echo "Submitting job '$job_name' for: $config"
-
-    if [ -z "$last_job_id" ]; then
-        # First job in the chain
-        job_output=$(sbatch scripts/submit_fsdp_training.sh "$config")
-        last_job_id=$(echo "$job_output" | awk '{print $4}')
-        echo "Chain started with Job ID: $last_job_id"
-    else
-        # Subsequent jobs depend on the previous one
-        job_output=$(sbatch --dependency=afterok:"$last_job_id" scripts/submit_fsdp_training.sh "$config")
-        last_job_id=$(echo "$job_output" | awk '{print $4}')
-        echo "Queued dependent job with ID: $last_job_id"
-    fi
+    sbatch scripts/submit_fsdp_training.sh "$config"
 done
 
 # --- 2. Submit Two-Stage Dependent Experiment (can run in parallel) ---

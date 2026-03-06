@@ -9,7 +9,7 @@
 #SBATCH --error=slurm_logs/aomt_fsdp_%j.err
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
-#SBATCH --gres=gpu:a100-80:1
+#SBATCH --gres=gpu:a100-40:2
 #SBATCH --constraint=cuda80
 #SBATCH --time=48:00:00
 #SBATCH --mem=64G
