@@ -11,6 +11,7 @@ import torch
 from transformers import AutoTokenizer, AutoModelForCausalLM
 from torch.distributed.fsdp import FullyShardedDataParallel as FSDP
 from torch.distributed.fsdp.fully_sharded_data_parallel import CPUOffload
+from datasets import load_from_disk
 from torch.distributed.fsdp.wrap import size_based_auto_wrap_policy
 import functools
 import yaml # Added for loading eval config
@@ -56,14 +57,14 @@ def run_evaluation_suite(
     
     model.eval()
 
-    # 2. Load Data
+    # 2. Load Data using the datasets library
     print(f"Loading evaluation data from: {data_split_path}")
     if not os.path.exists(data_split_path):
-        raise FileNotFoundError(f"Data split not found at {data_split_path}")
-    tokenized_trajectories = torch.load(data_split_path)
+        raise FileNotFoundError(f"Data split not found at {data_split_path}. Ensure 'prepare_data.sh' has been run for the 'test' split.")
+    tokenized_trajectories = load_from_disk(data_split_path)
 
     # Filter for a smaller subset for faster demonstration
-    eval_subset = tokenized_trajectories[:50]
+    eval_subset = tokenized_trajectories.select(range(50))
     print(f"Using a subset of {len(eval_subset)} trajectories for evaluation.")
 
     # Load evaluation configuration
@@ -127,7 +128,7 @@ def run_evaluation_suite(
 def main():
     parser = argparse.ArgumentParser(description="Run the full AOMT evaluation suite on a model checkpoint.")
     parser.add_argument("--checkpoint_path", type=str, required=True, help="Path to the trained model checkpoint directory.")
-    parser.add_argument("--data_split_path", type=str, default="aomt/data/cache/test_tokenized_trajectories_len2048.pt", help="Path to the tokenized test data split.")
+    parser.add_argument("--data_split_path", type=str, default="aomt/data/processed_dataset/test", help="Path to the processed test dataset directory.")
     parser.add_argument("--results_dir", type=str, help="Directory to save the results.json file. Defaults to the checkpoint directory.")
     parser.add_argument("--split", type=str, default="seen", choices=["seen", "unseen"], help="Which task split to evaluate on (e.g., 'seen', 'unseen').")
 
@@ -140,26 +141,6 @@ def main():
         data_split_path=args.data_split_path,
         results_dir=results_dir,
         split=args.split,
-    )
-
-if __name__ == "__main__":
-    main()
-    print(json.dumps(all_results, indent=4))
-
-def main():
-    parser = argparse.ArgumentParser(description="Run the full AOMT evaluation suite on a model checkpoint.")
-    parser.add_argument("--checkpoint_path", type=str, required=True, help="Path to the trained model checkpoint directory.")
-    parser.add_argument("--data_split_path", type=str, default="aomt/data/cache/test_tokenized_trajectories_len2048.pt", help="Path to the tokenized test data split.")
-    parser.add_argument("--results_dir", type=str, help="Directory to save the results.json file. Defaults to the checkpoint directory.")
-
-    args = parser.parse_args()
-
-    results_dir = args.results_dir if args.results_dir else args.checkpoint_path
-    
-    run_evaluation_suite(
-        checkpoint_path=args.checkpoint_path,
-        data_split_path=args.data_split_path,
-        results_dir=results_dir,
     )
 
 if __name__ == "__main__":
