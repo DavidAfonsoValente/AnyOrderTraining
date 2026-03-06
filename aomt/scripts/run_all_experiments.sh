@@ -7,6 +7,9 @@
 
 set -e
 
+# Create the log directory before submitting jobs
+mkdir -p slurm_logs
+
 # --- Configuration ---
 # An array of the main, independent experiment config files in the desired order.
 CONFIG_CHAIN=(
