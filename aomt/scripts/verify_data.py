@@ -51,7 +51,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Load and verify a processed dataset split.")
     
     # This script is run as 'aomt.scripts.verify_data', so paths must be relative to the top-level.
-    default_data_path = 'aomt/data/processed_dataset'
+    default_data_path = 'data/processed_dataset'
 
     parser.add_argument(
         "--data_path",
