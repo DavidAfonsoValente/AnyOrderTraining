@@ -25,7 +25,7 @@ CONFIG_FILE=$1
 
 echo "--- Activating Environment ---"
 source venv/bin/activate
-export PYTHONPATH="$(pwd)/dFactory:$PYTHONPATH"
+export PYTHONPATH="$(pwd)/dFactory/veomni:$(pwd)/dFactory:$PYTHONPATH"
 
 # Create a symlink for veomni if it doesn't exist, to handle case-sensitivity issues.
 (cd "$(pwd)/dFactory" && {
