@@ -27,7 +27,7 @@ def process_and_cache_dataset(
     model_name: str,
     max_length: int,
     split: str = "train",
-    num_proc: int = 4 # Increased for potentially faster processing
+    num_proc: int = 1 # Disabling multiprocessing to prevent memory issues on cluster
 ):
     """
     Loads a raw dataset, processes it using map for memory efficiency,

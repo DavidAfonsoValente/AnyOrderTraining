@@ -50,7 +50,7 @@ Next, the raw data must be processed. This is a memory-intensive task and **must
 1.  **Request an interactive Slurm session:**
     ```bash
     # Request a node with sufficient memory for 1 hour
-    salloc --time=1:00:00 --mem=32G --ntasks=1
+    salloc --time=1:00:00 --mem=128G --gpus=1 --ntasks=1
     ```
 
 2.  **Run the data preparation script:**
