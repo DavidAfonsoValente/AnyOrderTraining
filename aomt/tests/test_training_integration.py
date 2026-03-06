@@ -6,9 +6,6 @@ import os
 import sys
 import shutil
 
-# Ensure dFactory is in path, similar to how trainer.py does it
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'dFactory')))
-
 from aomt.training.trainer import run_training
 
 class TestTrainingIntegration(unittest.TestCase):
