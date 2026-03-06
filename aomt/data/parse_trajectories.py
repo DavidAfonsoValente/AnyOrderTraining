@@ -11,10 +11,14 @@ from .unit_parser import (
     tokenize_trajectory
 )
 
+# --- Robust Pathing ---
+SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
+PROJECT_ROOT = os.path.abspath(os.path.join(SCRIPT_DIR, '..'))
+
 # --- Constants ---
-DEFAULT_DATASET_PATH = "data/dataset_cache"
-DEFAULT_CACHE_PATH = "data/processed_dataset"
-DEFAULT_MODEL_NAME = "models/LLaDA2.0-mini"
+DEFAULT_DATASET_PATH = os.path.join(PROJECT_ROOT, "data", "dataset_cache")
+DEFAULT_CACHE_PATH = os.path.join(PROJECT_ROOT, "data", "processed_dataset")
+DEFAULT_MODEL_NAME = os.path.join(PROJECT_ROOT, "models", "LLaDA2.0-mini")
 DEFAULT_MAX_LENGTH = 2048
 
 def process_and_cache_dataset(

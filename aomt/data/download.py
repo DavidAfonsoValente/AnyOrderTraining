@@ -3,9 +3,14 @@ from datasets import load_dataset, DatasetDict, concatenate_datasets, Value
 import argparse
 import os
 
-# The dataset name as specified in the engineering specs
+# --- Robust Pathing ---
+# Get the absolute path to the project root (aomt)
+SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
+PROJECT_ROOT = os.path.abspath(os.path.join(SCRIPT_DIR, '..'))
+
+# --- Constants ---
 DATASET_NAME = "agent-eto/eto-sft-trajectory"
-DEFAULT_SAVE_PATH = "./dataset_cache"
+DEFAULT_SAVE_PATH = os.path.join(PROJECT_ROOT, "data", "dataset_cache")
 
 def download_dataset(save_path: str):
     """
@@ -74,15 +79,11 @@ def main():
         "--save_path",
         type=str,
         default=DEFAULT_SAVE_PATH,
-        help=f"The local directory to save the dataset. Defaults to '{DEFAULT_SAVE_PATH}'.",
+        help=f"The local directory to save the dataset. Defaults to an absolute path within the project.",
     )
     args = parser.parse_args()
     
-    # Ensure the path is relative to the script's directory for consistency
-    script_dir = os.path.dirname(__file__)
-    save_path = os.path.join(script_dir, args.save_path)
-
-    download_dataset(save_path)
+    download_dataset(args.save_path)
 
 if __name__ == "__main__":
     main()
