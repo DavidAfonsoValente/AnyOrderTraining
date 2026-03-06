@@ -44,10 +44,8 @@ TOP_LEVEL_DIR=$(dirname "$(pwd)")
 
 # --- 3. Initialize Git Submodules ---
 echo "[3/8] Initializing Git submodules..."
-echo "Forcefully de-initializing all submodules to ensure a clean state..."
-git submodule deinit --all -f
 git submodule sync
-git submodule update --init
+git submodule update --init --recursive
 
 # --- 4. Clone & Patch VeOmni Dependency ---
 echo "[4/8] Cloning and patching VeOmni dependency..."
