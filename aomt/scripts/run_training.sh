@@ -64,6 +64,12 @@ source "$PROJECT_ROOT/venv/bin/activate"
 # Add dFactory to python path
 export PYTHONPATH="$PROJECT_ROOT/dFactory:$PYTHONPATH"
 
+# Create a symlink for veomni if it doesn't exist, to handle case-sensitivity issues on some filesystems.
+if [ ! -L "$PROJECT_ROOT/dFactory/veomni" ] && [ -d "$PROJECT_ROOT/dFactory/VeOmni" ]; then
+    echo "Creating symlink for veomni in dFactory..."
+    ln -s "$PROJECT_ROOT/dFactory/VeOmni" "$PROJECT_ROOT/dFactory/veomni"
+fi
+
 # We are calling the simple, single-process trainer.py for demonstration.
 # A real FSDP setup would use `torchrun` or `accelerate launch`.
 python3 "$PROJECT_ROOT/training/trainer.py" --config "$CONFIG_FILE" "$@"

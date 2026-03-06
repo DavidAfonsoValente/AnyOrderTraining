@@ -19,6 +19,20 @@ import functools
 import itertools
 import wandb
 
+# --- Section: Patch for local LLaDA2 model ---
+# The `inclusionAI/LLaDA2.0-mini` model uses custom code that is included
+# in the dFactory submodule. We need to explicitly tell the `transformers`
+# library where to find this code, otherwise it will fail to load it from the Hub.
+try:
+    from veomni.models.registry import ModelRegistry
+    ModelRegistry.register_modeling_path("models.llada2_moe")
+    if not dist.is_initialized() or dist.get_rank() == 0:
+        print("Successfully registered local LLaDA2 model code.")
+except ImportError as e:
+    if not dist.is_initialized() or dist.get_rank() == 0:
+        print(f"Warning: Could not import or register local LLaDA2 model code: {e}. Training may fail if using a local model.")
+# --- End Patch ---
+
 from aomt.data.unit_parser import TokenizedTrajectory, TokenizedUnit
 from aomt.training.mask_sampler import MaskMode, apply_unit_mask
 from aomt.training.objectives import masked_unit_cross_entropy
