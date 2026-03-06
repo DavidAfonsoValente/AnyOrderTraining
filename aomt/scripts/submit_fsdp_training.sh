@@ -25,7 +25,6 @@ NUM_GPUS=1
 #SBATCH --job-name=aomt_fsdp_training
 #SBATCH --output=slurm_logs/aomt_fsdp_%j.out
 #SBATCH --error=slurm_logs/aomt_fsdp_%j.err
-#SBATCH --partition=gpu-long
 #SBATCH --constraint=cuda80
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
