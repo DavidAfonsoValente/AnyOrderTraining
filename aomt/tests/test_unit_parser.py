@@ -3,7 +3,7 @@ import unittest
 import torch
 from transformers import AutoTokenizer
 
-from aomt.data.unit_parser import (
+from ..data.unit_parser import (
     parse_conversation_to_trajectory,
     tokenize_trajectory,
     Trajectory,

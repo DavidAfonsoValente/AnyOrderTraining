@@ -5,8 +5,8 @@ import torch.nn.functional as F
 from transformers import AutoModelForCausalLM, AutoTokenizer, AutoConfig
 import numpy as np
 
-from aomt.training.objectives import masked_unit_cross_entropy
-from aomt.training.trainer import training_step
+from ..training.objectives import masked_unit_cross_entropy
+from ..training.trainer import training_step
 
 class TestLossComputation(unittest.TestCase):
 

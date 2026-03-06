@@ -4,8 +4,8 @@ import torch
 import numpy as np
 from transformers import AutoTokenizer
 
-from aomt.training.mask_sampler import MaskMode, apply_unit_mask
-from aomt.data.unit_parser import TokenizedTrajectory, TokenizedUnit
+from ..training.mask_sampler import MaskMode, apply_unit_mask
+from ..data.unit_parser import TokenizedTrajectory, TokenizedUnit
 
 class TestMaskSampler(unittest.TestCase):
 

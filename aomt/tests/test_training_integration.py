@@ -6,7 +6,7 @@ import os
 import sys
 import shutil
 
-from aomt.training.trainer import run_training
+from ..training.trainer import run_training
 
 class TestTrainingIntegration(unittest.TestCase):
 
