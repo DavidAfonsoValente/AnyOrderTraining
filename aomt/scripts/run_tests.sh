@@ -15,8 +15,8 @@ echo "--- Running AOMT Test Suite from $(pwd) ---"
 # Activate the virtual environment located inside 'aomt'
 source aomt/venv/bin/activate
 
-# Set the PYTHONPATH to include the dFactory submodule, allowing 'veomni' to be found
-export PYTHONPATH="$(pwd)/aomt/dFactory:$PYTHONPATH"
+# Set the PYTHONPATH to include the dFactory submodule and the aomt package
+export PYTHONPATH="$(pwd)/aomt/dFactory:$(pwd)/aomt:$PYTHONPATH"
 
 # Run the tests using discovery, specifying the project's top-level directory
 # to ensure 'from aomt...' imports work correctly.
