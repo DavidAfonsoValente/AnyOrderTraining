@@ -77,11 +77,11 @@ This section describes the full workflow, from verifying the setup to analyzing 
 
 ### Step 4.1: Verification and Testing
 
-Before submitting resource-intensive jobs, run the automated test suite. This ensures your environment is correctly configured and the core logic is sound. It includes unit tests and an integration test of the full training pipeline.
+Before submitting resource-intensive jobs, run the automated test suite script. This will activate the correct environment, set the necessary paths, and run all unit and integration tests to verify your setup.
 
 ```bash
 # Run from the aomt/ directory on a login node
-python3 -m unittest discover tests
+./scripts/run_tests.sh
 ```
 
 For a deeper sanity check, you can also run the visualization script within a Slurm allocation to see how the data for each experiment is masked and prepared.
