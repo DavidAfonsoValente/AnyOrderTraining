@@ -29,7 +29,7 @@ TOP_LEVEL_DIR=$(dirname "$PROJECT_ROOT")
 echo "--- Activating Environment ---"
 source "${PROJECT_ROOT}/venv/bin/activate"
 
-# Set PYTHONPATH for 'aomt' and 'veomni' packages
+# Set PYTHONPATH for 'aomt' and 'veomni' packages, mirroring the working logic.
 export PYTHONPATH="${TOP_LEVEL_DIR}:${PROJECT_ROOT}/dFactory:${PYTHONPATH}"
 
 echo "--- Launching dFactory Training ---"

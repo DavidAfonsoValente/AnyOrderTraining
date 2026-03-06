@@ -12,7 +12,8 @@ echo "--- Running AOMT Test Suite ---"
 # Activate the virtual environment
 source "${PROJECT_ROOT}/venv/bin/activate"
 
-# Set PYTHONPATH for 'aomt' and 'veomni' packages
+# Set PYTHONPATH for 'aomt' and 'veomni' packages, mirroring the working
+# logic from prepare_data.sh
 export PYTHONPATH="${TOP_LEVEL_DIR}:${PROJECT_ROOT}/dFactory:${PYTHONPATH}"
 
 # Run discovery from the top-level directory
