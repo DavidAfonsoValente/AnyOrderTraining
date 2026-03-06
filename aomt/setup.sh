@@ -61,7 +61,7 @@ echo "[5/6] Installing Python packages from requirements.txt..."
 pip install --upgrade pip
 pip install -r requirements.txt
 echo "Installing VeOmni dependency in editable mode..."
-pip install -e dFactory/VeOmni
+pip install -e dFactory/VeOmni --no-cache-dir
 
 # --- 6. Download Pre-trained Model ---
 echo "[6/6] Checking for and downloading pre-trained model..."
