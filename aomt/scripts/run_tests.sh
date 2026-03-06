@@ -17,6 +17,10 @@ source "${PROJECT_ROOT}/venv/bin/activate"
 export PYTHONPATH="${TOP_LEVEL_DIR}:${PROJECT_ROOT}/dFactory:${PYTHONPATH}"
 
 # Run discovery from the top-level directory
+echo "--- Debug Information ---"
+echo "Python executable: $(which python3)"
+echo "PYTHONPATH: ${PYTHONPATH}"
+echo "---------------------------"
 python3 -m unittest discover -s "${PROJECT_ROOT}/tests" -t "${TOP_LEVEL_DIR}"
 
 echo "--- Test suite finished. ---"
