@@ -2,47 +2,33 @@
 
 This document provides the canonical workflow for setting up the environment, running tests, and executing the full experiment suite.
 
-## 1. Environment Setup
+## 1. Automated Full Setup
 
-This project requires **Python 3.11** and the `uv` package manager.
+The `full_setup.sh` script provides a comprehensive, automated setup process. It is the recommended way to get started.
 
-### Step 1: Prepare your Python 3.11 Environment
-
-Before running the setup script, you must have a Python 3.11 executable available. There are two common ways to achieve this on a cluster:
-
-**Option A: Using Conda (Recommended)**
-If you have Conda or Miniconda installed, create and activate a Python 3.11 environment:
+From the `aomt/` directory, simply run:
 ```bash
-conda create -n py311 python=3.11 -y
-conda activate py311
+./full_setup.sh
 ```
 
-**Option B: Using Environment Modules**
-If your cluster uses environment modules, load Python 3.11:
-```bash
-# The exact module name may vary
-module load python/3.11
-```
+This script will:
+1.  Install a local copy of Miniconda in your home directory (`~/miniconda3`) if it's not already present.
+2.  Create a dedicated `py311` Conda environment with Python 3.11.
+3.  Execute the main `setup.sh` script, which clones all dependencies and installs the required packages in a final project-specific virtual environment.
 
-### Step 2: Run the Project Setup Script
+After the setup is complete, the script will provide instructions on how to activate the environment for your work.
 
-Once your shell is configured with Python 3.11, run the main setup script from the `aomt/` directory. This script will install `uv` (if needed), clone all dependencies, and set up the project's virtual environment.
+## 2. Activating the Environment
 
-```bash
-# This only needs to be run once.
-./setup.sh
-```
-This script will create a helper script, `activate_env.sh`, for convenient activation.
+For all subsequent work (running tests, data prep, training), you must be in the correct environment. The setup script creates a helper script for this.
 
-### Step 3: Activate the Project Environment
-
-For all subsequent steps (running tests, data prep, training), you must be in the correct environment. From the `aomt/` directory, run:
+From the `aomt/` directory, run:
 ```bash
 source activate_env.sh
 ```
-This will activate both the Python module (if needed) and the project-specific virtual environment.
+This will activate the correct virtual environment and set all necessary paths.
 
-## 2. Data Preparation (on a Compute Node)
+## 3. Data Preparation (on a Compute Node)
 
 After activating the environment, process the raw dataset. This is memory-intensive and **must be run on a compute node**.
 
@@ -62,7 +48,7 @@ After activating the environment, process the raw dataset. This is memory-intens
     ./scripts/prepare_data.sh
     ```
 
-## 3. Running the Test Suite
+## 4. Running the Test Suite
 
 From the `aomt/` directory, with the environment activated (`source activate_env.sh`), run the test suite:
 
@@ -70,7 +56,7 @@ From the `aomt/` directory, with the environment activated (`source activate_env
 ./scripts/run_tests.sh
 ```
 
-## 4. Running Experiments
+## 5. Running Experiments
 
 From the `aomt/` directory on a login node, with the environment activated (`source activate_env.sh`), execute the master script to submit all training jobs:
 
