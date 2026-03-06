@@ -96,6 +96,20 @@ def process_and_cache_dataset(
                 continue
         return processed_examples
 
+    # --- DEBUGGING INSERT ---
+    print(f"DEBUG: Attempting to iterate through {len(raw_dataset)} examples in '{split}' split to check for read errors...")
+    count = 0
+    try:
+        for _ in raw_dataset:
+            count += 1
+            if count % 1000 == 0:
+                print(f"DEBUG: Read {count} records...")
+        print(f"DEBUG: Successfully iterated through all {count} records. The data is readable.")
+    except Exception as e:
+        print(f"DEBUG: Failed to iterate through dataset. Error at record ~{count}: {e}")
+    return
+    # --- END DEBUGGING INSERT ---
+
     # 3. Define the features for the new dataset
     output_features = Features({
         'input_ids': Sequence(feature=Value(dtype='int64')),
