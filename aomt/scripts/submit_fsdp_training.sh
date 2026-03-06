@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Corrected AOMT FSDP Training Submission Script for Slurm
+# AOMT FSDP Training Submission Script for Slurm
 #
 #SBATCH --job-name=aomt_fsdp_training
 #SBATCH --output=slurm_logs/aomt_fsdp_%j.out
@@ -29,8 +29,8 @@ TOP_LEVEL_DIR=$(dirname "$PROJECT_ROOT")
 echo "--- Activating Environment ---"
 source "${PROJECT_ROOT}/venv/bin/activate"
 
-# Set PYTHONPATH to include the project's top-level and the VeOmni submodule path.
-export PYTHONPATH="${TOP_LEVEL_DIR}:${PROJECT_ROOT}/dFactory/VeOmni:${PYTHONPATH}"
+# Set PYTHONPATH for 'aomt' and 'veomni' packages
+export PYTHONPATH="${TOP_LEVEL_DIR}:${PROJECT_ROOT}/dFactory:${PYTHONPATH}"
 
 echo "--- Launching dFactory Training ---"
 export NPROC_PER_NODE=2
