@@ -4,20 +4,19 @@
 set -e
 
 # --- Robust Path Setup ---
-# Get the absolute path to the directory containing this script.
 SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &> /dev/null && pwd)
-# The project root ('aomt') is one level up from the 'scripts' directory.
 PROJECT_ROOT=$(dirname "$SCRIPT_DIR")
-# The top-level directory (containing 'aomt') is one level up from the project root.
 TOP_LEVEL_DIR=$(dirname "$PROJECT_ROOT")
+cd "$TOP_LEVEL_DIR"
 
 echo "--- Running AOMT Test Suite from $(pwd) ---"
 
 # Activate the virtual environment
-source "${PROJECT_ROOT}/venv/bin/activate"
+source "aomt/venv/bin/activate"
 
-# Set the PYTHONPATH to include the top-level directory AND the dFactory submodule.
-export PYTHONPATH="${TOP_LEVEL_DIR}:${PROJECT_ROOT}/dFactory:${PYTHONPATH}"
+# Set PYTHONPATH to include the project's top-level directory (for 'aomt' imports)
+# and the path to the VeOmni submodule (for 'veomni' imports).
+export PYTHONPATH="${TOP_LEVEL_DIR}:${PROJECT_ROOT}/dFactory/VeOmni:${PYTHONPATH}"
 
 # Run discovery, providing the top-level directory so 'from aomt...' imports work.
 python3 -m unittest discover -s "${PROJECT_ROOT}/tests" -t "${TOP_LEVEL_DIR}"

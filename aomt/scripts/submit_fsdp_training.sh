@@ -1,9 +1,7 @@
 #!/bin/bash
 #
 # Corrected AOMT FSDP Training Submission Script for Slurm
-# This script requests resources from Slurm and then uses the dFactory
-# training script to launch the job on the allocated resources.
-
+#
 #SBATCH --job-name=aomt_fsdp_training
 #SBATCH --output=slurm_logs/aomt_fsdp_%j.out
 #SBATCH --error=slurm_logs/aomt_fsdp_%j.err
@@ -31,15 +29,13 @@ TOP_LEVEL_DIR=$(dirname "$PROJECT_ROOT")
 echo "--- Activating Environment ---"
 source "${PROJECT_ROOT}/venv/bin/activate"
 
-# Set the PYTHONPATH to include the top-level directory AND the dFactory submodule.
-export PYTHONPATH="${TOP_LEVEL_DIR}:${PROJECT_ROOT}/dFactory:${PYTHONPATH}"
-
+# Set PYTHONPATH to include the project's top-level and the VeOmni submodule path.
+export PYTHONPATH="${TOP_LEVEL_DIR}:${PROJECT_ROOT}/dFactory/VeOmni:${PYTHONPATH}"
 
 echo "--- Launching dFactory Training ---"
-# Explicitly set the number of processes to match the GPUs we requested
 export NPROC_PER_NODE=2
 
-# Use absolute paths to be safe.
+# dFactory's train.sh calls torchrun, which will execute the trainer module.
 "${PROJECT_ROOT}/dFactory/train.sh" \
     -m aomt.training.trainer \
     --config "$CONFIG_FILE" \
