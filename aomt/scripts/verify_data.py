@@ -1,23 +1,22 @@
 #!/usr/bin/env python3
 import sys
 import os
-from datasets import load_from_disk
-from ..data.unit_parser import TokenizedTrajectory, TokenizedUnit
 import torch
+import argparse
+from datasets import load_from_disk
+
+# Use relative imports, as this is run as a module
+from ..data.unit_parser import TokenizedTrajectory, TokenizedUnit
 
 def verify_processed_data(data_path: str, split: str = "train", num_examples: int = 5):
     """
-    Loads and verifies the processed dataset, displaying a few examples.
-
-    Args:
-        data_path (str): Path to the processed dataset directory (e.g., "./processed_dataset").
-        split (str): The dataset split to verify (e.g., 'train', 'test').
-        num_examples (int): Number of examples to display.
+    Loads and verifies a processed dataset split, displaying a few examples.
     """
     full_path = os.path.join(data_path, split)
     if not os.path.exists(full_path):
-        print(f"Warning: Processed dataset not found at '{full_path}'. Skipping verification for this split.")
-        return
+        print(f"Error: Processed dataset not found at '{full_path}'.")
+        print("Please ensure the data preparation script has been run successfully.")
+        sys.exit(1)
 
     print(f"Loading processed dataset from '{full_path}'...")
     processed_dataset = load_from_disk(full_path)
@@ -29,16 +28,15 @@ def verify_processed_data(data_path: str, split: str = "train", num_examples: in
     for i in range(min(num_examples, len(processed_dataset))):
         item = processed_dataset[i]
         
-        # Reconstruct the TokenizedTrajectory object
         unit_spans = [
-            TokenizedUnit(unit_type=type, token_start=start, token_end=end, unit_index=j)
-            for j, (type, start, end) in enumerate(zip(item["unit_spans_type"], item["unit_spans_start"], item["unit_spans_end"]))
+            TokenizedUnit(unit_type=utype, token_start=start, token_end=end, unit_index=j)
+            for j, (utype, start, end) in enumerate(zip(item["unit_spans_type"], item["unit_spans_start"], item["unit_spans_end"]))
         ]
         tokenized_traj = TokenizedTrajectory(
             input_ids=torch.tensor(item["input_ids"]),
             unit_spans=unit_spans,
             env=item["env"],
-            trajectory_id=item["id"], # 'id' in dataset features corresponds to 'trajectory_id'
+            trajectory_id=item["id"],
         )
 
         print(f"\n--- Example {i+1} ---")
@@ -46,15 +44,14 @@ def verify_processed_data(data_path: str, split: str = "train", num_examples: in
         print(f"  Environment: {tokenized_traj.env}")
         print(f"  Input IDs Shape: {tokenized_traj.input_ids.shape}")
         print(f"  Number of Unit Spans: {len(tokenized_traj.unit_spans)}")
-        
-        # Optionally, print some unit spans for more detail
-        for j, span in enumerate(tokenized_traj.unit_spans[:3]): # Print first 3 spans
+        for j, span in enumerate(tokenized_traj.unit_spans[:3]):
             print(f"    Span {j}: Type={span.unit_type}, Start={span.token_start}, End={span.token_end}, Index={span.unit_index}")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Load and verify a processed dataset split.")
-    script_dir = os.path.dirname(__file__)
-    default_data_path = os.path.join(script_dir, '../data/processed_dataset')
+    
+    # This script is run as 'aomt.scripts.verify_data', so paths must be relative to the top-level.
+    default_data_path = 'aomt/data/processed_dataset'
 
     parser.add_argument(
         "--data_path",
@@ -66,7 +63,7 @@ if __name__ == "__main__":
         "--split",
         type=str,
         default="train",
-        help="The dataset split to verify (e.g., 'train', 'test').",
+        help="The dataset split to verify (e.g., 'train').",
     )
     args = parser.parse_args()
 

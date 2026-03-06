@@ -1,147 +1,79 @@
 # Any-Order Motion Transformer (AOMT)
 
+This document provides the canonical workflow for setting up the environment, running tests, and executing the full experiment suite.
+
 ## 1. Project Overview
 
-This repository contains the implementation for **Any-Order Masked Training (AOMT)**, a supervised fine-tuning (SFT) paradigm for LLM-based agents that reframes agent learning as a trajectory-level reconstruction problem. As described in the `project_desc.md`, AOMT trains a masked diffusion language model (LLaDA 2.0-mini) to reconstruct arbitrarily masked observation/action units from bidirectional context. This approach generalizes standard next-action prediction and other fixed-order training schemes.
+As described in `project_desc.md`, this project implements **Any-Order Masked Training (AOMT)**. It reframes agent fine-tuning as a trajectory reconstruction problem, using a masked diffusion model (`LLaDA 2.0-mini`) to reconstruct missing trajectory segments from bidirectional context. The goal is to improve generalization and world-model understanding using a fixed expert dataset (`agent-eto/eto-sft-trajectory`).
 
-The primary goal is to demonstrate that this training-objective improvement can extract more supervisory signal from fixed expert trajectory datasets (`agent-eto/eto-sft-trajectory`), leading to better generalization and world-model understanding, particularly on complex environments like ALFWorld, ScienceWorld, and WebShop.
+## 2. Setup and Data Preparation
 
-This `README` provides the canonical workflow for setting up the environment, running tests, and executing the full experiment suite on the Slurm cluster.
-
----
-
-## 2. Repository Structure
-
-The repository is organized as follows:
-
-```
-aomt/
-├── configs/              # YAML configs for each experiment baseline.
-├── data/                 # Scripts for downloading and processing datasets.
-├── dFactory/             # Git submodule for the core training framework.
-├── eval/                 # Scripts for the evaluation pipeline.
-├── models/               # Target directory for the downloaded base model.
-├── scripts/              # Master scripts for running the end-to-end workflow.
-├── tests/                # Unit and integration tests.
-├── training/             # Core AOMT implementation (masking, objectives, trainer).
-└── venv/                 # Local Python virtual environment.
-```
-
----
-
-## 3. Environment Setup
-
-The setup is a two-phase process that separates lightweight tasks (run on a login node) from memory-intensive tasks (run on a compute node).
+The setup is a two-phase process. Phase 1 can be run on a login node, while Phase 2 must be run on a compute node due to high memory requirements.
 
 ### Phase 1: Initial Setup (on Login Node)
 
-First, run the `setup.sh` script from the `aomt/` directory. This will handle checking for submodules, setting up the Python environment, installing dependencies, and downloading the pre-trained model.
+This is handled by the `setup.sh` script, which installs dependencies and downloads the required pre-trained model.
 
 ```bash
-# To be run on a login node (e.g., xlogin1)
+# Run from the 'aomt/' directory
 chmod +x setup.sh
 ./setup.sh
 ```
 
-### Phase 2: Data Preparation (on Compute Node)
+### Phase 2: Data Processing (on Compute Node)
 
-Next, the raw data must be processed into the format used for training. This is a memory-intensive task and **must be run on a compute node**. The script will process the `train` split, which will be used for both training and validation.
+This step processes the raw dataset into the format required for training. **It only processes the `train` split**, as the `test` split in the source data is corrupt and causes fatal errors. All evaluation is performed on a validation set held out from the `train` data.
 
-1.  **Request an interactive Slurm session:**
+1.  **Request an interactive compute node:**
     ```bash
-    # Request a node with sufficient memory and a GPU for 1 hour
     salloc --time=1:00:00 --mem=128G --gpus=1 --ntasks=1
     ```
 
 2.  **Run the data preparation script:**
-    Once your job starts and you are on a compute node prompt, run the script:
+    Once the job starts, run the script. It will now succeed by only processing the `train` split.
     ```bash
-    # This will now run on the compute node
-    source venv/bin/activate
     ./scripts/prepare_data.sh
     ```
 
-3.  **Set the Environment Variable:**
-    The final step is to set the `ALFWORLD_DATA` environment variable. Add the following line to your `~/.bashrc` or `~/.zshrc` file on the login node.
+3.  **Set Environment Variable:**
+    Finally, add the following line to your `~/.bashrc` or `~/.zshrc` on the login node to configure the evaluation environment.
     ```bash
     export ALFWORLD_DATA="$(pwd)/data/alfworld"
     ```
-    *(Note: Ensure `$(pwd)` resolves to the absolute path to your `aomt` directory.)*
 
-After completing these phases, your environment is fully configured.
+## 3. End-to-End Workflow
 
----
+### Step 3.1: Run Tests
 
-## 4. End-to-End Workflow
-
-This section describes the full workflow, from verifying the setup to analyzing final results.
-
-### Step 4.1: Verification and Testing
-
-Before submitting jobs, run the automated test suite. The script handles all environment and path setup internally.
+Before launching experiments, verify the setup by running the test suite. This script handles all pathing and environment setup automatically.
 
 ```bash
-# Run from the aomt/ directory on a login node
+# Run from the 'aomt/' directory
 ./scripts/run_tests.sh
 ```
 
-For a deeper sanity check, you can also run the visualization script within a Slurm allocation to see how the data for each experiment is masked and prepared.
+### Step 3.2: Run Experiments
+
+The `run_all_experiments.sh` script submits all training jobs to the Slurm scheduler. You can edit the `CONFIG_CHAIN` array inside this script to control which experiments are run.
 
 ```bash
-# First, get an interactive session on a compute node
-salloc --time=0:15:00 --mem=32G --gpus=1 --ntasks=1
-
-# Once the job starts, run the script
-source venv/bin/activate
-./scripts/visualize_experiments.sh
-# This script now automatically shows one example from each environment (alfworld, scienceworld, webshop) per config.
-
-# Exit the allocation when done
-exit
-```
-
-### Step 4.2: Running the Experiments
-
-The main `scripts/run_all_experiments.sh` script is the entry point for launching all training jobs.
-
-#### How It Works
-*   It reads the `CONFIG_CHAIN` array to submit a job for each baseline experiment (e.g., `sft_standard`, `aomt_mixed`). You can edit this array to control which experiments are run.
-*   Each job is submitted using `sbatch` with the `scripts/submit_fsdp_training.sh` script.
-*   The submission script requests the necessary cluster resources, as defined in `engineering_specs.md` and available on the cluster (`cluster_info.md`). Specifically, it requests **2x A100-40GB GPUs** on a single node.
-*   It automatically handles the dependency for the two-stage `Prefix-SFT` experiment.
-
-#### Execution
-
-From the `aomt/` directory on a login node, run:
-```bash
+# Run from the 'aomt/' directory
 ./scripts/run_all_experiments.sh
 ```
-You can monitor your jobs with `squeue -u $USER`. Checkpoints are saved to the `checkpoints/` directory.
+Monitor jobs with `squeue -u $USER`.
 
-### Step 4.3: Evaluation and Analysis
+### Step 3.3: Evaluate and Analyze
 
-After training completes, use the evaluation scripts to measure model performance. These are best run in an interactive `salloc` session on a GPU node.
-
-**1. Run Evaluations:**
-The main evaluation script is `run_full_eval.py`, which runs all metrics (task success, NLL, robustness) for a given checkpoint.
+After training, evaluate your models. This should be done on a compute node.
 
 ```bash
-# Get an interactive session
+# Get a compute node
 salloc --time=0:30:00 --mem=32G --gpus=1 --ntasks=1
 
-# Activate the environment
-source venv/bin/activate
-
-# Run evaluation on a checkpoint from the previous step
+# Run evaluation on a generated checkpoint
+# The script now uses a validation set from the 'train' data
 python3 run_full_eval.py --checkpoint_path checkpoints/aomt_mixed
 
-# Exit when done
-exit
-```
-
-**2. Summarize Results:**
-After evaluating all desired checkpoints, run the analysis script on the login node. It will scan all `results.json` files and print a comparative summary table.
-
-```bash
+# After evaluating, summarize the results on the login node
 python3 analysis/summarize_results.py
 ```
