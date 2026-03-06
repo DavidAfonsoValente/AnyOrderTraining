@@ -4,31 +4,36 @@ This document provides the canonical workflow for setting up the environment, ru
 
 ## 1. Setup
 
-The entire setup process is handled by two scripts, run in sequence.
+The setup process is divided into two main phases.
 
 ### Phase 1: Environment Setup (on Login Node)
 
-First, run the `setup.sh` script from the `aomt/` directory. This will check submodules, create the Python environment, install dependencies, create a necessary framework symlink, and download the pre-trained model.
+This phase sets up the required Python version and all package dependencies. It uses a wrapper script that will automatically install a local copy of Miniconda (if needed) to create a compatible Python 3.11 environment.
 
+From the `aomt/` directory, run:
 ```bash
-# To be run from the 'aomt/' directory
-chmod +x setup.sh
-./setup.sh
+# This only needs to be run once.
+./full_setup.sh
 ```
+This script will create another helper script, `activate_env.sh`, which you will use in the next steps.
 
 ### Phase 2: Data Preparation (on Compute Node)
 
-Next, process the raw dataset. This is memory-intensive and **must be run on a compute node**. The script will process the `train` split, which is used for both training and validation.
+This phase processes the raw dataset. It is memory-intensive and **must be run on a compute node**.
 
 1.  **Request an interactive Slurm session:**
     ```bash
     salloc --time=1:00:00 --mem=128G --gpus=1 --ntasks=1
     ```
 
-2.  **Run the data preparation script:**
-    Once your job starts, run the script. It will automatically activate the correct environment and set all necessary paths.
+2.  **Activate the environment:**
+    Once your job starts, navigate to the `aomt` directory and activate the environment using the script created in Phase 1:
     ```bash
-    # Run from the 'aomt/' directory
+    source activate_env.sh
+    ```
+
+3.  **Run the data preparation script:**
+    ```bash
     ./scripts/prepare_data.sh
     ```
 
