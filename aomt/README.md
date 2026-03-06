@@ -43,9 +43,10 @@ After activating the environment, process the raw dataset. This is memory-intens
     source activate_env.sh
     ```
 
-3.  **Run the data preparation script:**
+3.  **Run the data preparation script using `srun`:**
+    You must use `srun` to ensure the script executes on the compute node you allocated, where the 128GB of memory is available.
     ```bash
-    ./scripts/prepare_data.sh
+    srun ./scripts/prepare_data.sh
     ```
 
 ## 4. Running the Test Suite
