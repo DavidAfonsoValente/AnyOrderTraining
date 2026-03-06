@@ -28,8 +28,11 @@ source venv/bin/activate
 export PYTHONPATH="$(pwd)/dFactory:$PYTHONPATH"
 
 echo "--- Launching dFactory Training ---"
+# Explicitly set the number of processes to match the GPUs we requested
+# This overrides the faulty auto-detection in dFactory/train.sh
+export NPROC_PER_NODE=2
+
 # Let dFactory's train.sh handle torchrun setup inside the Slurm allocation
-# It will correctly detect the number of allocated GPUs.
 ./dFactory/train.sh \
     training/trainer.py \
     --config "$CONFIG_FILE" \
