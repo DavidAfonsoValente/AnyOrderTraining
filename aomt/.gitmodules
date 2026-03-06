@@ -1,7 +1,0 @@
-[submodule "dFactory"]
-	path = dFactory
-	url = https://github.com/inclusionAI/dFactory.git
-
-[submodule "dFactory/VeOmni"]
-	path = dFactory/VeOmni
-	url = https://github.com/ByteDance-Seed/VeOmni.git
