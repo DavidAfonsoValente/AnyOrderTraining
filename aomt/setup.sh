@@ -9,16 +9,26 @@ echo "--- AOMT Environment Setup ---"
 # The Top Level Directory (containing 'aomt') needs to be on the Python path.
 TOP_LEVEL_DIR=$(dirname "$(pwd)")
 
-# --- 1. Initialize Git Submodules ---
-echo "[1/6] Initializing Git submodules..."
-git submodule update --init --recursive
+# --- 1. Initialize Git Submodules & VeOmni ---
+echo "[1/6] Initializing Git submodules and VeOmni..."
+git submodule update --init # Not recursive, VeOmni is handled manually
+
+# Manually clone VeOmni into dFactory, as it's not a formal submodule upstream
+VEOMNI_DIR="dFactory/VeOmni"
+if [ ! -d "$VEOMNI_DIR/.git" ]; then
+    echo "Cloning VeOmni repository into dFactory..."
+    # Remove directory if it exists but is not a git repo
+    rm -rf "$VEOMNI_DIR"
+    git clone https://github.com/ByteDance-Seed/VeOmni.git "$VEOMNI_DIR"
+else
+    echo "VeOmni repository already exists."
+fi
 
 if [ ! -f "dFactory/VeOmni/README.md" ]; then
-    echo "ERROR: VeOmni submodule not found after initialization."
-    echo "Please ensure that 'dFactory' is a submodule and that it contains the 'VeOmni' submodule."
+    echo "ERROR: VeOmni could not be cloned into dFactory."
     exit 1
 fi
-echo "Submodules initialized successfully."
+echo "Submodules and VeOmni initialized successfully."
 
 # --- 2. Create Framework Symlink ---
 echo "[2/6] Creating framework compatibility symlink..."
