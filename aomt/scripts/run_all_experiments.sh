@@ -54,7 +54,7 @@ echo "Stage 1 submitted with Job ID: $job1_id."
 # Submit Stage 2, making it dependent on the successful completion of Stage 1
 sbatch --dependency=afterok:"$job1_id" scripts/submit_fsdp_training.sh "$PREFIX_SFT_STAGE2_CONFIG"
 echo "Stage 2 queued, dependent on Job ID $job1_id."
-
+s
 echo "
 ========================================"
 echo "    All experiment jobs submitted."
