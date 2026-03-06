@@ -64,8 +64,7 @@ class TestTrainingIntegration(unittest.TestCase):
         step without crashing. This tests the integration of data loading, model
         building (via dFactory), the forward pass, and the backward pass.
         """
-        print("
-Running test: test_single_step_run")
+        print("\nRunning test: test_single_step_run")
         try:
             # We run the main training function, but it will only run for a very
             # small number of steps due to the tiny dataset and batch size.
