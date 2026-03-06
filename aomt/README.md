@@ -48,7 +48,7 @@ salloc --time=0:15:00 --mem=16G --ntasks=1 # Adjust resources as needed
 
 # Once on the compute node, activate your venv and run tests
 source venv/bin/activate
-srun python -m pytest aomt/tests/
+srun python -m pytest tests/
 ```
 
 ### Optional: Weights & Biases (WandB) Setup
