@@ -1,32 +1,46 @@
 #!/bin/bash
-# AOMT Environment Setup Script (Module-aware, uv-based, final)
+# AOMT Environment Setup Script (uv-based, correct version)
 set -e
 
-echo "--- AOMT Environment Setup ---"
+echo "--- AOMT Environment Setup (uv method) ---"
 
 # --- 1. Load Required Python Version ---
 echo "[1/5] Checking for and loading Python 3.11..."
 PYTHON_EXEC="python3.11"
-
-# Check if python3.11 is already available
 if ! command -v "$PYTHON_EXEC" &> /dev/null; then
     if command -v module &> /dev/null; then
         echo "Attempting to load Python 3.11 via 'module load python/3.11'..."
-        # The '|| true' prevents the script from exiting if the module is not found or fails.
         module load python/3.11 || true
     fi
 fi
-
-# Final check for the required python executable
 if ! command -v "$PYTHON_EXEC" &> /dev/null; then
     echo "ERROR: Python 3.11 is required, but could not be found or loaded."
-    echo "Please ensure Python 3.11 is installed, or use 'module load' to make it available."
+    echo "Please activate your 'py311' conda environment or use 'module load' first."
     exit 1
 fi
 echo "Using Python executable: $($PYTHON_EXEC --version)"
 
-# --- 2. Clone Dependencies ---
-echo "[2/5] Cloning dFactory and its submodules..."
+# --- 2. Check and Install/Update 'uv' ---
+echo "[2/5] Checking for uv and ensuring correct version..."
+REQUIRED_UV_VERSION="0.8.14" # As discovered, this specific version is required.
+if ! command -v uv &> /dev/null; then
+    echo "'uv' is not installed. Installing..."
+    curl -LsSf https://astral.sh/uv/install.sh | sh
+    # The new uv will be in $HOME/.cargo/bin, need to add to PATH for this session
+    export PATH="$HOME/.cargo/bin:$PATH"
+fi
+
+CURRENT_UV_VERSION=$(uv --version | awk '{print $2}')
+if [ "$CURRENT_UV_VERSION" != "$REQUIRED_UV_VERSION" ]; then
+    echo "Incorrect uv version found ($CURRENT_UV_VERSION). Updating to $REQUIRED_UV_VERSION..."
+    # Use the command syntax that the user confirmed works
+    uv self update "$REQUIRED_UV_VERSION"
+fi
+echo "Using uv version: $(uv --version)"
+
+
+# --- 3. Clone Dependencies ---
+echo "[3/5] Cloning dFactory and its submodules..."
 DFACTORY_DIR="dFactory"
 if [ ! -d "$DFACTORY_DIR/.git" ]; then
     echo "Cloning dFactory repository..."
@@ -37,39 +51,29 @@ else
 fi
 echo "Dependencies cloned."
 
-# --- 3. Setup Environment with uv ---
-echo "[3/5] Creating environment and installing dependencies with uv..."
+# --- 4. Setup Environment with uv ---
+echo "[4/5] Creating environment and installing dependencies with uv..."
 VEOMNI_DIR="dFactory/VeOmni"
-# Check for uv
-if ! command -v uv &> /dev/null; then
-    echo "ERROR: 'uv' is not installed. Please install it by running:"
-    echo "curl -LsSf https://astral.sh/uv/install.sh | sh"
-    exit 1
-fi
-# Tell uv to use the python3.11 we just found
+# Tell uv to use python3.11
 export UV_PYTHON="$PYTHON_EXEC"
-# We run this from within the VeOmni directory. uv will create the .venv there.
+# With the correct Python and uv versions, no patching or lock file deletion should be necessary.
 (cd "$VEOMNI_DIR" && uv sync --extra gpu)
 echo "uv sync complete."
 
-# --- 4. Create Helper Script for Activation ---
-echo "[4/5] Creating helper script 'activate_env.sh'..."
+# --- 5. Create Helper Script for Activation ---
+echo "[5/5] Creating helper script 'activate_env.sh'..."
 TOP_LEVEL_DIR=$(dirname "$(pwd)")
 VEOMNI_PATH_REL_AOMT="dFactory/VeOmni"
 echo "#!/bin/bash" > activate_env.sh
-echo "# This script loads the correct python module, activates the virtual environment, and sets the PYTHONPATH." >> activate_env.sh
-echo "echo 'Loading Python 3.11 module...'" >> activate_env.sh
+echo "# This script loads the correct python module and activates the virtual environment." >> activate_env.sh
+echo "echo 'Attempting to load Python 3.11 module...'" >> activate_env.sh
 echo "module load python/3.11 || true" >> activate_env.sh
 echo "echo 'Activating uv environment at ${PWD}/${VEOMNI_PATH_REL_AOMT}/.venv...'" >> activate_env.sh
 echo "source ${PWD}/${VEOMNI_PATH_REL_AOMT}/.venv/bin/activate" >> activate_env.sh
-echo "export PYTHONPATH=${TOP_LEVEL_DIR}:${PWD}/${VEOMNI_PATH_REL_AOMT}:\${PYTHONPATH}" >> activate_env.sh
+echo "export PYTHONPATH=${TOP_LEVEL_DIR}:\${PYTHONPATH}" >> activate_env.sh
 echo "echo 'Environment activated.'" >> activate_env.sh
 chmod +x activate_env.sh
 
-# --- 5. Final Instructions ---
-echo "[5/5] Setup is complete."
-echo
-echo "--- IMPORTANT ---"
+echo -e "\n--- Environment setup complete! ---"
 echo "A new virtual environment has been created at: ${PWD}/${VEOMNI_PATH_REL_AOMT}/.venv"
-echo "To activate this environment for your development, run:"
-echo "source activate_env.sh"
+echo "To activate this environment, run: source activate_env.sh"

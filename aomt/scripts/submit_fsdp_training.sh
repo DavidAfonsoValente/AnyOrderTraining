@@ -21,18 +21,15 @@ if [ -z "$1" ]; then
 fi
 CONFIG_FILE=$1
 
-# --- Robust Path Setup ---
+# --- Path Setup ---
 # sbatch starts in the CWD of the caller. We assume this is the 'aomt' directory.
+# The user should have activated the environment with 'source activate_env.sh' before
+# submitting this job, which handles all pathing.
 PROJECT_ROOT=$(pwd)
-TOP_LEVEL_DIR=$(dirname "$PROJECT_ROOT")
-
-echo "--- Activating Environment ---"
-source "${PROJECT_ROOT}/venv/bin/activate"
-
-# Set PYTHONPATH for 'aomt' and 'veomni' packages, mirroring the working logic.
-export PYTHONPATH="${TOP_LEVEL_DIR}:${PROJECT_ROOT}/dFactory:${PYTHONPATH}"
 
 echo "--- Launching dFactory Training ---"
+echo "Using Python from: $(which python)"
+echo "PYTHONPATH is: ${PYTHONPATH}"
 export NPROC_PER_NODE=2
 
 # dFactory's train.sh calls torchrun, which will execute the trainer module.

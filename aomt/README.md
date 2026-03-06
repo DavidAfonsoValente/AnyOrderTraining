@@ -2,33 +2,58 @@
 
 This document provides the canonical workflow for setting up the environment, running tests, and executing the full experiment suite.
 
-## 1. Setup
+## 1. Environment Setup
 
-The setup process is divided into two main phases.
+This project requires **Python 3.11** and the `uv` package manager.
 
-### Phase 1: Environment Setup (on Login Node)
+### Step 1: Prepare your Python 3.11 Environment
 
-This phase sets up the required Python version and all package dependencies. It uses a wrapper script that will automatically install a local copy of Miniconda (if needed) to create a compatible Python 3.11 environment.
+Before running the setup script, you must have a Python 3.11 executable available. There are two common ways to achieve this on a cluster:
 
-From the `aomt/` directory, run:
+**Option A: Using Conda (Recommended)**
+If you have Conda or Miniconda installed, create and activate a Python 3.11 environment:
+```bash
+conda create -n py311 python=3.11 -y
+conda activate py311
+```
+
+**Option B: Using Environment Modules**
+If your cluster uses environment modules, load Python 3.11:
+```bash
+# The exact module name may vary
+module load python/3.11
+```
+
+### Step 2: Run the Project Setup Script
+
+Once your shell is configured with Python 3.11, run the main setup script from the `aomt/` directory. This script will install `uv` (if needed), clone all dependencies, and set up the project's virtual environment.
+
 ```bash
 # This only needs to be run once.
-./full_setup.sh
+./setup.sh
 ```
-This script will create another helper script, `activate_env.sh`, which you will use in the next steps.
+This script will create a helper script, `activate_env.sh`, for convenient activation.
 
-### Phase 2: Data Preparation (on Compute Node)
+### Step 3: Activate the Project Environment
 
-This phase processes the raw dataset. It is memory-intensive and **must be run on a compute node**.
+For all subsequent steps (running tests, data prep, training), you must be in the correct environment. From the `aomt/` directory, run:
+```bash
+source activate_env.sh
+```
+This will activate both the Python module (if needed) and the project-specific virtual environment.
+
+## 2. Data Preparation (on a Compute Node)
+
+After activating the environment, process the raw dataset. This is memory-intensive and **must be run on a compute node**.
 
 1.  **Request an interactive Slurm session:**
     ```bash
     salloc --time=1:00:00 --mem=128G --gpus=1 --ntasks=1
     ```
 
-2.  **Activate the environment:**
-    Once your job starts, navigate to the `aomt` directory and activate the environment using the script created in Phase 1:
+2.  **Activate the environment (inside the Slurm session):**
     ```bash
+    # Navigate to the aomt/ directory first
     source activate_env.sh
     ```
 
@@ -37,23 +62,19 @@ This phase processes the raw dataset. It is memory-intensive and **must be run o
     ./scripts/prepare_data.sh
     ```
 
-After completing these two phases, your environment is fully configured.
+## 3. Running the Test Suite
 
-## 2. Running the Test Suite
-
-Before launching experiments, verify the complete setup by running the test suite. The script handles all pathing and environment setup automatically.
+From the `aomt/` directory, with the environment activated (`source activate_env.sh`), run the test suite:
 
 ```bash
-# Run from the 'aomt/' directory
 ./scripts/run_tests.sh
 ```
 
-## 3. Running Experiments
+## 4. Running Experiments
 
-From the `aomt/` directory on a login node, execute the master script to submit all training jobs to the Slurm scheduler.
+From the `aomt/` directory on a login node, with the environment activated (`source activate_env.sh`), execute the master script to submit all training jobs:
 
 ```bash
 ./scripts/run_all_experiments.sh
 ```
-
-You can edit the `CONFIG_CHAIN` array inside `run_all_experiments.sh` to control which experiments are run. You can monitor the jobs with `squeue -u $USER`.
+You can monitor the jobs with `squeue -u $USER`.
