@@ -1,81 +1,68 @@
 #!/bin/bash
-# AOMT Environment Setup Script (Submodule-less version)
+# AOMT Environment Setup Script (uv-based)
 set -e
 
-echo "--- AOMT Environment Setup ---"
+echo "--- AOMT Environment Setup (uv method) ---"
 
-# --- 1. Check for Python Version ---
-echo "[1/7] Checking for Python version..."
-PYTHON_EXEC="python3"
-echo "Using Python executable: $($PYTHON_EXEC --version)"
-
-# --- 2. Setup Virtual Environment ---
-echo "[2/7] Setting up virtual environment..."
-VENV_DIR="venv"
-if [ ! -d "$VENV_DIR" ]; then
-    echo "Creating new virtual environment in './${VENV_DIR}'..."
-    rm -rf "$VENV_DIR"
-    "$PYTHON_EXEC" -m venv "$VENV_DIR"
+# --- 1. Check for uv ---
+echo "[1/6] Checking for uv..."
+if ! command -v uv &> /dev/null; then
+    echo "ERROR: 'uv' is not installed, but it is required for this setup method."
+    echo "Please install it by running the following command:"
+    echo "curl -LsSf https://astral.sh/uv/install.sh | sh"
+    exit 1
 fi
-source "${VENV_DIR}/bin/activate"
-echo "Virtual environment activated."
+echo "uv is installed."
 
-# --- 3. Manually Clone Dependencies ---
-echo "[3/7] Cloning dependencies..."
-# dFactory
+# --- 2. Manually Clone dFactory and VeOmni ---
+echo "[2/6] Cloning dFactory and its submodules..."
 DFACTORY_DIR="dFactory"
 if [ ! -d "$DFACTORY_DIR/.git" ]; then
-    echo "Cloning dFactory..."
+    echo "Cloning dFactory repository..."
     rm -rf "$DFACTORY_DIR"
-    git clone https://github.com/inclusionAI/dFactory.git "$DFACTORY_DIR"
+    # Use --recursive to correctly initialize the VeOmni submodule
+    git clone https://github.com/inclusionAI/dFactory.git --recursive "$DFACTORY_DIR"
 else
-    echo "dFactory repository already exists."
-fi
-# VeOmni
-VEOMNI_DIR="dFactory/VeOmni"
-if [ ! -d "$VEOMNI_DIR/.git" ]; then
-    echo "Cloning VeOmni..."
-    rm -rf "$VEOMNI_DIR"
-    git clone https://github.com/ByteDance-Seed/VeOmni.git "$VEOMNI_DIR"
-else
-    echo "VeOmni repository already exists."
+    echo "dFactory repository already exists. Ensuring submodules are up to date..."
+    (cd "$DFACTORY_DIR" && git submodule update --init --recursive)
 fi
 echo "Dependencies cloned."
 
-# --- 4. Patch VeOmni Dependency ---
-echo "[4/7] Patching VeOmni for Python 3.12+ compatibility..."
+# --- 3. Patch VeOmni for Python 3.12+ ---
+echo "[3/6] Patching VeOmni for Python 3.12+ compatibility..."
+VEOMNI_DIR="dFactory/VeOmni"
 if [ ! -f "$VEOMNI_DIR/pyproject.toml" ]; then
-    echo "ERROR: VeOmni was cloned, but pyproject.toml is missing."
+    echo "ERROR: dFactory/VeOmni/pyproject.toml not found. Cloning may have failed."
     exit 1
 fi
 # Use a temporary file for sed compatibility between GNU and BSD/macOS
 sed 's/requires-python = ">=3.11, <3.12"/requires-python = ">=3.11"/' "$VEOMNI_DIR/pyproject.toml" > "$VEOMNI_DIR/pyproject.toml.tmp" && mv "$VEOMNI_DIR/pyproject.toml.tmp" "$VEOMNI_DIR/pyproject.toml"
 echo "Patching complete."
 
-# --- 5. Create Framework Symlink ---
-echo "[5/7] Creating framework compatibility symlink..."
-(cd "$DFACTORY_DIR" && {
-    if [ ! -e "veomni" ]; then
-        ln -s VeOmni veomni
-        echo "'veomni' symlink created."
-    else
-        echo "'veomni' symlink already exists."
-    fi
-})
+# --- 4. Setup Environment with uv ---
+echo "[4/6] Creating environment and installing dependencies with uv..."
+# We run this from within the VeOmni directory as per dFactory's instructions
+(cd "$VEOMNI_DIR" && uv sync --extra gpu)
+echo "uv sync complete."
 
-# --- 6. Install Python Dependencies ---
-echo "[6/7] Installing Python packages..."
+# --- 5. Create Helper Script for Activation ---
+echo "[5/6] Creating helper script 'activate_env.sh'..."
+# The dFactory README and scripts use PYTHONPATH. We will set it up too.
+# The root of the project needs to be on the path for 'aomt' imports.
+# The VeOmni directory is needed for 'veomni' imports if not using an activated venv.
 TOP_LEVEL_DIR=$(dirname "$(pwd)")
-export PYTHONPATH="${TOP_LEVEL_DIR}:${PYTHONPATH}"
+echo "#!/bin/bash" > activate_env.sh
+echo "# This script activates the correct virtual environment and sets the PYTHONPATH." >> activate_env.sh
+echo "echo 'Activating uv environment at ${PWD}/${VEOMNI_DIR}/.venv...'" >> activate_env.sh
+echo "source ${PWD}/${VEOMNI_DIR}/.venv/bin/activate" >> activate_env.sh
+echo "export PYTHONPATH=${TOP_LEVEL_DIR}:${PWD}/${VEOMNI_DIR}:\${PYTHONPATH}" >> activate_env.sh
+echo "echo 'Environment activated.'" >> activate_env.sh
+chmod +x activate_env.sh
 
-pip install --upgrade pip
-pip cache purge
-pip install -r requirements.txt
-pip install -e "$VEOMNI_DIR" --no-cache-dir
-
-# --- 7. Download Pre-trained Model ---
-echo "[7/7] Checking for and downloading pre-trained model..."
-python3 -m aomt.data.download
-
-echo -e "\n--- Environment setup complete! ---"
-echo "To use this environment, run: source ${VENV_DIR}/bin/activate"
+# --- 6. Final Instructions ---
+echo "[6/6] Setup is complete."
+echo
+echo "--- IMPORTANT ---"
+echo "A new virtual environment has been created at: ${PWD}/${VEOMNI_DIR}/.venv"
+echo "To activate this environment for your development, run:"
+echo "source activate_env.sh"
