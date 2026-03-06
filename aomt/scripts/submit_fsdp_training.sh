@@ -41,7 +41,7 @@ export NPROC_PER_NODE=2
 
 # Use absolute paths to be safe.
 "${PROJECT_ROOT}/dFactory/train.sh" \
-    "${PROJECT_ROOT}/training/trainer.py" \
+    -m aomt.training.trainer \
     --config "$CONFIG_FILE" \
     --distributed
 

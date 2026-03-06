@@ -1,11 +1,6 @@
 # aomt/training/trainer.py
 import sys
 import os
-
-# Add the project root and dFactory to the Python path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'dFactory')))
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
-
 import torch
 from torch.utils.data import Dataset, DataLoader
 import numpy as np
@@ -23,10 +18,11 @@ import wandb
 # --- dFactory/VeOmni Imports ---
 from veomni.models import build_tokenizer, build_foundation_model
 
-from aomt.data.unit_parser import TokenizedTrajectory, TokenizedUnit
-from aomt.training.mask_sampler import MaskMode, apply_unit_mask
-from aomt.training.objectives import masked_unit_cross_entropy
-from aomt.training.collator import AOMTDataCollator, build_prefix_sft_examples, build_prefix_sft_stage2_examples, build_standard_sft_examples
+# --- Relative Imports for AOMT Package ---
+from ..data.unit_parser import TokenizedTrajectory, TokenizedUnit
+from .mask_sampler import MaskMode, apply_unit_mask
+from .objectives import masked_unit_cross_entropy
+from .collator import AOMTDataCollator, build_prefix_sft_examples, build_prefix_sft_stage2_examples, build_standard_sft_examples
 from datasets import load_from_disk
 from collections import defaultdict
 from torch.utils.data import Sampler
@@ -107,16 +103,12 @@ class BenchmarkUniformSampler(Sampler):
 
         self.indices_by_env = defaultdict(list)
         
-        # This logic now correctly handles both AOMTDataset and SummarizedTrajectoryDataset
         if isinstance(dataset, AOMTDataset):
-            # AOMTDataset has a direct reference to the processed dataset
             env_data = dataset.processed_dataset['env']
             for idx, env in enumerate(env_data):
                 self.indices_by_env[env].append(idx)
         elif isinstance(dataset, SummarizedTrajectoryDataset):
-            # Summarized datasets have pre-built examples with env info
             for idx, ex in enumerate(dataset.examples):
-                # This assumes the 'env' key was propagated by the builder fn
                 self.indices_by_env[ex.get('env', 'unknown')].append(idx)
 
         self.env_names = list(self.indices_by_env.keys())
@@ -167,7 +159,6 @@ class SummarizedTrajectoryDataset(Dataset):
         
         print(f"Building summarized trajectory dataset using {build_fn.__name__}...")
         for item in tqdm(processed_dataset):
-            # Reconstruct the TokenizedTrajectory on the fly
             unit_spans = [
                 TokenizedUnit(unit_type=type, token_start=start, token_end=end, unit_index=j)
                 for j, (type, start, end) in enumerate(zip(item["unit_spans_type"], item["unit_spans_start"], item["unit_spans_end"]))
@@ -188,8 +179,6 @@ class SummarizedTrajectoryDataset(Dataset):
     def __getitem__(self, idx: int) -> dict:
         return self.examples[idx]
 
-# --- Section 7.2: Training Step ---
-
 def training_step(model, batch, device):
     """
     Performs a single training step (forward pass, loss calculation).
@@ -197,10 +186,7 @@ def training_step(model, batch, device):
     for key, val in batch.items():
         if isinstance(val, torch.Tensor):
             batch[key] = val.to(device)
-
-    is_causal = batch["use_causal_mask"][0].item() if "use_causal_mask" in batch else False
     
-    # The model from build_foundation_model returns a tuple, where the first element is logits
     outputs = model(
         input_ids=batch["input_ids"],
         attention_mask=batch["attention_mask"],
@@ -211,13 +197,10 @@ def training_step(model, batch, device):
     loss = masked_unit_cross_entropy(logits, batch["target_ids"], batch["loss_mask"])
     return loss
 
-# --- Main Training Loop ---
-
 def run_training(config_path: str, is_distributed: bool):
     """
     Main training function, updated to handle FSDP.
     """
-    # 1. Distributed Setup
     rank = 0
     world_size = 1
     if is_distributed:
@@ -226,7 +209,6 @@ def run_training(config_path: str, is_distributed: bool):
         world_size = dist.get_world_size()
         torch.cuda.set_device(rank)
 
-    # Load Config
     with open(config_path, 'r') as f:
         config = yaml.safe_load(f)
     
@@ -238,35 +220,23 @@ def run_training(config_path: str, is_distributed: bool):
         print(yaml.dump(config))
         print("--------------------")
         
-        wandb = None # Initialize wandb to None
         try:
             import wandb
-            wandb.init(
-                project="aomt",
-                name=config.get("name", "default_run"),
-                config=config
-            )
+            wandb.init(project="aomt", name=config.get("name", "default_run"), config=config)
         except ImportError:
-            print("Warning: `wandb` not installed. Skipping online logging. Please run `pip install wandb`")
-            # wandb is already None
+            print("Warning: `wandb` not installed. Skipping online logging.")
 
-
-    # Setup Tokenizer using dFactory/VeOmni method
     tokenizer = build_tokenizer(model_config["tokenizer_path"])
     if tokenizer.pad_token is None: tokenizer.add_special_tokens({'pad_token': tokenizer.eos_token})
     if tokenizer.mask_token is None: tokenizer.add_special_tokens({'mask_token': '[MASK]'})
 
-    # Load Data
-    # Determine the absolute path to the data cache, relative to this script's location
     script_dir = os.path.dirname(__file__)
-    base_data_path = os.path.abspath(os.path.join(script_dir, '..', 'data', 'processed_dataset'))
-    data_path = os.path.join(base_data_path, config.get("train_split", "train"))
+    data_path = os.path.join(script_dir, '..', 'data', 'processed_dataset', config.get("train_split", "train"))
     
     if not os.path.exists(data_path):
-         raise FileNotFoundError(f"Processed dataset not found at {data_path}. Run parse_trajectories.py first.")
+         raise FileNotFoundError(f"Processed dataset not found at {data_path}. Run 'prepare_data.sh' first.")
     processed_dataset = load_from_disk(data_path)
 
-    # Initialize Dataset
     mask_mode = MaskMode(config["mask_mode"])
 
     if mask_mode == MaskMode.PREFIX_SFT_STAGE1:
@@ -278,13 +248,11 @@ def run_training(config_path: str, is_distributed: bool):
     else:
         dataset = AOMTDataset(processed_dataset, tokenizer, mode=mask_mode, mask_prob=config.get("mask_prob", 0.0))
     
-    # Initialize the sampler with the final dataset object
     sampler = BenchmarkUniformSampler(dataset, num_replicas=world_size, rank=rank)
     
     collator = AOMTDataCollator(tokenizer)
     dataloader = DataLoader(dataset, batch_size=config.get("per_device_batch_size", 2), collate_fn=collator, sampler=sampler, shuffle=False)
 
-    # Initialize Model using dFactory/VeOmni method
     auto_wrap_policy = functools.partial(size_based_auto_wrap_policy, min_num_params=1_000_000)
     
     model = build_foundation_model(
@@ -300,22 +268,17 @@ def run_training(config_path: str, is_distributed: bool):
     else:
         model = model.to(rank)
 
-    # For fair comparison, normalize training to a fixed number of steps
-    # based on the original dataset size and epochs.
-    # This correctly handles cases where the dataset is expanded (e.g., prefix SFT).
     steps_per_epoch = len(processed_dataset) // (config.get("per_device_batch_size", 2) * world_size)
     num_training_steps = int(steps_per_epoch * config["num_epochs"])
 
     if rank == 0:
         print(f"Original dataset size: {len(processed_dataset)}")
         print(f"Effective dataset size for this mode: {len(dataset)}")
-        print(f"Normalizing training to {num_training_steps} total steps for fair comparison.")
+        print(f"Normalizing training to {num_training_steps} total steps.")
 
-    # Optimizer & Scheduler
     optimizer = torch.optim.AdamW(model.parameters(), lr=config["learning_rate"], weight_decay=config["weight_decay"])
     lr_scheduler = get_scheduler(name=config.get("lr_schedule", "cosine"), optimizer=optimizer, num_warmup_steps=config.get("warmup_steps", 0), num_training_steps=num_training_steps)
 
-    # Training Loop
     if rank == 0: print("Starting training...")
     checkpoint_dir = f"./checkpoints/{config['name']}"
     os.makedirs(checkpoint_dir, exist_ok=True)
@@ -325,11 +288,8 @@ def run_training(config_path: str, is_distributed: bool):
 
     model.train()
     for step in progress_bar:
-        # Manually set epoch for the sampler if it's a new "epoch" equivalent.
-        # This is an approximation to ensure sampler shuffling continues.
         if step > 0 and step % steps_per_epoch == 0:
-            new_epoch = step // steps_per_epoch
-            sampler.set_epoch(new_epoch)
+            sampler.set_epoch(step // steps_per_epoch)
 
         batch = next(dataloader_iterator)
         loss = training_step(model, batch, rank)
@@ -341,42 +301,12 @@ def run_training(config_path: str, is_distributed: bool):
         
         if rank == 0:
             progress_bar.set_postfix(loss=loss.item())
-            if wandb:
-                wandb.log({
-                    "loss": loss.item(),
-                    "learning_rate": lr_scheduler.get_last_lr()[0],
-                    "step": step
-                })
+            if 'wandb' in locals():
+                wandb.log({"loss": loss.item(), "learning_rate": lr_scheduler.get_last_lr()[0], "step": step})
 
-        # Checkpoint saving
-        if (step + 1) % config.get("save_interval", 500) == 0:
-            save_path = os.path.join(checkpoint_dir, f"step_{step+1}")
-            if rank == 0: print(f"\nSaving checkpoint to {save_path}...")
-            # NOTE: This saving logic is simplified and may not work perfectly with dFactory's checkpointing.
-            if is_distributed:
-                states = model.state_dict()
-                if rank == 0:
-                    torch.save(states, os.path.join(save_path, "model.pt"))
-            else:
-                 model.save_pretrained(save_path) # This might not work for the new model type
-            
-            if rank == 0:
-                tokenizer.save_pretrained(save_path)
-    
     if rank == 0:
         print("\n--- Training Complete ---")
-        final_save_path = os.path.join(checkpoint_dir, "final_checkpoint")
-        print(f"Saving final model to {final_save_path}...")
-        # NOTE: This saving logic is simplified.
-        if is_distributed:
-            states = model.state_dict()
-            if rank == 0:
-                torch.save(states, os.path.join(final_save_path, "model.pt"))
-        else:
-            model.save_pretrained(final_save_path)
-
-        tokenizer.save_pretrained(final_save_path)
-        if wandb:
+        if 'wandb' in locals():
             wandb.finish()
         
     if is_distributed: dist.destroy_process_group()
