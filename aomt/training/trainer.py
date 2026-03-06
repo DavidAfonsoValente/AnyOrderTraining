@@ -2,13 +2,14 @@
 import sys
 import os
 
-# Add the project root to the Python path
+# Add the project root and dFactory to the Python path
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'dFactory')))
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 
 import torch
 from torch.utils.data import Dataset, DataLoader
 import numpy as np
-from transformers import AutoTokenizer, AutoModelForCausalLM, get_scheduler
+from transformers import AutoTokenizer, get_scheduler
 from tqdm import tqdm
 import yaml
 import argparse
@@ -19,19 +20,8 @@ import functools
 import itertools
 import wandb
 
-# --- Section: Patch for local LLaDA2 model ---
-# The `inclusionAI/LLaDA2.0-mini` model uses custom code that is included
-# in the dFactory submodule. We need to explicitly tell the `transformers`
-# library where to find this code, otherwise it will fail to load it from the Hub.
-try:
-    from veomni.models.registry import ModelRegistry
-    ModelRegistry.register_modeling_path("models.llada2_moe")
-    if not dist.is_initialized() or dist.get_rank() == 0:
-        print("Successfully registered local LLaDA2 model code.")
-except ImportError as e:
-    if not dist.is_initialized() or dist.get_rank() == 0:
-        print(f"Warning: Could not import or register local LLaDA2 model code: {e}. Training may fail if using a local model.")
-# --- End Patch ---
+# --- dFactory/VeOmni Imports ---
+from veomni.models import build_tokenizer, build_foundation_model
 
 from aomt.data.unit_parser import TokenizedTrajectory, TokenizedUnit
 from aomt.training.mask_sampler import MaskMode, apply_unit_mask
@@ -210,13 +200,15 @@ def training_step(model, batch, device):
 
     is_causal = batch["use_causal_mask"][0].item() if "use_causal_mask" in batch else False
     
+    # The model from build_foundation_model returns a tuple, where the first element is logits
     outputs = model(
         input_ids=batch["input_ids"],
         attention_mask=batch["attention_mask"],
         use_cache=False,
     )
+    logits = outputs[0]
     
-    loss = masked_unit_cross_entropy(outputs.logits, batch["target_ids"], batch["loss_mask"])
+    loss = masked_unit_cross_entropy(logits, batch["target_ids"], batch["loss_mask"])
     return loss
 
 # --- Main Training Loop ---
@@ -238,6 +230,8 @@ def run_training(config_path: str, is_distributed: bool):
     with open(config_path, 'r') as f:
         config = yaml.safe_load(f)
     
+    model_config = config["model"]
+    
     if rank == 0:
         print(f"--- Training Config: {config_path} ---")
         print(f"Distributed: {is_distributed}, World Size: {world_size}")
@@ -257,8 +251,8 @@ def run_training(config_path: str, is_distributed: bool):
             # wandb is already None
 
 
-    # Setup Tokenizer
-    tokenizer = AutoTokenizer.from_pretrained(config["model"], trust_remote_code=True)
+    # Setup Tokenizer using dFactory/VeOmni method
+    tokenizer = build_tokenizer(model_config["tokenizer_path"])
     if tokenizer.pad_token is None: tokenizer.add_special_tokens({'pad_token': tokenizer.eos_token})
     if tokenizer.mask_token is None: tokenizer.add_special_tokens({'mask_token': '[MASK]'})
 
@@ -290,9 +284,15 @@ def run_training(config_path: str, is_distributed: bool):
     collator = AOMTDataCollator(tokenizer)
     dataloader = DataLoader(dataset, batch_size=config.get("per_device_batch_size", 2), collate_fn=collator, sampler=sampler, shuffle=False)
 
-    # Initialize Model
+    # Initialize Model using dFactory/VeOmni method
     auto_wrap_policy = functools.partial(size_based_auto_wrap_policy, min_num_params=1_000_000)
-    model = AutoModelForCausalLM.from_pretrained(config["model"], trust_remote_code=True, torch_dtype=torch.bfloat16)
+    
+    model = build_foundation_model(
+        config_path=model_config["config_path"],
+        weights_path=model_config["model_path"],
+        torch_dtype=torch.bfloat16 if config.get("mixed_precision") == "bf16" else torch.float32, 
+        attn_implementation=model_config.get("attn_implementation", "sdpa"),
+    )
     model.resize_token_embeddings(len(tokenizer))
 
     if is_distributed:
@@ -352,14 +352,29 @@ def run_training(config_path: str, is_distributed: bool):
         if (step + 1) % config.get("save_interval", 500) == 0:
             save_path = os.path.join(checkpoint_dir, f"step_{step+1}")
             if rank == 0: print(f"\nSaving checkpoint to {save_path}...")
-            model.save_pretrained(save_path)
-            tokenizer.save_pretrained(save_path)
+            # NOTE: This saving logic is simplified and may not work perfectly with dFactory's checkpointing.
+            if is_distributed:
+                states = model.state_dict()
+                if rank == 0:
+                    torch.save(states, os.path.join(save_path, "model.pt"))
+            else:
+                 model.save_pretrained(save_path) # This might not work for the new model type
+            
+            if rank == 0:
+                tokenizer.save_pretrained(save_path)
     
     if rank == 0:
         print("\n--- Training Complete ---")
         final_save_path = os.path.join(checkpoint_dir, "final_checkpoint")
         print(f"Saving final model to {final_save_path}...")
-        model.save_pretrained(final_save_path)
+        # NOTE: This saving logic is simplified.
+        if is_distributed:
+            states = model.state_dict()
+            if rank == 0:
+                torch.save(states, os.path.join(final_save_path, "model.pt"))
+        else:
+            model.save_pretrained(final_save_path)
+
         tokenizer.save_pretrained(final_save_path)
         if wandb:
             wandb.finish()

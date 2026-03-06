@@ -1,7 +1,12 @@
 # configs/aomt_mixed.yaml
 # Baseline 4: Full AOMT with mixed masking of Observation and Action units.
 name: aomt_mixed
-model: inclusionAI/LLaDA2.0-mini
+model:
+  config_path: dFactory/configs/model_configs/llada2_mini
+  model_path: models/LLaDA2.0-mini
+  tokenizer_path: models/LLaDA2.0-mini
+  attn_implementation: sdpa
+  moe_implementation: fused
 data_cache_path: "data/processed_dataset"
 
 # --- Training Objective ---

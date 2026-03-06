@@ -25,22 +25,12 @@ CONFIG_FILE=$1
 
 echo "--- Activating Environment ---"
 source venv/bin/activate
-export PYTHONPATH="$(pwd)/dFactory/veomni:$(pwd)/dFactory:$PYTHONPATH"
-
-# Create a symlink for veomni if it doesn't exist, to handle case-sensitivity issues.
-(cd "$(pwd)/dFactory" && {
-    if [ ! -L "veomni" ] && [ -d "VeOmni" ]; then
-        echo "Creating symlink for veomni in dFactory..."
-        ln -s VeOmni veomni
-    fi
-})
-
+export PYTHONPATH="$(pwd)/dFactory:$PYTHONPATH"
 
 echo "--- Launching dFactory Training ---"
 # Explicitly set the number of processes to match the GPUs we requested
-# by exporting the variable.
-export NPROC_PER_NODE=2
-./dFactory/train.sh \
+# by prepending the variable to the command.
+NPROC_PER_NODE=2 ./dFactory/train.sh \
     training/trainer.py \
     --config "$CONFIG_FILE" \
     --distributed
