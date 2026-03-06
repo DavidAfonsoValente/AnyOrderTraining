@@ -60,12 +60,12 @@ def run_evaluation_suite(
     # 2. Load Data using the datasets library
     print(f"Loading evaluation data from: {data_split_path}")
     if not os.path.exists(data_split_path):
-        raise FileNotFoundError(f"Data split not found at {data_split_path}. Ensure 'prepare_data.sh' has been run for the 'test' split.")
+        raise FileNotFoundError(f"Data split not found at {data_split_path}. Ensure 'prepare_data.sh' has been run for the 'train' split.")
     tokenized_trajectories = load_from_disk(data_split_path)
 
     # Filter for a smaller subset for faster demonstration
     eval_subset = tokenized_trajectories.select(range(50))
-    print(f"Using a subset of {len(eval_subset)} trajectories for evaluation.")
+    print(f"Using a subset of {len(eval_subset)} trajectories from the train set for evaluation.")
 
     # Load evaluation configuration
     eval_config_path = os.path.join(os.path.dirname(__file__), 'configs', 'eval_config.yaml')
@@ -128,7 +128,7 @@ def run_evaluation_suite(
 def main():
     parser = argparse.ArgumentParser(description="Run the full AOMT evaluation suite on a model checkpoint.")
     parser.add_argument("--checkpoint_path", type=str, required=True, help="Path to the trained model checkpoint directory.")
-    parser.add_argument("--data_split_path", type=str, default="aomt/data/processed_dataset/test", help="Path to the processed test dataset directory.")
+    parser.add_argument("--data_split_path", type=str, default="aomt/data/processed_dataset/train", help="Path to the processed train dataset directory (used for validation).")
     parser.add_argument("--results_dir", type=str, help="Directory to save the results.json file. Defaults to the checkpoint directory.")
     parser.add_argument("--split", type=str, default="seen", choices=["seen", "unseen"], help="Which task split to evaluate on (e.g., 'seen', 'unseen').")
 

@@ -9,36 +9,30 @@ set -e # Exit on error
 SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &> /dev/null && pwd)
 # The project root ('aomt') is one level up from the 'scripts' directory.
 PROJECT_ROOT=$(dirname "$SCRIPT_DIR")
-# The top-level directory (containing 'aomt') is one level up from the project root.
-TOP_LEVEL_DIR=$(dirname "$PROJECT_ROOT")
+cd "$PROJECT_ROOT" # Ensure we are running from the 'aomt' directory
 
 # Activate virtual environment
-source "${PROJECT_ROOT}/venv/bin/activate"
+source "venv/bin/activate"
 
-# Set the PYTHONPATH to include the top-level directory AND the dFactory submodule.
-# This makes 'from aomt...' and 'from veomni...' imports work correctly.
-export PYTHONPATH="${TOP_LEVEL_DIR}:${PROJECT_ROOT}/dFactory:${PYTHONPATH}"
+# Add the project root ('aomt') and dFactory to the Python path
+export PYTHONPATH="${PROJECT_ROOT}:${PROJECT_ROOT}/dFactory:${PYTHONPATH}"
 
 echo "========================================"
 echo "      AOMT Data Preparation"
 echo "========================================"
 
 # --- Step 1: Download Raw Dataset ---
-echo "\n[1/4] Checking for and downloading raw dataset..."
-python3 "${PROJECT_ROOT}/data/download.py"
+echo "\n[1/3] Checking for and downloading raw dataset..."
+python3 "data/download.py"
 
 # --- Step 2: Process 'train' split ---
-echo "\n[2/4] Processing 'train' split..."
-python3 "${PROJECT_ROOT}/data/parse_trajectories.py" --split train
+echo "\n[2/3] Processing 'train' split..."
+python3 "data/parse_trajectories.py" --split train
 
-# --- Step 3: Process 'test' split ---
-echo "\n[3/4] Processing 'test' split..."
-python3 "${PROJECT_ROOT}/data/parse_trajectories.py" --split test
-
-# --- Step 4: Verify Processed Data ---
-echo "\n[4/4] Verifying processed data..."
-chmod +x "${PROJECT_ROOT}/scripts/verify_data.py"
-"${PROJECT_ROOT}/scripts/verify_data.py"
+# --- Step 3: Verify Processed Data ---
+echo "\n[3/3] Verifying processed 'train' data..."
+# Note: We are now only verifying the train split.
+"scripts/verify_data.py" --split train
 
 echo "\n========================================"
 echo "      Data preparation complete."

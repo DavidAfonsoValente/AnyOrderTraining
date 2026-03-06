@@ -56,12 +56,23 @@ def verify_processed_data(data_path: str, split: str = "train", num_examples: in
             print(f"    Span {j}: Type={span.unit_type}, Start={span.token_start}, End={span.token_end}, Index={span.unit_index}")
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Load and verify a processed dataset split.")
     script_dir = os.path.dirname(__file__)
     default_data_path = os.path.join(script_dir, '../data/processed_dataset')
-    
-    print("Verifying 'train' split:")
-    verify_processed_data(default_data_path, split="train")
-    
-    # Try to verify 'test' split if it exists, but don't error if it doesn't
-    print("\nVerifying 'test' split (if available):")
-    verify_processed_data(default_data_path, split="test")
+
+    parser.add_argument(
+        "--data_path",
+        type=str,
+        default=default_data_path,
+        help="Path to the root directory of the processed dataset.",
+    )
+    parser.add_argument(
+        "--split",
+        type=str,
+        default="train",
+        help="The dataset split to verify (e.g., 'train', 'test').",
+    )
+    args = parser.parse_args()
+
+    print(f"Verifying '{args.split}' split:")
+    verify_processed_data(args.data_path, split=args.split)

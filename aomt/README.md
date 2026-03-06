@@ -45,7 +45,7 @@ chmod +x setup.sh
 
 ### Phase 2: Data Preparation (on Compute Node)
 
-Next, the raw data must be processed. This is a memory-intensive task and **must be run on a compute node**.
+Next, the raw data must be processed into the format used for training. This is a memory-intensive task and **must be run on a compute node**. The script will process the `train` split, which will be used for both training and validation.
 
 1.  **Request an interactive Slurm session:**
     ```bash
@@ -56,7 +56,7 @@ Next, the raw data must be processed. This is a memory-intensive task and **must
 2.  **Run the data preparation script:**
     Once your job starts and you are on a compute node prompt, run the script:
     ```bash
-    # Activate the environment and run the script
+    # This will now run on the compute node
     source venv/bin/activate
     ./scripts/prepare_data.sh
     ```
