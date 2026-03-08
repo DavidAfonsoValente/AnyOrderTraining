@@ -24,13 +24,13 @@ from veomni.utils.dist_utils import all_reduce
 from veomni.models.registry import ModelRegistry
 
 # Register custom architecture
-ModelRegistry.register_modeling_path("dFactory.models.llada2_moe")
+ModelRegistry.register_modeling_path("llada2_moe")
 
 def compute_unit_mask_loss(logits: torch.Tensor, labels: torch.Tensor) -> torch.Tensor:
     """Shared loss function: Cross-entropy over masked positions only."""
     mask = (labels != -100)
     if not mask.any():
-        return torch.tensor(0.0, device=logits.device, requires_grad=True)
+        return logits.new_zeros(())
     return torch.nn.functional.cross_entropy(
         logits.view(-1, logits.size(-1)),
         labels.view(-1),
@@ -89,7 +89,8 @@ def main():
                         dp_mode=config["train"].get("fsdp_type", "fsdp1"))
     ps = get_parallel_state()
     device_type = get_device_type()
-    get_torch_device().set_device(f"{device_type}:{ps.local_rank}")
+    device_name = f"{device_type}:{ps.local_rank}"
+    get_torch_device().set_device(device_name)
     
     tokenizer = build_tokenizer(config["model"]["tokenizer_path"])
     mask_token_id = tokenizer.mask_token_id or 156895
@@ -120,11 +121,11 @@ def main():
     for epoch in range(config["train"]["num_epochs"]):
         sampler.set_epoch(epoch)
         for batch in dataloader:
-            batch = {k: v.to(f"{device_type}:{ps.local_rank}", non_blocking=True) for k, v in batch.items()}
+            batch = {k: v.to(device_name, non_blocking=True) for k, v in batch.items()}
             input_ids, prompt_lengths = batch["input_ids"], batch["prompt_lens"]
             masked_input_ids, labels = apply_response_unit_mask(input_ids, prompt_lengths, mask_token_id)
-            # Bidirectional 2D attention mask
-            attn_mask = (masked_input_ids != (tokenizer.pad_token_id or 0)).long()
+            # Bidirectional 2D attention mask (float needed for transformers utilities)
+            attn_mask = (masked_input_ids != (tokenizer.pad_token_id or 0)).to(model.dtype if hasattr(model, "dtype") else torch.float32)
             
             logits = model(input_ids=masked_input_ids, attention_mask=attn_mask, use_cache=False).logits
             loss = compute_unit_mask_loss(logits, labels)

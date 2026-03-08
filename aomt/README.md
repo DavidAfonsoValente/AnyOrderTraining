@@ -20,10 +20,13 @@ conda activate py311 && source activate_env.sh
 ```
 
 ### 2. Preparation & Verification (Compute Node)
-*Heavy lifting: merging MoE weights, processing trajectories, and running the verification suite. LLaDA 2.0 Mini (MoE) is a **16B parameter model** requiring >32GB VRAM for full weight loading in bf16.*
+*Heavy lifting: merging MoE weights, processing trajectories, and running the verification suite. LLaDA 2.0 Mini (MoE) is a **16B parameter model**. Single-GPU verification requires **>64GB VRAM** due to float32 upcasting during loading.*
+
+**⚠️ CRITICAL:** Do NOT use MIG (partitioned) GPUs (e.g., 40GB MIG partitions). You need a **Native** A100-80GB or H100 node.
+
 ```bash
-# Request an interactive compute node (A100 40GB recommended to fit the 16B model)
-salloc --time=2:00:00 --mem=128G --cpus-per-task=8 --gres=gpu:a100-40:1
+# Request a Native 80GB compute node (xgpj0 or xgpk0 recommended)
+salloc --time=2:00:00 --mem=128G --cpus-per-task=8 --gres=gpu:a100-80:1
 ```
 
 Once the allocation is granted:
