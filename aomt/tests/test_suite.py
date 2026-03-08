@@ -147,10 +147,28 @@ class MockTokenizer:
 
     def encode(self, text, add_special_tokens=False):
         # Stable hash-based tokenisation: each word → a token ID in [100, 1000]
-        return [hash(w) % 900 + 100 for w in text.split()]
+        # We split by spaces or the role tags to simulate token boundaries
+        import re
+        parts = re.split(r'(\s+|<[^>]+>)', text)
+        ids = []
+        for p in parts:
+            if not p or p.isspace(): continue
+            ids.append(hash(p) % 900 + 100)
+        return ids
 
     def decode(self, ids, skip_special_tokens=True):
         return " ".join(str(i) for i in ids)
+
+    def apply_chat_template(self, messages, tokenize=True, add_generation_prompt=False, **kwargs):
+        full_text = ""
+        for m in messages:
+            full_text += f" <role> {m['role'].upper()} </role> {m['content']} <|role_end|> "
+        if add_generation_prompt:
+            full_text += " <role> ASSISTANT </role> "
+        
+        if tokenize:
+            return self.encode(full_text)
+        return full_text
 
 
 # ---- Fixtures ---------------------------------------------------------------
