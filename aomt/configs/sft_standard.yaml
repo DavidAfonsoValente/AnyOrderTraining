@@ -1,8 +1,8 @@
 # configs/sft_standard.yaml
 # Baseline 1: Standard Supervised Fine-Tuning (Next-Action Prediction)
 model:
-  model_path:      ./models/llada2-mini-merged
-  tokenizer_path:  ./models/LLaDA2.0-mini
+  model_path:      ./weights/llada2-mini-merged
+  tokenizer_path:  ./weights/LLaDA2.0-mini
 
 data:
   train_path:  ./data/cache/sft_standard_train.jsonl

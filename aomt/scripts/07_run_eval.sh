@@ -29,18 +29,18 @@ convert_ckpt() {
     local NAME="$1"
     local CKPT_DIR="$2"
 
-    if [ -d "./models/${NAME}-sep" ]; then
-        echo "  Checkpoint ./models/${NAME}-sep already exists, skipping conversion."
+    if [ -d "./weights/${NAME}-sep" ]; then
+        echo "  Checkpoint ./weights/${NAME}-sep already exists, skipping conversion."
         return
     fi
 
     BEST=$(ls -td "$CKPT_DIR"/*/ | head -1)
-    echo "  Converting $BEST → ./models/${NAME}-sep"
+    echo "  Converting $BEST → ./weights/${NAME}-sep"
     python dFactory/scripts/moe_convertor.py \
         --input-path  "${BEST}/hf_ckpt" \
-        --output-path "./models/${NAME}-sep" \
+        --output-path "./weights/${NAME}-sep" \
         --mode split
-    cp ./models/LLaDA2.0-mini/modeling_llada2_moe.py "./models/${NAME}-sep/"
+    cp ./weights/LLaDA2.0-mini/modeling_llada2_moe.py "./weights/${NAME}-sep/"
 }
 
 echo "[$(date)] Converting checkpoints..."
@@ -59,8 +59,8 @@ for MODEL in $MODELS; do
     for BENCH in $BENCHMARKS; do
         echo "  Benchmark: $BENCH"
         python eval/task_eval.py \
-            --model_path "./models/${MODEL}-sep" \
-            --tokenizer  "./models/LLaDA2.0-mini" \
+            --model_path "./weights/${MODEL}-sep" \
+            --tokenizer  "./weights/LLaDA2.0-mini" \
             --benchmark  "$BENCH" \
             --gen_length 256 \
             --block_length 32 \
@@ -74,8 +74,8 @@ done
 echo ""
 echo "[$(date)] Steps=1 consistency check: AOMT-Mixed on ALFWorld..."
 python eval/task_eval.py \
-    --model_path ./models/aomt_mixed-sep \
-    --tokenizer  ./models/LLaDA2.0-mini \
+    --model_path ./weights/aomt_mixed-sep \
+    --tokenizer  ./weights/LLaDA2.0-mini \
     --benchmark  alfworld \
     --gen_length 256 \
     --block_length 256 \
@@ -88,8 +88,8 @@ echo ""
 echo "[$(date)] Computing NLL-obs..."
 for MODEL in aomt_action aomt_mixed; do
     python eval/nll_obs.py \
-        --model_path "./models/${MODEL}-sep" \
-        --tokenizer  ./models/LLaDA2.0-mini \
+        --model_path "./weights/${MODEL}-sep" \
+        --tokenizer  ./weights/LLaDA2.0-mini \
         --data_path  ./data/cache/aomt_test.jsonl \
         --output_file "results/${MODEL}_nll_obs.json"
 done
@@ -100,8 +100,8 @@ echo "[$(date)] Running robustness evaluation..."
 for RHO in 0.1 0.2 0.3; do
     for MODEL in sft_standard aomt_action aomt_mixed; do
         python eval/noise_robustness.py \
-            --model_path "./models/${MODEL}-sep" \
-            --tokenizer  ./models/LLaDA2.0-mini \
+            --model_path "./weights/${MODEL}-sep" \
+            --tokenizer  ./weights/LLaDA2.0-mini \
             --benchmark  alfworld \
             --split      seen \
             --rho        "$RHO" \

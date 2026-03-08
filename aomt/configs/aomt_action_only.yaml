@@ -1,8 +1,8 @@
 # configs/aomt_action_only.yaml
 # Baseline 3: Any-Order Masked Training (Action-Only masking)
 model:
-  model_path:      ./models/llada2-mini-merged
-  tokenizer_path:  ./models/LLaDA2.0-mini
+  model_path:      ./weights/llada2-mini-merged
+  tokenizer_path:  ./weights/LLaDA2.0-mini
 
 data:
   train_path:  ./data/cache/aomt_train.jsonl

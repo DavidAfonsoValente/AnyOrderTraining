@@ -1,8 +1,8 @@
 # configs/prefix_sft_stage2.yaml
 # Baseline 2 Stage 2: Policy restoration (Next-action prediction)
 model:
-  model_path:      ./models/prefix_sft_s1_merged   # Stage 1 ckpt, re-merged
-  tokenizer_path:  ./models/LLaDA2.0-mini
+  model_path:      ./weights/prefix_sft_s1_merged   # Stage 1 ckpt, re-merged
+  tokenizer_path:  ./weights/LLaDA2.0-mini
 
 data:
   train_path:  ./data/cache/sft_standard_train.jsonl

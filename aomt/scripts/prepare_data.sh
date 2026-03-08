@@ -11,7 +11,7 @@ AOMT_DIR=$(dirname "$SCRIPT_DIR")
 VENV_PYTHON="$AOMT_DIR/dFactory/VeOmni/.venv/bin/python"
 CACHE_DIR="$AOMT_DIR/data/dataset_cache"
 RAW_CACHE_DIR="$AOMT_DIR/data/dataset_cache/raw"
-TOKENIZER_PATH="$AOMT_DIR/models/LLaDA2.0-mini"
+TOKENIZER_PATH="$AOMT_DIR/weights/LLaDA2.0-mini"
 
 # --- Pre-flight Checks ---
 if [ ! -f "$VENV_PYTHON" ]; then

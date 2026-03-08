@@ -32,8 +32,8 @@ class TestTrainingIntegration(unittest.TestCase):
         self.config = {
             'name': 'integration_test',
             'model': {
-                'model_path': 'models/LLaDA2.0-mini-merged',
-                'tokenizer_path': 'models/LLaDA2.0-mini',
+                'model_path': 'weights/LLaDA2.0-mini-merged',
+                'tokenizer_path': 'weights/LLaDA2.0-mini',
             },
             'data': {
                 'train_path': self.jsonl_path,

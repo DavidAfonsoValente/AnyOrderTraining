@@ -17,8 +17,8 @@ set -euo pipefail
 mkdir -p logs checkpoints/prefix_sft_s2
 
 # Verify the Stage 1 merged checkpoint exists before starting
-if [ ! -d "./models/prefix_sft_s1_merged" ]; then
-    echo "ERROR: ./models/prefix_sft_s1_merged not found."
+if [ ! -d "./weights/prefix_sft_s1_merged" ]; then
+    echo "ERROR: ./weights/prefix_sft_s1_merged not found."
     echo "Ensure 03_train_prefix_s1.sh completed successfully."
     exit 1
 fi

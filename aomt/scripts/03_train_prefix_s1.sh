@@ -36,8 +36,8 @@ echo "Best checkpoint: $BEST_CKPT"
 echo "[$(date)] Converting checkpoint to merged format for Stage 2..."
 python dFactory/scripts/moe_convertor.py \
     --input-path  "${BEST_CKPT}/hf_ckpt" \
-    --output-path ./models/prefix_sft_s1_merged \
+    --output-path ./weights/prefix_sft_s1_merged \
     --mode merge
 
-echo "[$(date)] Merged checkpoint written to ./models/prefix_sft_s1_merged"
+echo "[$(date)] Merged checkpoint written to ./weights/prefix_sft_s1_merged"
 echo "[$(date)] Stage 1 complete. Stage 2 job will start automatically via dependency."

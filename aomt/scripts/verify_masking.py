@@ -35,7 +35,7 @@ def verify_experiment_data(config_path: str):
         config = yaml.safe_load(f)
 
     # Use the local model path from the updated configs
-    tokenizer_path = config.get("model", {}).get("tokenizer_path", "models/LLaDA2.0-mini")
+    tokenizer_path = config.get("model", {}).get("tokenizer_path", "weights/LLaDA2.0-mini")
     train_path = config.get("data", {}).get("train_path")
     
     # 2. Load Tokenizer
