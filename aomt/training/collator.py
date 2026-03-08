@@ -13,67 +13,34 @@ def build_prefix_sft_examples(
     tokenizer: PreTrainedTokenizer
 ) -> List[Dict[str, Any]]:
     """
-    Constructs multiple short training examples from a single trajectory,
-    specifically for the Prefix-SFT (ALEE-style) Stage 1 objective.
-
-    Each example has the form: (O_t, A_t) -> O_{t+1}
-    Input:  [O_t tokens] [SEP] [A_t tokens] [SEP] [MASK]...[MASK]
-    Target: [O_t tokens] [SEP] [A_t tokens] [SEP] [O_{t+1} tokens]
-
-    Args:
-        tokenized_traj (TokenizedTrajectory): The trajectory to process.
-        tokenizer (PreTrainedTokenizer): The tokenizer, needed for special tokens.
-
-    Returns:
-        List[Dict[str, Any]]: A list of dictionary-based training instances.
+    Constructs Prefix-SFT Stage 1 examples: (O_t, A_t) -> O_{t+1}.
+    Prompt = O_t, A_t (local context ONLY). Response = O_{t+1}.
     """
-    sep_token_id = tokenizer.eos_token_id
-    mask_token_id = tokenizer.mask_token_id
-    if sep_token_id is None or mask_token_id is None:
-        raise ValueError("Tokenizer must have defined eos_token_id and mask_token_id.")
-
     units = tokenized_traj.unit_spans
     ids = tokenized_traj.input_ids
     examples = []
 
-    # Iterate through the trajectory to find (obs, act, obs) sequences
     for i in range(len(units) - 2):
-        # Check for the O_t, A_t, O_{t+1} pattern
         if (units[i].unit_type == "obs" and
             units[i+1].unit_type == "act" and
             units[i+2].unit_type == "obs"):
 
-            obs_t, act_t, obs_t1 = units[i], units[i+1], units[i+2]
+            obs_t = tokenized_traj.input_ids[units[i].token_start:units[i].token_end]
+            act_t = tokenized_traj.input_ids[units[i+1].token_start:units[i+1].token_end]
+            obs_t1 = tokenized_traj.input_ids[units[i+2].token_start:units[i+2].token_end]
 
-            # Context is O_t + SEP + A_t + SEP
-            ctx_ids = torch.cat([
-                ids[obs_t.token_start:obs_t.token_end],
-                torch.tensor([sep_token_id], dtype=torch.long),
-                ids[act_t.token_start:act_t.token_end],
-                torch.tensor([sep_token_id], dtype=torch.long),
-            ])
+            # Reconstruct text to use chat template for consistent boundaries
+            obs_t_text = tokenizer.decode(obs_t)
+            act_t_text = tokenizer.decode(act_t)
+            obs_t1_text = tokenizer.decode(obs_t1)
 
-            # Target is the O_{t+1} span
-            target_span = ids[obs_t1.token_start:obs_t1.token_end]
+            messages = [
+                {"role": "user", "content": f"{obs_t_text}\n{act_t_text}"},
+                {"role": "assistant", "content": obs_t1_text}
+            ]
             
-            # The input replaces the target span with MASK tokens of the same length
-            masked_span = torch.full_like(target_span, fill_value=mask_token_id)
-            
-            # Assemble the full sequences
-            full_input_ids = torch.cat([ctx_ids, masked_span])
-            # The target_ids contain the ground truth for the whole sequence
-            full_target_ids = torch.cat([ctx_ids, target_span])
-            
-            # Loss is only calculated on the O_{t+1} span
-            loss_mask = torch.zeros_like(full_input_ids, dtype=torch.bool)
-            loss_mask[len(ctx_ids):] = True
-
-            examples.append({
-                "input_ids": full_input_ids,
-                "target_ids": full_target_ids,
-                "loss_mask": loss_mask,
-                "use_causal_mask": True, # User-directed change to make Stage 1 causal
-            })
+            # This will be processed by SFTDataset in train_standard_sft.py
+            examples.append({"messages": messages})
 
     return examples
 

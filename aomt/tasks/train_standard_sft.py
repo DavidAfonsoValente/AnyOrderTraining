@@ -1,41 +1,31 @@
 """
 tasks/train_standard_sft.py
 Baseline custom task for Standard SFT, Prefix SFT Stage 1, and Stage 2.
-Verified implementation based on Engineering Specification v3.
+Refactored to align strictly with dFactory standards while implementing unit-level masking.
 """
 
 import os
 import torch
-import torch.nn.functional as F
 import torch.distributed as dist
-from torch.utils.data import DataLoader
-from transformers import AutoTokenizer, get_scheduler
 import yaml
 import argparse
-from tqdm import tqdm
+from tqdm import trange
 import numpy as np
+import json
+from functools import partial
 
-# Use local dFactory/VeOmni if available
-try:
-    from veomni.models import build_tokenizer, build_foundation_model
-    from veomni.distributed.torch_parallelize import build_parallelize_model
-    from veomni.distributed.parallel_state import init_parallel_state, get_parallel_state
-    from veomni.utils.device import get_device_id, get_device_type
-except ImportError:
-    # Fallback/Mock for local testing
-    def build_tokenizer(path): return AutoTokenizer.from_pretrained(path, trust_remote_code=True)
-    def build_foundation_model(**kwargs): 
-        from transformers import AutoModelForCausalLM
-        return AutoModelForCausalLM.from_pretrained(kwargs['weights_path'], trust_remote_code=True)
-    def build_parallelize_model(model, **kwargs): return model
-    def init_parallel_state(**kwargs): pass
-    def get_parallel_state():
-        class DummyPS:
-            def __init__(self): self.global_rank = 0; self.local_rank = 0; self.world_size = 1
-            @property
-            def device_type(self): return "cuda" if torch.cuda.is_available() else "cpu"
-        return DummyPS()
-    def get_device_id(): return 0
+# dFactory/VeOmni Imports
+from veomni.models import build_foundation_model, build_tokenizer
+from veomni.distributed.parallel_state import init_parallel_state, get_parallel_state
+from veomni.distributed.torch_parallelize import build_parallelize_model
+from veomni.optim import build_lr_scheduler, build_optimizer
+from veomni.utils import helper
+from veomni.utils.device import get_device_type, get_nccl_backend, synchronize, get_torch_device
+from veomni.utils.dist_utils import all_reduce
+from veomni.models.registry import ModelRegistry
+
+# Ensure custom modeling is registered
+ModelRegistry.register_modeling_path("models.llada2_moe")
 
 # ---- Spec Section 6: Masking logic ------------------------------------------
 
@@ -57,17 +47,6 @@ def apply_response_unit_mask(input_ids: torch.Tensor,
     labels[response_mask] = input_ids[response_mask]
 
     return masked_input_ids, labels
-
-
-def compute_unit_mask_loss(logits: torch.Tensor, labels: torch.Tensor) -> torch.Tensor:
-    """Cross-entropy over masked positions only. No 1/p_mask weighting."""
-    if (labels == -100).all():
-        return torch.tensor(0.0, device=logits.device, requires_grad=True)
-    return F.cross_entropy(
-        logits.view(-1, logits.size(-1)),
-        labels.view(-1),
-        ignore_index=-100,
-    )
 
 # ---- Dataset and Collator ---------------------------------------------------
 
@@ -106,111 +85,125 @@ def collate_fn(batch, pad_token_id):
 
 # ---- Main Training Loop -----------------------------------------------------
 
-import json
-
-def run_training():
+def main():
+    dist.init_process_group(backend=get_nccl_backend())
+    
     parser = argparse.ArgumentParser()
     parser.add_argument("config", type=str)
-    args = parser.parse_args()
+    args_cli = parser.parse_args()
 
-    with open(args.config, "r") as f:
+    with open(args_cli.config, "r") as f:
         config = yaml.safe_load(f)
 
-    # Distributed setup using VeOmni/dFactory standards
-    if "WORLD_SIZE" in os.environ:
-        dist.init_process_group("nccl")
-        # Initialize parallel state for FSDP/TP/EP support
-        init_parallel_state(
-            dp_mode=config["train"].get("fsdp_type", "fsdp1")
-        )
-        rank = get_parallel_state().global_rank
-        device = f"{get_parallel_state().device_type}:{get_parallel_state().local_rank}"
-        torch.cuda.set_device(device)
-    else:
-        rank = 0
-        device = "cuda" if torch.cuda.is_available() else "cpu"
-
+    init_parallel_state(
+        dp_size=dist.get_world_size(),
+        dp_mode=config["train"].get("fsdp_type", "fsdp1")
+    )
+    
+    ps = get_parallel_state()
+    get_torch_device().set_device(f"{get_device_type()}:{ps.local_rank}")
+    
+    logger = helper.create_logger(__name__)
+    
     tokenizer = build_tokenizer(config["model"]["tokenizer_path"])
-    if tokenizer.pad_token_id is None:
-        tokenizer.pad_token = tokenizer.eos_token
+    mask_token_id = tokenizer.mask_token_id or 156895
     
-    mask_token_id = tokenizer.mask_token_id
-    if mask_token_id is None:
-        mask_token_id = 156895 # Fallback for LLaDA 2.0
-    
-    if rank == 0:
-        print(f"Using Mask Token ID: {mask_token_id} ({tokenizer.decode([mask_token_id])})")
-
     dataset = SFTDataset(config["data"]["train_path"], tokenizer, config["train"]["max_seq_length"])
-    dataloader = DataLoader(dataset, batch_size=config["train"]["per_device_batch_size"], 
-                            collate_fn=lambda b: collate_fn(b, tokenizer.pad_token_id),
-                            shuffle=True)
-
-    model_path = config["model"]["model_path"]
-    config_path = config["model"].get("config_path", model_path)
-    if config_path is None: config_path = model_path
+    
+    sampler = torch.utils.data.distributed.DistributedSampler(
+        dataset, num_replicas=ps.world_size, rank=ps.global_rank, shuffle=True
+    )
+    dataloader = torch.utils.data.DataLoader(
+        dataset, 
+        batch_size=config["train"]["per_device_batch_size"],
+        sampler=sampler,
+        collate_fn=lambda b: collate_fn(b, tokenizer.pad_token_id or tokenizer.eos_token_id)
+    )
 
     model = build_foundation_model(
-        weights_path=model_path,
-        config_path=config_path,
+        config_path=config["model"].get("config_path", config["model"]["model_path"]),
+        weights_path=config["model"]["model_path"],
         torch_dtype="bfloat16" if config["train"]["mixed_precision"] == "bf16" else "float32",
         attn_implementation="sdpa",
-        init_device=device
+        init_device=f"{get_device_type()}:{ps.local_rank}"
     )
-    
-    # NEW: Apply parallelization (FSDP/TP/EP) using VeOmni API
+
     model = build_parallelize_model(
         model,
-        weights_path=model_path,
+        weights_path=config["model"]["model_path"],
         enable_gradient_checkpointing=config["train"].get("gradient_checkpointing", True),
         enable_mixed_precision=(config["train"]["mixed_precision"] == "bf16"),
-        # basic_modules used for FSDP wrapping policy
-        basic_modules=["LLaDA2MoeDecoderLayer"] 
+        basic_modules=["LLaDA2MoeDecoderLayer"]
     )
-    
-    # model.to(device) # handled by loader/parallelizer
 
-    optimizer = torch.optim.AdamW(model.parameters(), lr=float(config["train"]["learning_rate"]), 
-                                 weight_decay=config["train"]["weight_decay"])
-    
+    optimizer = build_optimizer(
+        model,
+        lr=float(config["train"]["learning_rate"]),
+        weight_decay=config["train"]["weight_decay"],
+        fused=True
+    )
+
     num_training_steps = len(dataloader) * config["train"]["num_epochs"]
-    lr_scheduler = get_scheduler(config["train"]["lr_scheduler"], optimizer, 
-                                 num_warmup_steps=config["train"]["warmup_steps"], 
-                                 num_training_steps=num_training_steps)
+    lr_scheduler = build_lr_scheduler(
+        optimizer,
+        train_steps=num_training_steps,
+        lr=float(config["train"]["learning_rate"]),
+        lr_min=float(config["train"].get("min_lr", 0)),
+        lr_warmup_ratio=float(config["train"].get("warmup_steps", 0)) / num_training_steps if num_training_steps > 0 else 0
+    )
 
     model.train()
     for epoch in range(config["train"]["num_epochs"]):
-        pbar = tqdm(dataloader, desc=f"Epoch {epoch}", disable=rank != 0)
-        for batch in pbar:
-            input_ids = batch["input_ids"].to(device)
-            prompt_lengths = batch["prompt_lens"].to(device)
+        sampler.set_epoch(epoch)
+        pbar = trange(len(dataloader), desc=f"Epoch {epoch}", disable=ps.global_rank != 0)
+        data_iter = iter(dataloader)
+        
+        for _ in pbar:
+            batch = next(data_iter)
+            batch = {k: v.to(get_torch_device().get_device_name(), non_blocking=True) for k, v in batch.items()}
+            
+            input_ids = batch["input_ids"]
+            prompt_lengths = batch["prompt_lens"]
 
-            # NEW — unit-level masking (Spec Section 6):
+            # Standard SFT masking
             masked_input_ids, labels = apply_response_unit_mask(input_ids, prompt_lengths, mask_token_id)
             
-            # Bidirectional attention over all non-padding positions
-            # LLaDA 2.0 requires 4D block attention mask: (B, 1, L, L)
+            # Bidirectional 4D mask
             seq_len = masked_input_ids.shape[1]
-            padding_mask = (masked_input_ids != tokenizer.pad_token_id).long()
+            padding_mask = (masked_input_ids != (tokenizer.pad_token_id or tokenizer.eos_token_id)).long()
             attn_mask = padding_mask.unsqueeze(1).unsqueeze(2).expand(-1, 1, seq_len, seq_len)
 
-            logits = model(input_ids=masked_input_ids, attention_mask=attn_mask).logits
-            loss = compute_unit_mask_loss(logits, labels)
+            logits = model(input_ids=masked_input_ids, attention_mask=attn_mask, use_cache=False).logits
+            
+            loss = torch.nn.functional.cross_entropy(
+                logits.view(-1, logits.size(-1)),
+                labels.view(-1),
+                ignore_index=-100
+            )
 
             loss.backward()
             
-            if (pbar.n + 1) % config["train"].get("gradient_accumulation_steps", 1) == 0:
-                torch.nn.utils.clip_grad_norm_(model.parameters(), config["train"]["gradient_clip"])
-                optimizer.step()
-                lr_scheduler.step()
-                optimizer.zero_grad()
-            
-            pbar.set_postfix(loss=loss.item())
+            if hasattr(model, "clip_grad_norm_"):
+                grad_norm = model.clip_grad_norm_(config["train"]["gradient_clip"])
+            else:
+                grad_norm = torch.nn.utils.clip_grad_norm_(model.parameters(), config["train"]["gradient_clip"])
 
-        # Save checkpoint
-        if rank == 0:
-            os.makedirs(config["train"]["output_dir"], exist_ok=True)
-            model.save_pretrained(os.path.join(config["train"]["output_dir"], f"epoch_{epoch}"))
+            optimizer.step()
+            lr_scheduler.step()
+            optimizer.zero_grad()
+            
+            # Sync loss for logging
+            reduced_loss = all_reduce(loss.detach(), group=ps.fsdp_group)
+            
+            if ps.global_rank == 0:
+                pbar.set_postfix(loss=reduced_loss.item())
+
+        if ps.global_rank == 0:
+            save_path = os.path.join(config["train"]["output_dir"], f"epoch_{epoch}")
+            os.makedirs(save_path, exist_ok=True)
+            model.save_pretrained(save_path)
+
+    dist.destroy_process_group()
 
 if __name__ == "__main__":
-    run_training()
+    main()
