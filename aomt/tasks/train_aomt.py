@@ -82,7 +82,8 @@ def compute_unit_mask_loss(logits: torch.Tensor, labels: torch.Tensor) -> torch.
     Shared loss function: Cross-entropy over masked positions only.
     Handles the case where all labels are -100 to avoid NaN.
     """
-    if (labels == -100).all():
+    mask = (labels != -100)
+    if not mask.any():
         return torch.tensor(0.0, device=logits.device, requires_grad=True)
     return torch.nn.functional.cross_entropy(
         logits.view(-1, logits.size(-1)),

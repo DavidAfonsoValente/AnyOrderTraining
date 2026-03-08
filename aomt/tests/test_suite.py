@@ -56,8 +56,12 @@ except ImportError as e:
         return masked_input_ids, labels
 
     def compute_unit_mask_loss(logits, labels):
-        if (labels == -100).all():
+        # Flatten and check if any label is NOT -100
+        mask = (labels != -100)
+        if not mask.any():
             return torch.tensor(0.0, device=logits.device, requires_grad=True)
+        
+        # Only compute loss where labels are not -100
         return torch.nn.functional.cross_entropy(
             logits.view(-1, logits.size(-1)),
             labels.view(-1),
