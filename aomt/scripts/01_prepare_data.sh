@@ -23,23 +23,19 @@ export PYTHONPATH="$REPO_ROOT/dFactory/VeOmni:$PARENT_DIR:$PYTHONPATH"
 echo "[$(date)] Starting data preparation..."
 echo "Node: $(hostname)"
 
-# --- 1. Download dataset -------------------------------------------------
-echo "[$(date)] Downloading agent-eto/eto-sft-trajectory..."
-python data/download.py --output_dir ./data/raw/
-
-# --- 2. Length analysis (REQUIRED before training) -----------------------
+# --- 1. Length analysis (REQUIRED before training) -----------------------
 echo "[$(date)] Running length analysis..."
+# This script will download agent-eto/eto-sft-trajectory automatically via HF datasets
 python data/measure_lengths.py \
-    --raw_dir     ./data/raw/ \
     --tokenizer   ./models/llada2-mini-sep \
     --gen_length  256 \
     --max_seq_len 2048 \
     | tee logs/length_analysis.txt
 
-# --- 3. Generate JSONL files per training mode ---------------------------
+# --- 2. Generate JSONL files per training mode ---------------------------
 echo "[$(date)] Generating training JSONL files..."
+# This script also downloads/loads the dataset automatically
 python data/prepare_data.py \
-    --raw_dir    ./data/raw/ \
     --output_dir ./data/cache/ \
     --tokenizer  ./models/llada2-mini-sep
 
