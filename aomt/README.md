@@ -20,16 +20,33 @@ conda activate py311 && source activate_env.sh
 ```
 
 ### 2. Preparation & Verification (Compute Node)
-*Merging weights, processing data, and running tests. Requires high memory (~128G).*
+*Heavy lifting: merging MoE weights, processing trajectories, and running the verification suite. Requires high memory (~128G).*
 ```bash
 # Request an interactive compute node
 salloc --time=2:00:00 --mem=128G --cpus-per-task=8 --gpus=1 --ntasks=1
 
-# Once on the compute node:
+# Once the allocation is granted and you are on the compute node:
+cd ~/AnyOrderTraining/aomt
+source ~/miniconda3/etc/profile.d/conda.sh
+conda activate py311 && source activate_env.sh
+
+# A. Prepare model weights (converts to merged-expert format)
+srun ./scripts/prepare_model.sh
+
+# B. Download and process trajectories into JSONL files
+srun ./scripts/01_prepare_data.sh
+
+# C. Run the verification tests (Ensure scientific logic is correct)
+srun scripts/run_tests.sh
+
+# D. Visualize masking (Sanity check for all experiment configs)
+srun scripts/visualize_experiments.sh
+
+exit # Return to login node
 ```
 
-### 3. Launch Experiments (Login Node)
-*Submits all training variants and evaluation to Slurm with correct dependencies.*
+### 3. Launch Full Pipeline (Login Node)
+*Submits all training variants and the evaluation suite to Slurm with correct job dependencies.*
 ```bash
 source activate_env.sh
 bash scripts/submit_pipeline.sh --email your_email@comp.nus.edu.sg
@@ -50,7 +67,7 @@ bash scripts/submit_pipeline.sh --email your_email@comp.nus.edu.sg
 
 *   `data/`: Trajectory parsing, downloading, and mode-specific JSONL generation.
 *   `tasks/`: Training entry points for standard SFT and AOMT modes.
-*   `training/`: Core implementation of unit-level masking and datasets.
+*   `training/`: Legacy components and utility implementations.
 *   `eval/`: Full evaluation suite (ALFWorld, ScienceWorld, WebShop, NLL-obs).
 *   `scripts/`: Slurm batch scripts and utility scripts (ordered `01` to `07`).
 *   `configs/`: YAML configuration files for all experiment modes.

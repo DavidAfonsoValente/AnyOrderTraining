@@ -58,7 +58,10 @@ VEOMNI_DIR="dFactory/VeOmni"
 export UV_PYTHON="$PYTHON_EXEC"
 # With the correct Python and uv versions, no patching or lock file deletion should be necessary.
 (cd "$VEOMNI_DIR" && uv sync --extra gpu)
-echo "uv sync complete."
+# Install AOMT specific requirements into the same venv
+source "${VEOMNI_DIR}/.venv/bin/activate"
+pip install -r requirements.txt
+echo "uv sync and pip requirements complete."
 
 # --- 5. Create Helper Script for Activation ---
 echo "[5/5] Creating helper script 'activate_env.sh'..."
