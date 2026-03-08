@@ -185,7 +185,7 @@ def main():
             
             # Bidirectional 4D mask
             seq_len = masked_input_ids.shape[1]
-            padding_mask = (masked_input_ids != (tokenizer.pad_token_id or tokenizer.eos_token_id)).long()
+            padding_mask = (masked_input_ids != (tokenizer.pad_token_id or tokenizer.eos_token_id))
             attn_mask = padding_mask.unsqueeze(1).unsqueeze(2).expand(-1, 1, seq_len, seq_len)
 
             logits = model(input_ids=masked_input_ids, attention_mask=attn_mask, use_cache=False).logits

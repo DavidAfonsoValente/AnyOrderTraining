@@ -698,7 +698,7 @@ class TestSmokeForward(unittest.TestCase):
         labels = labels.cuda()
         
         # 4D bidirectional mask
-        padding_mask = torch.ones_like(masked_ids)
+        padding_mask = torch.ones_like(masked_ids, dtype=torch.bool)
         attn_mask = padding_mask.unsqueeze(1).unsqueeze(2).expand(-1, 1, L, L)
 
         with torch.no_grad():

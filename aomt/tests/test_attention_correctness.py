@@ -46,7 +46,7 @@ class TestAttentionMaskCorrectness(unittest.TestCase):
         B, L = 2, 64
         input_ids = torch.randint(100, 1000, (B, L)).to(self.model.device)
         # LLaDA 2.0 requires 4D block attention mask: (B, 1, L, L)
-        attn_mask = torch.ones((B, 1, L, L), dtype=torch.long).to(self.model.device)
+        attn_mask = torch.ones((B, 1, L, L), dtype=torch.bool).to(self.model.device)
         
         try:
             with torch.no_grad():
