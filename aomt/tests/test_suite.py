@@ -44,12 +44,12 @@ except ImportError as e:
 
     MASK_TOKEN_ID = 126336
 
-    def apply_response_unit_mask(input_ids, prompt_lengths):
+    def apply_response_unit_mask(input_ids, prompt_lengths, mask_token_id=156895):
         B, L = input_ids.shape
         positions = torch.arange(L, device=input_ids.device).unsqueeze(0).expand(B, -1)
         response_mask = positions >= prompt_lengths.unsqueeze(1)
         masked_input_ids = input_ids.clone()
-        masked_input_ids[response_mask] = MASK_TOKEN_ID
+        masked_input_ids[response_mask] = mask_token_id
         labels = torch.full_like(input_ids, -100)
         labels[response_mask] = input_ids[response_mask]
         return masked_input_ids, labels
@@ -61,7 +61,7 @@ except ImportError as e:
             ignore_index=-100,
         )
 
-    def apply_unit_mask(unit_texts, unit_types, tokenizer, mask_prob, mode, rng):
+    def apply_unit_mask(unit_texts, unit_types, tokenizer, mask_prob, mode, rng, mask_token_id=156895):
         sep = getattr(tokenizer, "eos_token_id", 2)
         all_ids, spans = [], []
         for i, (text, utype) in enumerate(zip(unit_texts, unit_types)):
@@ -79,7 +79,7 @@ except ImportError as e:
                 continue
             if rng.random() < mask_prob:
                 labels[start:end] = input_ids[start:end].clone()
-                input_ids[start:end] = MASK_TOKEN_ID
+                input_ids[start:end] = mask_token_id
                 masked_any = True
         if not masked_any:
             eligible = [(s, e) for s, e, ut in spans
@@ -87,7 +87,7 @@ except ImportError as e:
             if eligible:
                 s, e = eligible[rng.integers(len(eligible))]
                 labels[s:e] = input_ids[s:e].clone()
-                input_ids[s:e] = MASK_TOKEN_ID
+                input_ids[s:e] = mask_token_id
         return input_ids, labels
 
     def parse_units(conversations):
@@ -288,7 +288,7 @@ class TestBaselineMasking(unittest.TestCase):
         self.prompt_lengths = torch.tensor([5, 8])
 
     def test_prompt_tokens_clean(self):
-        masked, labels = apply_response_unit_mask(self.input_ids, self.prompt_lengths)
+        masked, labels = apply_response_unit_mask(self.input_ids, self.prompt_lengths, 156895)
         for b in range(masked.shape[0]):
             pl = self.prompt_lengths[b].item()
             self.assertTrue(
@@ -297,16 +297,16 @@ class TestBaselineMasking(unittest.TestCase):
             )
 
     def test_response_tokens_all_masked(self):
-        masked, labels = apply_response_unit_mask(self.input_ids, self.prompt_lengths)
+        masked, labels = apply_response_unit_mask(self.input_ids, self.prompt_lengths, 156895)
         for b in range(masked.shape[0]):
             pl = self.prompt_lengths[b].item()
             self.assertTrue(
-                (masked[b, pl:] == 126336).all(),
-                f"Batch {b}: ALL response tokens must be MASK_TOKEN_ID=126336"
+                (masked[b, pl:] == 156895).all(),
+                f"Batch {b}: ALL response tokens must be MASK_TOKEN_ID=156895"
             )
 
     def test_labels_at_prompt_positions_minus100(self):
-        masked, labels = apply_response_unit_mask(self.input_ids, self.prompt_lengths)
+        masked, labels = apply_response_unit_mask(self.input_ids, self.prompt_lengths, 156895)
         for b in range(labels.shape[0]):
             pl = self.prompt_lengths[b].item()
             self.assertTrue(
@@ -315,7 +315,7 @@ class TestBaselineMasking(unittest.TestCase):
             )
 
     def test_labels_at_response_positions_correct(self):
-        masked, labels = apply_response_unit_mask(self.input_ids, self.prompt_lengths)
+        masked, labels = apply_response_unit_mask(self.input_ids, self.prompt_lengths, 156895)
         for b in range(labels.shape[0]):
             pl = self.prompt_lengths[b].item()
             self.assertTrue(
@@ -325,18 +325,18 @@ class TestBaselineMasking(unittest.TestCase):
 
     def test_deterministic(self):
         """Same input → same output, always."""
-        m1, l1 = apply_response_unit_mask(self.input_ids, self.prompt_lengths)
-        m2, l2 = apply_response_unit_mask(self.input_ids, self.prompt_lengths)
+        m1, l1 = apply_response_unit_mask(self.input_ids, self.prompt_lengths, 156895)
+        m2, l2 = apply_response_unit_mask(self.input_ids, self.prompt_lengths, 156895)
         self.assertTrue(torch.equal(m1, m2), "apply_response_unit_mask must be deterministic")
         self.assertTrue(torch.equal(l1, l2), "apply_response_unit_mask must be deterministic")
 
     def test_no_mask_token_in_prompt(self):
-        """Robustness: even if input_ids contain 126336, prompt part must stay clean."""
+        """Robustness: even if input_ids contain 156895, prompt part must stay clean."""
         input_ids = self.input_ids.clone()
-        input_ids[0, 2] = 126336   # inject MASK token in prompt
-        masked, _ = apply_response_unit_mask(input_ids, self.prompt_lengths)
-        # The prompt position should remain 126336 (unchanged, not double-masked or cleared)
-        self.assertEqual(masked[0, 2].item(), 126336,
+        input_ids[0, 2] = 156895   # inject MASK token in prompt
+        masked, _ = apply_response_unit_mask(input_ids, self.prompt_lengths, 156895)
+        # The prompt position should remain 156895 (unchanged, not double-masked or cleared)
+        self.assertEqual(masked[0, 2].item(), 156895,
                          "Prompt tokens must be preserved exactly, even if they are MASK_TOKEN_ID")
 
 
@@ -375,7 +375,7 @@ class TestAOMTMasking(unittest.TestCase):
         rng = np.random.default_rng(0)
         input_ids, labels = apply_unit_mask(
             self.unit_texts, self.unit_types, self.tok,
-            mask_prob=1.0, mode="action_only", rng=rng  # force-mask everything eligible
+            mask_prob=1.0, mode="action_only", rng=rng, mask_token_id=156895  # force-mask everything eligible
         )
 
         target_positions = (labels != -100).nonzero(as_tuple=True)[0].tolist()
@@ -393,13 +393,13 @@ class TestAOMTMasking(unittest.TestCase):
         rng = np.random.default_rng(0)
         input_ids, labels = apply_unit_mask(
             self.unit_texts, self.unit_types, self.tok,
-            mask_prob=1.0, mode="action_only", rng=rng
+            mask_prob=1.0, mode="action_only", rng=rng, mask_token_id=156895
         )
 
         for pos in obs_positions:
             self.assertEqual(labels[pos].item(), -100,
                              f"Obs position {pos} must never be in labels for action_only mode")
-            self.assertNotEqual(input_ids[pos].item(), 126336,
+            self.assertNotEqual(input_ids[pos].item(), 156895,
                                 f"Obs position {pos} must not be MASK_TOKEN_ID in action_only mode")
 
     def test_whole_unit_masking_invariant(self):
@@ -408,7 +408,7 @@ class TestAOMTMasking(unittest.TestCase):
         rng = np.random.default_rng(7)
         input_ids, labels = apply_unit_mask(
             self.unit_texts, self.unit_types, self.tok,
-            mask_prob=0.5, mode="mixed", rng=rng
+            mask_prob=0.5, mode="mixed", rng=rng, mask_token_id=156895
         )
 
         for s, e, _ in spans:
@@ -416,12 +416,12 @@ class TestAOMTMasking(unittest.TestCase):
             is_masked = (labels[s] != -100).item()  # any token in unit is target
             if is_masked:
                 self.assertTrue(
-                    (unit_input == 126336).all(),
+                    (unit_input == 156895).all(),
                     f"Unit [{s}:{e}] is masked: ALL tokens must be MASK_TOKEN_ID"
                 )
             else:
                 self.assertFalse(
-                    (unit_input == 126336).any(),
+                    (unit_input == 156895).any(),
                     f"Unit [{s}:{e}] is unmasked: NO token should be MASK_TOKEN_ID"
                 )
 
@@ -432,7 +432,7 @@ class TestAOMTMasking(unittest.TestCase):
             rng = np.random.default_rng([42, 0, seed])
             input_ids, _ = apply_unit_mask(
                 self.unit_texts, self.unit_types, self.tok,
-                mask_prob=0.5, mode="mixed", rng=rng
+                mask_prob=0.5, mode="mixed", rng=rng, mask_token_id=156895
             )
             results.append(input_ids.tolist())
 
@@ -453,7 +453,7 @@ class TestAOMTMasking(unittest.TestCase):
             rng = np.random.default_rng([99, seed])
             _, labels = apply_unit_mask(
                 self.unit_texts, self.unit_types, self.tok,
-                mask_prob=0.5, mode="mixed", rng=rng
+                mask_prob=0.5, mode="mixed", rng=rng, mask_token_id=156895
             )
             target = (labels != -100).nonzero(as_tuple=True)[0].tolist()
             if any(p in obs_positions for p in target):
@@ -473,7 +473,7 @@ class TestAOMTMasking(unittest.TestCase):
             def integers(self, n): return 0
         input_ids, labels = apply_unit_mask(
             self.unit_texts, self.unit_types, self.tok,
-            mask_prob=0.0, mode="action_only", rng=AlwaysPass()
+            mask_prob=0.0, mode="action_only", rng=AlwaysPass(), mask_token_id=156895
         )
         self.assertTrue(
             (labels != -100).any(),
@@ -549,7 +549,7 @@ class TestMaskingConsistency(unittest.TestCase):
         B, L, V = 1, 20, 10000
         input_ids = torch.randint(100, 5000, (B, L))
         prompt_lengths = torch.tensor([5])
-        masked, labels_baseline = apply_response_unit_mask(input_ids, prompt_lengths)
+        masked, labels_baseline = apply_response_unit_mask(input_ids, prompt_lengths, 156895)
         logits = torch.randn(B, L, V)
         loss_baseline = compute_unit_mask_loss(logits, labels_baseline)
 
@@ -559,7 +559,7 @@ class TestMaskingConsistency(unittest.TestCase):
         rng = np.random.default_rng(0)
         aomt_ids, labels_aomt = apply_unit_mask(
             unit_texts, unit_types, self.tok, mask_prob=1.0,
-            mode="action_only", rng=rng
+            mode="action_only", rng=rng, mask_token_id=156895
         )
         logits_aomt = torch.randn(1, len(aomt_ids), V)
         loss_aomt = compute_unit_mask_loss(logits_aomt, labels_aomt.unsqueeze(0))
@@ -578,9 +578,9 @@ class TestMaskingConsistency(unittest.TestCase):
         B, L = 1, 15
         input_ids = torch.randint(100, 5000, (B, L))
         prompt_lengths = torch.tensor([4])
-        masked, labels = apply_response_unit_mask(input_ids, prompt_lengths)
+        masked, labels = apply_response_unit_mask(input_ids, prompt_lengths, 156895)
         response = masked[0, 4:]
-        self.assertTrue((response == 126336).all(),
+        self.assertTrue((response == 156895).all(),
                         "Baseline: response span must be entirely MASK_TOKEN_ID (no partial)")
 
         # AOMT: within each masked unit, ALL tokens are MASK_TOKEN_ID
@@ -589,12 +589,12 @@ class TestMaskingConsistency(unittest.TestCase):
         rng = np.random.default_rng(1)
         aomt_ids, labels_aomt = apply_unit_mask(
             unit_texts, unit_types, self.tok, mask_prob=1.0,
-            mode="action_only", rng=rng
+            mode="action_only", rng=rng, mask_token_id=156895
         )
         # All act-unit tokens should be MASK_TOKEN_ID
         sep = self.tok.eos_token_id
         # Verify unit integrity (tested more fully in TestAOMTMasking)
-        self.assertTrue((aomt_ids == 126336).any(),
+        self.assertTrue((aomt_ids == 156895).any(),
                         "AOMT: at least some tokens must be MASK_TOKEN_ID")
 
 

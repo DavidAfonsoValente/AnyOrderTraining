@@ -16,6 +16,7 @@ from tqdm import tqdm
 
 # Import all the necessary components from the training pipeline
 from tasks.train_aomt import apply_unit_mask, AOMTDataset
+from tasks.train_standard_sft import apply_response_unit_mask
 from training.mask_sampler import MaskMode
 
 def verify_experiment_data(config_path: str):
@@ -31,13 +32,20 @@ def verify_experiment_data(config_path: str):
         config = yaml.safe_load(f)
 
     # Use the local model path from the updated configs
-    tokenizer_path = config.get("model", {}).get("tokenizer_path", "models/llada2-mini-sep")
+    tokenizer_path = config.get("model", {}).get("tokenizer_path", "models/LLaDA2.0-mini")
     train_path = config.get("data", {}).get("train_path")
     
     # 2. Load Tokenizer
     print(f"Loading tokenizer from '{tokenizer_path}'...")
     tokenizer = AutoTokenizer.from_pretrained(tokenizer_path, trust_remote_code=True)
     if tokenizer.pad_token is None: tokenizer.pad_token = tokenizer.eos_token
+    
+    mask_token_id = tokenizer.mask_token_id
+    if mask_token_id is None:
+        # Fallback to LLaDA default if not set in tokenizer
+        mask_token_id = 156895
+    
+    print(f"Using Mask Token ID: {mask_token_id} ({tokenizer.decode([mask_token_id])})")
 
     # 3. Initialize the correct Dataset based on the config
     print(f"Loading data from '{train_path}'...")
@@ -46,37 +54,47 @@ def verify_experiment_data(config_path: str):
         mode = config["aomt"]["mode"]
         mask_prob = config["aomt"]["mask_prob"]
         dataset = AOMTDataset(train_path, tokenizer, mask_prob, mode)
-    else:
-        # Standard SFT / Prefix SFT
-        # We can use a simple reader for visualization
-        dataset = []
-        with open(train_path, "r") as f:
-            for i, line in enumerate(f):
-                if i >= 5: break # Just a few for viz
-                dataset.append(json.loads(line))
         
-    print(f"\nDisplaying one example:\n")
-    
-    if "aomt" in config:
+        print(f"\nDisplaying one AOMT example:\n")
         example_data = dataset[0]
         input_ids = example_data['input_ids']
         labels = example_data['labels']
         
-        print("INPUT (masked):")
+        print("INPUT (with masks):")
         print(tokenizer.decode(input_ids, skip_special_tokens=False))
-        print("\nTARGET (labels):")
-        # Decode only the masked parts
+        print("\nTARGET (reconstructed from labels):")
         target_ids = input_ids.clone()
         mask = labels != -100
         target_ids[mask] = labels[mask]
         print(tokenizer.decode(target_ids, skip_special_tokens=False))
     else:
-        # Chat format
+        # Standard SFT / Prefix SFT
+        dataset = []
+        with open(train_path, "r") as f:
+            for i, line in enumerate(f):
+                if i >= 5: break
+                dataset.append(json.loads(line))
+        
+        print(f"\nDisplaying one SFT example (as seen by the model during training):\n")
         ex = dataset[0]
-        print("PROMPT:")
-        print(ex["messages"][0]["content"])
-        print("\nRESPONSE:")
-        print(ex["messages"][1]["content"])
+        messages = ex["messages"]
+        
+        # Tokenise full sequence
+        input_ids = tokenizer.apply_chat_template(messages, return_tensors="pt")[0]
+        # Find prompt length
+        prompt_text = tokenizer.apply_chat_template(messages[:1], add_generation_prompt=True, tokenize=False)
+        prompt_len = len(tokenizer.encode(prompt_text))
+        
+        # Apply SFT masking logic
+        masked_ids, labels = apply_response_unit_mask(input_ids.unsqueeze(0), torch.tensor([prompt_len]))
+        masked_ids = masked_ids[0]
+        
+        print("PROMPT (unmasked context):")
+        print(tokenizer.decode(input_ids[:prompt_len], skip_special_tokens=False))
+        print("\nRESPONSE (masked target):")
+        print(tokenizer.decode(masked_ids[prompt_len:], skip_special_tokens=False))
+        print("\nFULL INPUT TO MODEL:")
+        print(tokenizer.decode(masked_ids, skip_special_tokens=False))
 
     print("\n" + "-"*40)
 

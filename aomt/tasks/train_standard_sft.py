@@ -29,10 +29,9 @@ except ImportError:
 
 # ---- Spec Section 6: Masking logic ------------------------------------------
 
-MASK_TOKEN_ID = 126336 
-
 def apply_response_unit_mask(input_ids: torch.Tensor,
-                              prompt_lengths: torch.Tensor) -> tuple:
+                              prompt_lengths: torch.Tensor,
+                              mask_token_id: int) -> tuple:
     """
     Deterministically masks the entire response span.
     """
@@ -42,7 +41,7 @@ def apply_response_unit_mask(input_ids: torch.Tensor,
     response_mask = positions >= prompt_lengths.unsqueeze(1)
 
     masked_input_ids = input_ids.clone()
-    masked_input_ids[response_mask] = MASK_TOKEN_ID
+    masked_input_ids[response_mask] = mask_token_id
 
     labels = torch.full_like(input_ids, -100)
     labels[response_mask] = input_ids[response_mask]
@@ -124,6 +123,13 @@ def run_training():
     tokenizer = build_tokenizer(config["model"]["tokenizer_path"])
     if tokenizer.pad_token_id is None:
         tokenizer.pad_token = tokenizer.eos_token
+    
+    mask_token_id = tokenizer.mask_token_id
+    if mask_token_id is None:
+        mask_token_id = 156895 # Fallback for LLaDA 2.0
+    
+    if rank == 0:
+        print(f"Using Mask Token ID: {mask_token_id} ({tokenizer.decode([mask_token_id])})")
 
     dataset = SFTDataset(config["data"]["train_path"], tokenizer, config["train"]["max_seq_length"])
     dataloader = DataLoader(dataset, batch_size=config["train"]["per_device_batch_size"], 
@@ -155,7 +161,7 @@ def run_training():
             prompt_lengths = batch["prompt_lens"].to(device)
 
             # NEW — unit-level masking (Spec Section 6):
-            masked_input_ids, labels = apply_response_unit_mask(input_ids, prompt_lengths)
+            masked_input_ids, labels = apply_response_unit_mask(input_ids, prompt_lengths, mask_token_id)
             
             # Bidirectional attention over all non-padding positions
             attn_mask = (masked_input_ids != tokenizer.pad_token_id).long()

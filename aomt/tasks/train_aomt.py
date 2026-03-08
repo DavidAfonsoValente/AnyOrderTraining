@@ -27,14 +27,13 @@ except ImportError:
 
 # ---- Spec Section 7.2: Masking logic ------------------------------------------
 
-MASK_TOKEN_ID = 126336
-
 def apply_unit_mask(unit_texts: list,
                     unit_types: list,
                     tokenizer,
                     mask_prob: float,
                     mode: str,
-                    rng) -> tuple:
+                    rng,
+                    mask_token_id: int) -> tuple:
     """
     Tokenises the full trajectory flat and applies unit-level Bernoulli masking.
     """
@@ -58,7 +57,7 @@ def apply_unit_mask(unit_texts: list,
             continue
         if rng.random() < mask_prob:
             labels[start:end] = input_ids[start:end].clone()
-            input_ids[start:end] = MASK_TOKEN_ID
+            input_ids[start:end] = mask_token_id
             masked_any = True
 
     if not masked_any:
@@ -68,7 +67,7 @@ def apply_unit_mask(unit_texts: list,
             idx = rng.integers(len(eligible))
             s, e, _ = eligible[idx]
             labels[s:e] = input_ids[s:e].clone()
-            input_ids[s:e] = MASK_TOKEN_ID
+            input_ids[s:e] = mask_token_id
 
     return input_ids, labels
 
@@ -86,7 +85,7 @@ def compute_unit_mask_loss(logits: torch.Tensor, labels: torch.Tensor) -> torch.
 # ---- Spec Section 7.3: AOMT Dataset class ------------------------------------
 
 class AOMTDataset(Dataset):
-    def __init__(self, jsonl_path, tokenizer, mask_prob, mode, seed=42):
+    def __init__(self, jsonl_path, tokenizer, mask_prob, mode, mask_token_id, seed=42):
         assert mode in ("action_only", "mixed")
         self.examples = []
         with open(jsonl_path, "r") as f:
@@ -95,6 +94,7 @@ class AOMTDataset(Dataset):
         self.tokenizer = tokenizer
         self.mask_prob = mask_prob
         self.mode = mode
+        self.mask_token_id = mask_token_id
         self.seed = seed
 
     def __len__(self):
@@ -107,6 +107,7 @@ class AOMTDataset(Dataset):
         input_ids, labels = apply_unit_mask(
             ex["unit_texts"], ex["unit_types"],
             self.tokenizer, self.mask_prob, self.mode, rng,
+            self.mask_token_id
         )
         return {"input_ids": input_ids, "labels": labels}
 
@@ -138,12 +139,17 @@ def run_training():
         rank = 0
         device = "cuda" if torch.cuda.is_available() else "cpu"
 
-    tokenizer = build_tokenizer(config["model"]["tokenizer_path"])
-    if tokenizer.pad_token_id is None:
-        tokenizer.pad_token = tokenizer.eos_token
+    # --- Setup Masking ---
+    mask_token_id = tokenizer.mask_token_id
+    if mask_token_id is None:
+        mask_token_id = 156895 # Fallback for LLaDA 2.0
+    
+    if rank == 0:
+        print(f"Using Mask Token ID: {mask_token_id} ({tokenizer.decode([mask_token_id])})")
 
     dataset = AOMTDataset(config["data"]["train_path"], tokenizer, 
-                          config["aomt"]["mask_prob"], config["aomt"]["mode"])
+                          config["aomt"]["mask_prob"], config["aomt"]["mode"],
+                          mask_token_id)
     dataloader = DataLoader(dataset, batch_size=config["train"]["per_device_batch_size"], 
                             collate_fn=lambda b: collate_fn(b, tokenizer.pad_token_id),
                             shuffle=True)
