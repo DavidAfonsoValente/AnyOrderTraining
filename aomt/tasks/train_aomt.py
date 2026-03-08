@@ -39,30 +39,22 @@ def apply_unit_mask(unit_texts: list,
                     mask_token_id: int) -> tuple:
     """
     Tokenises using the chat template and applies unit-level Bernoulli masking.
-    Matches dFactory's apply_chat_template_mdm logic for tokenization consistency.
     """
     messages = []
     for text, utype in zip(unit_texts, unit_types):
         role = "user" if utype == "obs" else "assistant"
         messages.append({"role": role, "content": text})
 
-    # Get full sequence string and tokenise without adding extra special tokens
-    all_str = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=False)
-    all_ids = tokenizer(all_str, add_special_tokens=False)["input_ids"]
-    
+    all_ids = tokenizer.apply_chat_template(messages, tokenize=True, add_generation_prompt=False)
     input_ids = torch.tensor(all_ids, dtype=torch.long)
     labels = torch.full_like(input_ids, -100)
 
-    # To find spans, we tokenize prefixes
     spans = []
     for i in range(1, len(messages) + 1):
-        prefix_str = tokenizer.apply_chat_template(messages[:i], tokenize=False, add_generation_prompt=False)
-        prefix_ids = tokenizer(prefix_str, add_special_tokens=False)["input_ids"]
-        
+        prefix_ids = tokenizer.apply_chat_template(messages[:i], tokenize=True, add_generation_prompt=False)
         start = spans[-1][1] if spans else 0
         end = len(prefix_ids)
         if end > len(all_ids): end = len(all_ids)
-        
         utype = unit_types[i-1]
         spans.append((start, end, utype))
 
@@ -112,18 +104,13 @@ class AOMTDataset(torch.utils.data.Dataset):
         self.mode = mode
         self.mask_token_id = mask_token_id
         self.seed = seed
-        self.epoch = 0
-
-    def set_epoch(self, epoch):
-        self.epoch = epoch
 
     def __len__(self):
         return len(self.examples)
 
     def __getitem__(self, idx: int) -> dict:
         ex = self.examples[idx]
-        # Seed includes epoch for deterministic resampling per epoch
-        rng = np.random.default_rng([self.seed, self.epoch, idx])
+        rng = np.random.default_rng([self.seed, idx, np.random.randint(0, 2**31)])
         input_ids, labels = apply_unit_mask(
             ex["unit_texts"], ex["unit_types"],
             self.tokenizer, self.mask_prob, self.mode, rng,
@@ -216,8 +203,6 @@ def main():
     model.train()
     for epoch in range(config["train"]["num_epochs"]):
         sampler.set_epoch(epoch)
-        if hasattr(dataset, "set_epoch"):
-            dataset.set_epoch(epoch)
         pbar = trange(len(dataloader), desc=f"Epoch {epoch}", disable=ps.global_rank != 0)
         data_iter = iter(dataloader)
         
