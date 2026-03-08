@@ -153,25 +153,28 @@ class MockTokenizer:
     vocab_size    = 131072
 
     def encode(self, text, add_special_tokens=False):
-        # Stable hash-based tokenisation: each word → a token ID in [100, 1000]
-        # We split by spaces or the role tags to simulate token boundaries
+        # Stable deterministic tokenisation: each "word" or "tag" → an ID.
+        # We use a simple counter to ensure stability within a run.
         import re
-        parts = re.split(r'(\s+|<[^>]+>)', text)
+        parts = re.split(r'(\s+)', text)
         ids = []
         for p in parts:
             if not p or p.isspace(): continue
-            ids.append(hash(p) % 900 + 100)
+            # Sum of chars as a simple hash to stay deterministic without python's hash seed issues
+            val = sum(ord(c) for c in p)
+            ids.append(val % 900 + 100)
         return ids
 
     def decode(self, ids, skip_special_tokens=True):
         return " ".join(str(i) for i in ids)
 
     def apply_chat_template(self, messages, tokenize=True, add_generation_prompt=False, **kwargs):
+        # Match LLaDA style roughly for structure
         full_text = ""
         for m in messages:
-            full_text += f" <role> {m['role'].upper()} </role> {m['content']} <|role_end|> "
+            full_text += f"<role>{m['role'].upper()}</role>{m['content']}<|role_end|>"
         if add_generation_prompt:
-            full_text += " <role> ASSISTANT </role> "
+            full_text += "<role>ASSISTANT</role>"
         
         if tokenize:
             return self.encode(full_text)
