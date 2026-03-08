@@ -139,7 +139,8 @@ def run_training():
     model = build_foundation_model(
         weights_path=model_path,
         config_path=config_path,
-        torch_dtype="bfloat16" if config["train"]["mixed_precision"] == "bf16" else "float32"
+        torch_dtype="bfloat16" if config["train"]["mixed_precision"] == "bf16" else "float32",
+        attn_implementation="sdpa"
     )
     model.to(device)
     
