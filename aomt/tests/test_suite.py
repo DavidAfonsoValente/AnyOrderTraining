@@ -59,7 +59,7 @@ except ImportError as e:
         # Flatten and check if any label is NOT -100
         mask = (labels != -100)
         if not mask.any():
-            # print("DEBUG: using stub with empty mask")
+            print("--- DEBUG: compute_unit_mask_loss (STUB) - Empty Mask detected ---")
             return torch.tensor(0.0, device=logits.device, requires_grad=True)
         
         # Only compute loss where labels are not -100
@@ -693,7 +693,7 @@ class TestSmokeForward(unittest.TestCase):
         input_ids = torch.randint(100, 5000, (B, L)).cuda()
         prompt_lengths = torch.tensor([32])
 
-        masked_ids, labels = apply_response_unit_mask(input_ids.cpu(), prompt_lengths)
+        masked_ids, labels = apply_response_unit_mask(input_ids.cpu(), prompt_lengths, tokenizer.mask_token_id or 156895)
         masked_ids = masked_ids.cuda()
         labels = labels.cuda()
         

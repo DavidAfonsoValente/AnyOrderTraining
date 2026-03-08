@@ -25,7 +25,7 @@ from veomni.utils.dist_utils import all_reduce
 from veomni.models.registry import ModelRegistry
 
 # Ensure custom modeling is registered
-ModelRegistry.register_modeling_path("dFactory.models.llada2_moe")
+ModelRegistry.register_modeling_path("models.llada2_moe")
 
 # ---- Spec Section 6: Masking logic ------------------------------------------
 
@@ -55,7 +55,7 @@ def compute_unit_mask_loss(logits: torch.Tensor, labels: torch.Tensor) -> torch.
     """
     mask = (labels != -100)
     if not mask.any():
-        # print("DEBUG: using tasks.train_standard_sft with empty mask")
+        print("--- DEBUG: compute_unit_mask_loss (REAL) - Empty Mask detected ---")
         return torch.tensor(0.0, device=logits.device, requires_grad=True)
     return torch.nn.functional.cross_entropy(
         logits.view(-1, logits.size(-1)),

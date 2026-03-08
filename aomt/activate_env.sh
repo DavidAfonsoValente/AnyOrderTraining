@@ -23,12 +23,8 @@ if [ -f "$VENV_PATH" ]; then
     # PARENT_DIR is the root of the whole project (contains aomt/)
     PARENT_DIR="$(dirname "$SCRIPT_DIR")"
     
-    # Ensure all relevant paths are in PYTHONPATH
-    # 1. dFactory (for 'models.llada2_moe' etc)
-    # 2. dFactory/VeOmni (for 'veomni.*' etc)
-    # 3. aomt root (for 'tasks.*', 'training.*' etc)
-    # 4. project root (for 'aomt.*' etc)
-    export PYTHONPATH="${SCRIPT_DIR}/dFactory:${SCRIPT_DIR}/dFactory/VeOmni:${SCRIPT_DIR}:${PARENT_DIR}:${PYTHONPATH:-}"
+    # Ensure project root and dFactory are in PYTHONPATH
+    export PYTHONPATH="${PARENT_DIR}:${SCRIPT_DIR}:${SCRIPT_DIR}/dFactory:${SCRIPT_DIR}/dFactory/VeOmni:${PYTHONPATH:-}"
     
     echo "AOMT Environment activated."
 else
