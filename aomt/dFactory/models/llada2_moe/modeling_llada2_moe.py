@@ -1057,12 +1057,12 @@ class LLaDA2MoeModel(LLaDA2MoePreTrainedModel):
             attention_mask = _prepare_4d_attention_mask(
                 attention_mask,
                 inputs_embeds.dtype,
-                (batch_size, seq_length),
+                seq_length,
             )
         else:
             # 4d mask is passed through the layers
             attention_mask = _prepare_4d_attention_mask(
-                attention_mask, inputs_embeds.dtype, (batch_size, seq_length)
+                attention_mask, inputs_embeds.dtype, seq_length
             )
 
         # embed positions
