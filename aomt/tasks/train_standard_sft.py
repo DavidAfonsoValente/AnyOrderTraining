@@ -88,8 +88,8 @@ def main():
     init_parallel_state(dp_size=dist.get_world_size() if dist.is_initialized() else 1,
                         dp_mode=config["train"].get("fsdp_type", "fsdp1"))
     ps = get_parallel_state()
-    device = f"{get_device_type()}:{ps.local_rank}"
-    get_torch_device().set_device(device)
+    device_type = get_device_type()
+    get_torch_device().set_device(f"{device_type}:{ps.local_rank}")
     
     tokenizer = build_tokenizer(config["model"]["tokenizer_path"])
     mask_token_id = tokenizer.mask_token_id or 156895
@@ -102,12 +102,13 @@ def main():
     model = build_foundation_model(weights_path=config["model"]["model_path"],
                                    config_path=config["model"].get("config_path", config["model"]["model_path"]),
                                    torch_dtype="bfloat16" if config["train"]["mixed_precision"] == "bf16" else "float32",
-                                   attn_implementation="sdpa", init_device=device)
+                                   attn_implementation="sdpa", init_device=device_type)
 
     model = build_parallelize_model(model, weights_path=config["model"]["model_path"],
                                     enable_gradient_checkpointing=config["train"].get("gradient_checkpointing", True),
                                     enable_mixed_precision=(config["train"]["mixed_precision"] == "bf16"),
-                                    basic_modules=["LLaDA2MoeDecoderLayer"])
+                                    basic_modules=["LLaDA2MoeDecoderLayer"],
+                                    init_device=device_type)
 
     optimizer = build_optimizer(model, lr=float(config["train"]["learning_rate"]), weight_decay=config["train"]["weight_decay"], fused=True)
     num_steps = len(dataloader) * config["train"]["num_epochs"]
@@ -119,7 +120,7 @@ def main():
     for epoch in range(config["train"]["num_epochs"]):
         sampler.set_epoch(epoch)
         for batch in dataloader:
-            batch = {k: v.to(device, non_blocking=True) for k, v in batch.items()}
+            batch = {k: v.to(f"{device_type}:{ps.local_rank}", non_blocking=True) for k, v in batch.items()}
             input_ids, prompt_lengths = batch["input_ids"], batch["prompt_lens"]
             masked_input_ids, labels = apply_response_unit_mask(input_ids, prompt_lengths, mask_token_id)
             # Bidirectional 2D attention mask
