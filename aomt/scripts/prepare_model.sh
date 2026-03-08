@@ -71,5 +71,13 @@ else
     echo "Conversion complete."
 fi
 
+# --- Post-conversion Fix: Copy missing code files ---
+# LLaDA uses trust_remote_code=True, so it needs the .py and .json files in the merged directory.
+echo "Ensuring all required code and config files are in the merged directory..."
+cp "$ORIGINAL_MODEL_PATH"/*.py "$MERGED_MODEL_PATH"/ 2>/dev/null || true
+cp "$ORIGINAL_MODEL_PATH"/*.json "$MERGED_MODEL_PATH"/ 2>/dev/null || true
+# Tokenizer files are also needed
+cp "$ORIGINAL_MODEL_PATH"/*.model "$MERGED_MODEL_PATH"/ 2>/dev/null || true
+
 echo -e "\nModel preparation complete. Use the path '$MERGED_MODEL_PATH' in your training configs."
 echo "========================================"
