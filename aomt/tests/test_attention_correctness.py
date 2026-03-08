@@ -7,8 +7,8 @@ import numpy as np
 import os
 
 # Import the core logic directly from the task scripts
-from aomt.tasks.train_standard_sft import apply_response_unit_mask
-from aomt.tasks.train_aomt import apply_unit_mask, build_foundation_model
+from tasks.train_standard_sft import apply_response_unit_mask
+from tasks.train_aomt import apply_unit_mask, build_foundation_model
 
 class TestAttentionMaskCorrectness(unittest.TestCase):
     """

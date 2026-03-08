@@ -25,8 +25,11 @@ conda activate py311 && source activate_env.sh
 **⚠️ CRITICAL:** Do NOT use MIG (partitioned) GPUs (e.g., 40GB MIG partitions). You need a **Native** A100-80GB or H100 node.
 
 ```bash
-# Request a Native 80GB compute node (xgpj0 or xgpk0 recommended)
+# Request a Native 80GB compute node (Best for verification)
 salloc --time=2:00:00 --mem=128G --cpus-per-task=8 --gres=gpu:a100-80:1
+
+# Alternative: Request a High-Perf H100 node
+# salloc --time=2:00:00 --mem=128G --cpus-per-task=8 --gpus-per-node=h100-96:1
 ```
 
 Once the allocation is granted:

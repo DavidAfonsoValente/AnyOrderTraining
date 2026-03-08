@@ -8,7 +8,7 @@ import shutil
 import json
 import torch.distributed as dist
 
-from aomt.tasks.train_aomt import main as run_training
+from tasks.train_aomt import main as run_training
 
 class TestTrainingIntegration(unittest.TestCase):
 

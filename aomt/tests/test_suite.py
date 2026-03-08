@@ -115,7 +115,8 @@ class MockTokenizer:
         return [sum(ord(c) for c in p) % 900 + 100 for p in re.split(r'(\s+)', text) if p and not p.isspace()]
     def decode(self, ids, **kwargs): return " ".join(str(i) for i in ids)
     def apply_chat_template(self, messages, tokenize=True, **kwargs):
-        full = "".join([f"<role>{m['role'].upper()}</role>{m['content']}<|role_end|>" for m in messages])
+        # Add spaces between units to ensure they are encoded as separate IDs
+        full = " ".join([f"<role>{m['role'].upper()}</role> {m['content']} <|role_end|>" for m in messages])
         return self.encode(full) if tokenize else full
 
 class TestTokenizer(unittest.TestCase):

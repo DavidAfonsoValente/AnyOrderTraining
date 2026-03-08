@@ -17,12 +17,12 @@ echo "PYTHONPATH is set to: ${PYTHONPATH}"
 
 # Run the suite of lightweight tests
 echo "Running unit tests..."
-python -m unittest tests/test_suite.py
+python -m unittest tests.test_suite
 
 echo -e "\nRunning attention correctness tests (requires GPU)..."
-python -m unittest tests/test_attention_correctness.py
+python -m unittest tests.test_attention_correctness
 
 echo -e "\nRunning training integration tests..."
-python -m unittest tests/test_training_integration.py
+python -m unittest tests.test_training_integration
 
 echo "--- Test suite finished. ---"
