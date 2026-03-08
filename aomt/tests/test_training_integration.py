@@ -32,7 +32,7 @@ class TestTrainingIntegration(unittest.TestCase):
         self.config = {
             'name': 'integration_test',
             'model': {
-                'model_path': 'models/LLaDA2.0-mini',
+                'model_path': 'models/LLaDA2.0-mini-merged',
                 'tokenizer_path': 'models/LLaDA2.0-mini',
             },
             'data': {

@@ -51,9 +51,14 @@ if [ ! -f "$CONVERTOR_SCRIPT" ]; then
 fi
 
 # --- Main Logic ---
-if [ -d "$MERGED_MODEL_PATH" ]; then
-    echo "Merged model already exists at '$MERGED_MODEL_PATH'. Skipping conversion."
+if [ -d "$MERGED_MODEL_PATH" ] && [ -n "$(ls -A "$MERGED_MODEL_PATH"/*.safetensors 2>/dev/null)" ]; then
+    echo "Merged model weights already exist at '$MERGED_MODEL_PATH'. Skipping conversion."
 else
+    # If directory exists but is empty/incomplete, remove it to start clean
+    if [ -d "$MERGED_MODEL_PATH" ]; then
+        echo "Merged model directory exists but appears incomplete. Re-converting..."
+        rm -rf "$MERGED_MODEL_PATH"
+    fi
     echo "Converting model to 'merged-expert' format for dFactory..."
     echo "Source:      $ORIGINAL_MODEL_PATH"
     echo "Destination: $MERGED_MODEL_PATH"

@@ -4,7 +4,7 @@
 **Base model:** `inclusionAI/LLaDA2.0-mini` (16B total / 1.4B active, MoE)
 **Training framework:** dFactory — VeOmni / FSDP2
 **Dataset:** `agent-eto/eto-sft-trajectory` (HuggingFace)
-**Mask token ID:** `126336` (LLaDA's `[MASK]` token — confirm via `tokenizer.mask_token_id`)
+**Mask token ID:** `156895` (LLaDA's `[MASK]` token — confirm via `tokenizer.mask_token_id`)
 **Cluster:** SoC Compute Cluster (Slurm) — see `scripts/` directory
 
 > **v3 changes from v2:**
@@ -121,8 +121,8 @@ cp ./models/llada2-mini-sep/modeling_llada2_moe.py ./models/<name>-sep/
 from transformers import AutoTokenizer
 tok = AutoTokenizer.from_pretrained("./models/llada2-mini-sep", trust_remote_code=True)
 
-assert tok.mask_token_id == 126336, \
-    f"MASK_TOKEN_ID mismatch: expected 126336, got {tok.mask_token_id}"
+assert tok.mask_token_id == 156895, \
+    f"MASK_TOKEN_ID mismatch: expected 156895, got {tok.mask_token_id}"
 # If this fails, update MASK_TOKEN_ID = tok.mask_token_id everywhere.
 ```
 
@@ -407,7 +407,7 @@ Copy `dFactory/tasks/train_llada2_bd.py`. Make the following targeted changes on
 Insert after imports:
 
 ```python
-MASK_TOKEN_ID = 126336  # Verify at runtime: assert tok.mask_token_id == 126336
+MASK_TOKEN_ID = 156895  # Verify at runtime: assert tok.mask_token_id == 156895
 
 def apply_response_unit_mask(input_ids: torch.Tensor,
                               prompt_lengths: torch.Tensor) -> tuple:
@@ -509,7 +509,7 @@ Similar approach: copy `train_llada2_bd.py` but replace the dataset class AND th
 ### 7.2 Unit-level mask function
 
 ```python
-MASK_TOKEN_ID = 126336
+MASK_TOKEN_ID = 156895
 SEP_TOKEN_ID  = None  # Set at runtime: tokenizer.eos_token_id
 
 def apply_unit_mask(unit_texts: list,
@@ -956,7 +956,7 @@ def compute_nll_obs(model, tokenizer, aomt_examples: list) -> float:
     This is a pseudo-log-likelihood (Salazar et al., 2020) — comparable across
     masked DLMs only, not commensurable with AR log-likelihoods.
     """
-    MASK = tokenizer.mask_token_id   # = 126336
+    MASK = tokenizer.mask_token_id   # = 156895
     SEP  = tokenizer.eos_token_id
     all_nll = []
 
@@ -1022,7 +1022,7 @@ python aomt/tests/test_suite.py -v
 
 | Test | What it verifies |
 |---|---|
-| `test_mask_token_id` | `tok.mask_token_id == 126336` |
+| `test_mask_token_id` | `tok.mask_token_id == 156895` |
 | `test_sft_data_counts` | Correct number of datapoints per trajectory per method |
 | `test_response_unit_mask_coverage` | All response positions masked; all prompt positions clean |
 | `test_response_unit_mask_deterministic` | Same input → same output every call |

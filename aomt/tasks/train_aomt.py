@@ -139,6 +139,10 @@ def run_training():
         rank = 0
         device = "cuda" if torch.cuda.is_available() else "cpu"
 
+    tokenizer = build_tokenizer(config["model"]["tokenizer_path"])
+    if tokenizer.pad_token_id is None:
+        tokenizer.pad_token = tokenizer.eos_token
+
     # --- Setup Masking ---
     mask_token_id = tokenizer.mask_token_id
     if mask_token_id is None:

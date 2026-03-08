@@ -20,7 +20,7 @@ def compute_nll_obs(model, tokenizer, aomt_examples: list) -> float:
     """
     MASK = tokenizer.mask_token_id
     if MASK is None:
-        MASK = 126336 # Fallback for LLaDA2.0-mini
+        MASK = 156895 # Fallback for LLaDA2.0-mini
     
     SEP = tokenizer.eos_token_id
     all_nll = []

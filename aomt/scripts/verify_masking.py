@@ -86,7 +86,7 @@ def verify_experiment_data(config_path: str):
         prompt_len = len(tokenizer.encode(prompt_text))
         
         # Apply SFT masking logic
-        masked_ids, labels = apply_response_unit_mask(input_ids.unsqueeze(0), torch.tensor([prompt_len]))
+        masked_ids, labels = apply_response_unit_mask(input_ids.unsqueeze(0), torch.tensor([prompt_len]), mask_token_id)
         masked_ids = masked_ids[0]
         
         print("PROMPT (unmasked context):")

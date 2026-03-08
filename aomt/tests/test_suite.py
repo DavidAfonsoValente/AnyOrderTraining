@@ -42,7 +42,7 @@ except ImportError as e:
 
     # ---- Inline stubs (identical to spec implementations) -------------------
 
-    MASK_TOKEN_ID = 126336
+    MASK_TOKEN_ID = 156895
 
     def apply_response_unit_mask(input_ids, prompt_lengths, mask_token_id=156895):
         B, L = input_ids.shape
@@ -140,7 +140,7 @@ except ImportError as e:
 
 class MockTokenizer:
     """Deterministic toy tokenizer for unit tests (no real vocab needed)."""
-    mask_token_id = 126336
+    mask_token_id = 156895
     eos_token_id  = 2
     pad_token_id  = 0
     vocab_size    = 131072
@@ -175,8 +175,8 @@ class TestTokenizer(unittest.TestCase):
 
     def test_mock_mask_token_id(self):
         tok = MockTokenizer()
-        self.assertEqual(tok.mask_token_id, 126336,
-                         "MASK_TOKEN_ID must be 126336 for LLaDA2.0-mini")
+        self.assertEqual(tok.mask_token_id, 156895,
+                         "MASK_TOKEN_ID must be 156895 for LLaDA2.0-mini")
 
     def test_real_tokenizer_if_available(self):
         """Skip gracefully if model weights not present."""
@@ -185,8 +185,8 @@ class TestTokenizer(unittest.TestCase):
             self.skipTest("LLaDA tokenizer not available (expected in CI)")
         from transformers import AutoTokenizer
         tok = AutoTokenizer.from_pretrained(tokenizer_path, trust_remote_code=True)
-        self.assertEqual(tok.mask_token_id, 126336,
-                         f"Expected MASK_TOKEN_ID=126336, got {tok.mask_token_id}")
+        self.assertEqual(tok.mask_token_id, 156895,
+                         f"Expected MASK_TOKEN_ID=156895, got {tok.mask_token_id}")
 
 
 # =============================================================================
