@@ -19,11 +19,24 @@ import json
 # Use local dFactory/VeOmni if available
 try:
     from veomni.models import build_tokenizer, build_foundation_model
+    from veomni.distributed.torch_parallelize import build_parallelize_model
+    from veomni.distributed.parallel_state import init_parallel_state, get_parallel_state
+    from veomni.utils.device import get_device_id, get_device_type
 except ImportError:
+    # Fallback/Mock for local testing
     def build_tokenizer(path): return AutoTokenizer.from_pretrained(path, trust_remote_code=True)
     def build_foundation_model(**kwargs): 
         from transformers import AutoModelForCausalLM
         return AutoModelForCausalLM.from_pretrained(kwargs['weights_path'], trust_remote_code=True)
+    def build_parallelize_model(model, **kwargs): return model
+    def init_parallel_state(**kwargs): pass
+    def get_parallel_state():
+        class DummyPS:
+            def __init__(self): self.global_rank = 0; self.local_rank = 0; self.world_size = 1
+            @property
+            def device_type(self): return "cuda" if torch.cuda.is_available() else "cpu"
+        return DummyPS()
+    def get_device_id(): return 0
 
 # ---- Spec Section 7.2: Masking logic ------------------------------------------
 
@@ -142,10 +155,15 @@ def run_training():
     with open(args.config, "r") as f:
         config = yaml.safe_load(f)
 
+    # Distributed setup using VeOmni/dFactory standards
     if "WORLD_SIZE" in os.environ:
         dist.init_process_group("nccl")
-        rank = dist.get_rank()
-        device = f"cuda:{dist.get_local_rank()}"
+        # Initialize parallel state for FSDP/TP/EP support
+        init_parallel_state(
+            dp_mode=config["train"].get("fsdp_type", "fsdp1")
+        )
+        rank = get_parallel_state().global_rank
+        device = f"{get_parallel_state().device_type}:{get_parallel_state().local_rank}"
         torch.cuda.set_device(device)
     else:
         rank = 0
@@ -181,8 +199,18 @@ def run_training():
         attn_implementation="sdpa",
         init_device=device
     )
-    model.to(device)
-
+    
+    # NEW: Apply parallelization (FSDP/TP/EP) using VeOmni API
+    model = build_parallelize_model(
+        model,
+        weights_path=model_path,
+        enable_gradient_checkpointing=config["train"].get("gradient_checkpointing", True),
+        enable_mixed_precision=(config["train"]["mixed_precision"] == "bf16"),
+        # basic_modules used for FSDP wrapping policy
+        basic_modules=["LLaDA2MoeDecoderLayer"] 
+    )
+    
+    # optimizer setup (after parallelization)
     optimizer = torch.optim.AdamW(model.parameters(), lr=float(config["train"]["learning_rate"]), 
                                  weight_decay=config["train"]["weight_decay"])
     

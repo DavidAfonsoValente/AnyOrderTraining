@@ -9,6 +9,17 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..',
 
 from transformers import AutoTokenizer, AutoModelForCausalLM
 from datasets import load_from_disk
+
+# Use local dFactory/VeOmni if available
+try:
+    from veomni.models import build_tokenizer, build_foundation_model
+except ImportError:
+    # Minimal fallbacks
+    def build_tokenizer(path): return AutoTokenizer.from_pretrained(path, trust_remote_code=True)
+    def build_foundation_model(**kwargs): 
+        from transformers import AutoModelForCausalLM
+        return AutoModelForCausalLM.from_pretrained(kwargs['weights_path'], trust_remote_code=True)
+
 from aomt.training.trainer import AOMTDataset
 from aomt.training.mask_sampler import MaskMode
 from aomt.eval.task_eval import llada_generate
@@ -32,7 +43,13 @@ def check_attention_masks():
 def check_loss_range():
     print("\n--- 2. Initial Loss Range Check ---")
     try:
-        model = AutoModelForCausalLM.from_pretrained("inclusionAI/LLaDA2.0-mini", trust_remote_code=True)
+        model = build_foundation_model(
+            weights_path="inclusionAI/LLaDA2.0-mini",
+            config_path="inclusionAI/LLaDA2.0-mini",
+            torch_dtype="bfloat16",
+            attn_implementation="sdpa",
+            init_device="cuda" if torch.cuda.is_available() else "cpu"
+        )
         vocab_size = model.config.vocab_size
         
         expected_loss = np.log(vocab_size)
@@ -62,7 +79,7 @@ def check_loss_range():
 def check_mask_coverage(data_path):
     print("\n--- 3. AOMT-Mixed Mask Coverage Check ---")
     try:
-        tokenizer = AutoTokenizer.from_pretrained("inclusionAI/LLaDA2.0-mini", trust_remote_code=True)
+        tokenizer = build_tokenizer("inclusionAI/LLaDA2.0-mini")
         if tokenizer.mask_token is None: tokenizer.add_special_tokens({'mask_token': '[MASK]'})
             
         processed_dataset = load_from_disk(os.path.join(data_path, "train"))
@@ -100,7 +117,7 @@ def check_mask_coverage(data_path):
 def check_llada_inference():
     print("\n--- 4. LLaDA Inference Check ---")
     try:
-        tokenizer = AutoTokenizer.from_pretrained("inclusionAI/LLaDA2.0-mini", trust_remote_code=True)
+        tokenizer = build_tokenizer("inclusionAI/LLaDA2.0-mini")
         if tokenizer.mask_token is None: tokenizer.add_special_tokens({'mask_token': '[MASK]'})
 
         # This check is conceptual, as `llada_generate` encapsulates the logic.

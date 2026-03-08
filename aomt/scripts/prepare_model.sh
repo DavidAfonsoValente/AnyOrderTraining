@@ -82,5 +82,10 @@ cp "$ORIGINAL_MODEL_PATH"/*.json "$MERGED_MODEL_PATH"/ 2>/dev/null || true
 # Tokenizer files are also needed
 cp "$ORIGINAL_MODEL_PATH"/*.model "$MERGED_MODEL_PATH"/ 2>/dev/null || true
 
+# --- Fix model_type for dFactory compatibility ---
+# dFactory's modeling_llada2_moe.py uses "llada2_moe_veomni" to signal merged weights
+echo "Patching config.json for dFactory compatibility..."
+sed -i 's/"model_type": "llada2_moe"/"model_type": "llada2_moe_veomni"/' "$MERGED_MODEL_PATH/config.json"
+
 echo -e "\nModel preparation complete. Use the path '$MERGED_MODEL_PATH' in your training configs."
 echo "========================================"

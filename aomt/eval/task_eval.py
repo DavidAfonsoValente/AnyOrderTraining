@@ -11,6 +11,16 @@ import numpy as np
 from tqdm import tqdm
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
+# Use local dFactory/VeOmni if available
+try:
+    from veomni.models import build_tokenizer, build_foundation_model
+except ImportError:
+    # Minimal fallbacks
+    def build_tokenizer(path): return AutoTokenizer.from_pretrained(path, trust_remote_code=True)
+    def build_foundation_model(**kwargs): 
+        from transformers import AutoModelForCausalLM
+        return AutoModelForCausalLM.from_pretrained(kwargs['weights_path'], trust_remote_code=True)
+
 # Environment lazy imports
 def get_env(name, split="test"):
     if name == "alfworld":
@@ -79,8 +89,19 @@ def main():
     args = parser.parse_args()
 
     print(f"Loading model from {args.model_path}...")
-    model = AutoModelForCausalLM.from_pretrained(args.model_path, trust_remote_code=True, torch_dtype=torch.bfloat16, device_map="auto")
-    tokenizer = AutoTokenizer.from_pretrained(args.tokenizer, trust_remote_code=True)
+    
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    
+    tokenizer = build_tokenizer(args.tokenizer)
+    model = build_foundation_model(
+        weights_path=args.model_path,
+        config_path=args.model_path,
+        torch_dtype="bfloat16",
+        attn_implementation="sdpa",
+        init_device=device
+    )
+    model.to(device)
+    model.eval()
 
     # In a real evaluation, we would loop over episodes in the environment.
     # For this script, we'll output a placeholder result if env not found.

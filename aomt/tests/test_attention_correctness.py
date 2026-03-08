@@ -6,9 +6,9 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 import numpy as np
 import os
 
-# Import the core masking logic directly from the task scripts
+# Import the core logic directly from the task scripts
 from aomt.tasks.train_standard_sft import apply_response_unit_mask
-from aomt.tasks.train_aomt import apply_unit_mask
+from aomt.tasks.train_aomt import apply_unit_mask, build_foundation_model
 
 class TestAttentionMaskCorrectness(unittest.TestCase):
     """
@@ -26,11 +26,14 @@ class TestAttentionMaskCorrectness(unittest.TestCase):
 
         print(f"Loading model for test from {self.model_path}...")
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_path, trust_remote_code=True)
-        self.model = AutoModelForCausalLM.from_pretrained(
-            self.model_path, 
-            trust_remote_code=True,
-            torch_dtype=torch.bfloat16
-        ).cuda().eval()
+        # Use the standard project loader which handles weights correctly
+        self.model = build_foundation_model(
+            weights_path=self.model_path,
+            config_path=self.model_path,
+            torch_dtype="bfloat16",
+            attn_implementation="sdpa",
+            init_device="cuda"
+        ).eval()
 
     def test_bidirectional_forward_pass(self):
         """
