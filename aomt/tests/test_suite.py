@@ -214,7 +214,7 @@ class TestTokenizer(unittest.TestCase):
 
     def test_real_tokenizer_if_available(self):
         """Skip gracefully if model weights not present."""
-        tokenizer_path = "./models/llada2-mini-sep"
+        tokenizer_path = "weights/LLaDA2.0-mini"
         if not os.path.exists(tokenizer_path):
             self.skipTest("LLaDA tokenizer not available (expected in CI)")
         from transformers import AutoTokenizer
@@ -674,12 +674,12 @@ class TestSmokeForward(unittest.TestCase):
     """Quick model forward pass smoke test. Skipped without GPU or weights."""
 
     @unittest.skipUnless(torch.cuda.is_available(), "CUDA not available")
-    @unittest.skipUnless(os.path.exists("./models/llada2-mini-sep"), "Model weights not found")
+    @unittest.skipUnless(os.path.exists("weights/LLaDA2.0-mini"), "Model weights not found")
     def test_forward_pass_standard_sft(self):
         from transformers import AutoModelForCausalLM, AutoTokenizer
-        tok = AutoTokenizer.from_pretrained("./models/llada2-mini-sep", trust_remote_code=True)
+        tok = AutoTokenizer.from_pretrained("weights/LLaDA2.0-mini", trust_remote_code=True)
         model = AutoModelForCausalLM.from_pretrained(
-            "./models/llada2-mini-merged",
+            "weights/LLaDA2.0-mini-merged",
             trust_remote_code=True,
             torch_dtype=torch.bfloat16,
         ).cuda().eval()

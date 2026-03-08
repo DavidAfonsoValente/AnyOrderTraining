@@ -81,15 +81,26 @@ class SFTDataset(torch.utils.data.Dataset):
         ex = self.examples[idx]
         messages = ex["messages"]
         
-        # Tokenize using apply_chat_template for consistency with LLaDA/dFactory
-        input_ids = self.tokenizer.apply_chat_template(messages, tokenize=True, truncation=True, max_length=self.max_seq_length)
-        
-        # Determine prompt length by tokenizing messages[:-1] with generation prompt
+        # Follow dFactory's apply_chat_template_mdm logic exactly
+        inputs_str = self.tokenizer.apply_chat_template(messages, tokenize=False)
         prompt_str = self.tokenizer.apply_chat_template(messages[:-1], tokenize=False, add_generation_prompt=True)
-        prompt_ids = self.tokenizer(prompt_str, add_special_tokens=False)["input_ids"]
-        prompt_len = min(len(prompt_ids), len(input_ids))
+
+        prompt_ids_unpadded = self.tokenizer(prompt_str, add_special_tokens=False)['input_ids']
+        prompt_len = len(prompt_ids_unpadded)
+
+        tokenized_input = self.tokenizer(
+            inputs_str,
+            return_tensors="pt",
+            truncation=True, 
+            max_length=self.max_seq_length, 
+            padding="max_length",
+            add_special_tokens=False
+        ).input_ids.squeeze(0)
+
+        # Safety truncation for prompt_len
+        prompt_len = min(prompt_len, len(tokenized_input))
         
-        return {"input_ids": torch.tensor(input_ids), "prompt_len": prompt_len}
+        return {"input_ids": tokenized_input, "prompt_len": prompt_len}
 
 def collate_fn(batch, pad_token_id):
     input_ids = [item["input_ids"] for item in batch]

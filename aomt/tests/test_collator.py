@@ -10,7 +10,7 @@ class TestCollator(unittest.TestCase):
 
     def setUp(self):
         """Set up a tokenizer and a dummy trajectory for the tests."""
-        self.model_path = "./models/LLaDA2.0-mini"
+        self.model_path = "weights/LLaDA2.0-mini"
         try:
             self.tokenizer = AutoTokenizer.from_pretrained(self.model_path)
             if self.tokenizer.mask_token is None:

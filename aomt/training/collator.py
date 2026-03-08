@@ -52,60 +52,21 @@ def build_prefix_sft_stage2_examples(
     tokenizer: PreTrainedTokenizer
 ) -> List[Dict[str, Any]]:
     """
-    Constructs multiple short training examples from a single trajectory
-    for the Prefix-SFT Stage 2 (Policy) objective.
-
-    Each example has the form: O_t -> A_t
-    Input:  [O_t tokens] [SEP] [MASK]...[MASK]
-    Target: [O_t tokens] [SEP] [A_t tokens]
-
-    Args:
-        tokenized_traj (TokenizedTrajectory): The trajectory to process.
-        tokenizer (PreTrainedTokenizer): The tokenizer, needed for special tokens.
-
-    Returns:
-        List[Dict[str, Any]]: A list of dictionary-based training instances.
+    Constructs Prefix-SFT Stage 2 (Policy) examples: O_t -> A_t.
     """
-    sep_token_id = tokenizer.eos_token_id
-    mask_token_id = tokenizer.mask_token_id
-    if sep_token_id is None or mask_token_id is None:
-        raise ValueError("Tokenizer must have defined eos_token_id and mask_token_id.")
-
     units = tokenized_traj.unit_spans
-    ids = tokenized_traj.input_ids
     examples = []
 
-    # Iterate through the trajectory to find (obs, act) sequences
     for i in range(len(units) - 1):
         if units[i].unit_type == "obs" and units[i+1].unit_type == "act":
-            obs_t, act_t = units[i], units[i+1]
+            obs_t = tokenized_traj.input_ids[units[i].token_start:units[i].token_end]
+            act_t = tokenized_traj.input_ids[units[i+1].token_start:units[i+1].token_end]
 
-            # Context is O_t + SEP
-            ctx_ids = torch.cat([
-                ids[obs_t.token_start:obs_t.token_end],
-                torch.tensor([sep_token_id], dtype=torch.long),
-            ])
-
-            # Target is the A_t span
-            target_span = ids[act_t.token_start:act_t.token_end]
-            
-            # The input replaces the target span with MASK tokens
-            masked_span = torch.full_like(target_span, fill_value=mask_token_id)
-            
-            # Assemble the full sequences
-            full_input_ids = torch.cat([ctx_ids, masked_span])
-            full_target_ids = torch.cat([ctx_ids, target_span])
-            
-            # Loss is only calculated on the A_t span
-            loss_mask = torch.zeros_like(full_input_ids, dtype=torch.bool)
-            loss_mask[len(ctx_ids):] = True
-
-            examples.append({
-                "input_ids": full_input_ids,
-                "target_ids": full_target_ids,
-                "loss_mask": loss_mask,
-                "use_causal_mask": True,
-            })
+            messages = [
+                {"role": "user", "content": tokenizer.decode(obs_t)},
+                {"role": "assistant", "content": tokenizer.decode(act_t)}
+            ]
+            examples.append({"messages": messages})
 
     return examples
 
@@ -115,69 +76,25 @@ def build_standard_sft_examples(
     tokenizer: PreTrainedTokenizer
 ) -> List[Dict[str, Any]]:
     """
-    Constructs multiple short training examples from a single trajectory to
-    efficiently mimic autoregressive SFT with a bidirectional model.
-
-    For each action `a_t` in the trajectory, it creates an example:
-    (s_0, a_0, ..., s_t) -> a_t
-
-    Input:  [s_0, a_0, ..., s_t tokens] [SEP] [MASK]...[MASK]
-    Target: [s_0, a_0, ..., s_t tokens] [SEP] [a_t tokens]
-
-    Args:
-        tokenized_traj (TokenizedTrajectory): The trajectory to process.
-        tokenizer (PreTrainedTokenizer): The tokenizer, needed for special tokens.
-
-    Returns:
-        List[Dict[str, Any]]: A list of dictionary-based training instances.
+    Constructs Standard SFT examples: (O_0, A_0, ..., O_t) -> A_t.
     """
-    sep_token_id = tokenizer.eos_token_id
-    mask_token_id = tokenizer.mask_token_id
-    if sep_token_id is None or mask_token_id is None:
-        raise ValueError("Tokenizer must have defined eos_token_id and mask_token_id.")
-
     units = tokenized_traj.unit_spans
-    ids = tokenized_traj.input_ids
     examples = []
 
     # Iterate through the trajectory to find all actions
     for i in range(len(units)):
         if units[i].unit_type == "act":
-            act_t = units[i]
+            if i == 0: continue
             
             # Context is everything up to the start of the current action
-            # This includes all prior obs and act units.
-            # The final observation before the action is units[i-1].
-            if i == 0:
-                continue # Cannot predict an action with no preceding observation
-            
-            prev_unit_end = units[i-1].token_end
-            
-            ctx_ids = torch.cat([
-                ids[:prev_unit_end],
-                torch.tensor([sep_token_id], dtype=torch.long),
-            ])
+            prompt_ids = tokenized_traj.input_ids[:units[i-1].token_end]
+            target_ids = tokenized_traj.input_ids[units[i].token_start:units[i].token_end]
 
-            # Target is the A_t span
-            target_span = ids[act_t.token_start:act_t.token_end]
-            
-            # The input replaces the target span with MASK tokens
-            masked_span = torch.full_like(target_span, fill_value=mask_token_id)
-            
-            # Assemble the full sequences
-            full_input_ids = torch.cat([ctx_ids, masked_span])
-            full_target_ids = torch.cat([ctx_ids, target_span])
-            
-            # Loss is only calculated on the A_t span
-            loss_mask = torch.zeros_like(full_input_ids, dtype=torch.bool)
-            loss_mask[len(ctx_ids):] = True
-
-            examples.append({
-                "input_ids": full_input_ids,
-                "target_ids": full_target_ids,
-                "loss_mask": loss_mask,
-                "use_causal_mask": True,
-            })
+            messages = [
+                {"role": "user", "content": tokenizer.decode(prompt_ids)},
+                {"role": "assistant", "content": tokenizer.decode(target_ids)}
+            ]
+            examples.append({"messages": messages})
             
     return examples
 
