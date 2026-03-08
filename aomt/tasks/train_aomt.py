@@ -211,10 +211,8 @@ def main():
             batch = {k: v.to(get_torch_device().get_device_name(), non_blocking=True) for k, v in batch.items()}
             labels = batch.pop("labels")
             
-            # Bidirectional 4D mask
-            seq_len = batch["input_ids"].shape[1]
-            padding_mask = (batch["input_ids"] != (tokenizer.pad_token_id or tokenizer.eos_token_id))
-            batch["attention_mask"] = padding_mask.unsqueeze(1).unsqueeze(2).expand(-1, 1, seq_len, seq_len)
+            # Bidirectional attention mask (2D), model will expand to 4D
+            batch["attention_mask"] = (batch["input_ids"] != (tokenizer.pad_token_id or tokenizer.eos_token_id)).long()
 
             logits = model(**batch, use_cache=False).logits
             

@@ -697,9 +697,8 @@ class TestSmokeForward(unittest.TestCase):
         masked_ids = masked_ids.cuda()
         labels = labels.cuda()
         
-        # 4D bidirectional mask
-        padding_mask = torch.ones_like(masked_ids, dtype=torch.bool)
-        attn_mask = padding_mask.unsqueeze(1).unsqueeze(2).expand(-1, 1, L, L)
+        # Bidirectional attention mask (2D), model will expand to 4D
+        attn_mask = (masked_ids != (tokenizer.pad_token_id or tokenizer.eos_token_id)).long()
 
         with torch.no_grad():
             logits = model(input_ids=masked_ids, attention_mask=attn_mask).logits
