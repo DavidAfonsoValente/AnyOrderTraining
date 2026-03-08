@@ -74,7 +74,10 @@ fi
 # --- Post-conversion Fix: Copy missing code files ---
 # LLaDA uses trust_remote_code=True, so it needs the .py and .json files in the merged directory.
 echo "Ensuring all required code and config files are in the merged directory..."
-cp "$ORIGINAL_MODEL_PATH"/*.py "$MERGED_MODEL_PATH"/ 2>/dev/null || true
+# IMPORTANT: Use the dFactory version of modeling code which supports the merged experts format
+cp "$AOMT_DIR/dFactory/models/llada2_moe/modeling_llada2_moe.py" "$MERGED_MODEL_PATH"/
+cp "$AOMT_DIR/dFactory/models/llada2_moe/configuration_llada2_moe.py" "$MERGED_MODEL_PATH"/
+cp "$AOMT_DIR/dFactory/models/llada2_moe/parallel_plan.py" "$MERGED_MODEL_PATH"/
 cp "$ORIGINAL_MODEL_PATH"/*.json "$MERGED_MODEL_PATH"/ 2>/dev/null || true
 # Tokenizer files are also needed
 cp "$ORIGINAL_MODEL_PATH"/*.model "$MERGED_MODEL_PATH"/ 2>/dev/null || true

@@ -166,7 +166,10 @@ def run_training():
             masked_input_ids, labels = apply_response_unit_mask(input_ids, prompt_lengths, mask_token_id)
             
             # Bidirectional attention over all non-padding positions
-            attn_mask = (masked_input_ids != tokenizer.pad_token_id).long()
+            # LLaDA 2.0 requires 4D block attention mask: (B, 1, L, L)
+            seq_len = masked_input_ids.shape[1]
+            padding_mask = (masked_input_ids != tokenizer.pad_token_id).long()
+            attn_mask = padding_mask.unsqueeze(1).unsqueeze(2).expand(-1, 1, seq_len, seq_len)
 
             logits = model(input_ids=masked_input_ids, attention_mask=attn_mask).logits
             loss = compute_unit_mask_loss(logits, labels)
