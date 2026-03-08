@@ -25,10 +25,11 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 
-# Add repo root to path
-REPO_ROOT = Path(__file__).parent.parent.parent
-sys.path.insert(0, str(REPO_ROOT / "aomt"))
-sys.path.insert(0, str(REPO_ROOT / "VeOmni"))
+# Add repo root and dFactory to path
+AOMT_ROOT = Path(__file__).parent.parent
+sys.path.insert(0, str(AOMT_ROOT))
+sys.path.insert(0, str(AOMT_ROOT / "dFactory"))
+sys.path.insert(0, str(AOMT_ROOT / "dFactory" / "VeOmni"))
 
 # ---- Import the functions under test ----------------------------------------
 # Adjust imports to match your actual module structure.
@@ -55,7 +56,9 @@ except ImportError as e:
         return masked_input_ids, labels
 
     def compute_unit_mask_loss(logits, labels):
-        return F.cross_entropy(
+        if (labels == -100).all():
+            return torch.tensor(0.0, device=logits.device, requires_grad=True)
+        return torch.nn.functional.cross_entropy(
             logits.view(-1, logits.size(-1)),
             labels.view(-1),
             ignore_index=-100,

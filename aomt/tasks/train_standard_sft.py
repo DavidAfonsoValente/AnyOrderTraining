@@ -48,6 +48,19 @@ def apply_response_unit_mask(input_ids: torch.Tensor,
 
     return masked_input_ids, labels
 
+def compute_unit_mask_loss(logits: torch.Tensor, labels: torch.Tensor) -> torch.Tensor:
+    """
+    Shared loss function: Cross-entropy over masked positions only.
+    Handles the case where all labels are -100 to avoid NaN.
+    """
+    if (labels == -100).all():
+        return torch.tensor(0.0, device=logits.device, requires_grad=True)
+    return torch.nn.functional.cross_entropy(
+        logits.view(-1, logits.size(-1)),
+        labels.view(-1),
+        ignore_index=-100
+    )
+
 # ---- Dataset and Collator ---------------------------------------------------
 
 class SFTDataset(torch.utils.data.Dataset):
@@ -175,11 +188,7 @@ def main():
 
             logits = model(input_ids=masked_input_ids, attention_mask=attn_mask, use_cache=False).logits
             
-            loss = torch.nn.functional.cross_entropy(
-                logits.view(-1, logits.size(-1)),
-                labels.view(-1),
-                ignore_index=-100
-            )
+            loss = compute_unit_mask_loss(logits, labels)
 
             loss.backward()
             

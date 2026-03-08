@@ -77,6 +77,19 @@ def apply_unit_mask(unit_texts: list,
 
     return input_ids, labels
 
+def compute_unit_mask_loss(logits: torch.Tensor, labels: torch.Tensor) -> torch.Tensor:
+    """
+    Shared loss function: Cross-entropy over masked positions only.
+    Handles the case where all labels are -100 to avoid NaN.
+    """
+    if (labels == -100).all():
+        return torch.tensor(0.0, device=logits.device, requires_grad=True)
+    return torch.nn.functional.cross_entropy(
+        logits.view(-1, logits.size(-1)),
+        labels.view(-1),
+        ignore_index=-100
+    )
+
 # ---- Spec Section 7.3: AOMT Dataset class ------------------------------------
 
 class AOMTDataset(torch.utils.data.Dataset):
@@ -204,11 +217,7 @@ def main():
 
             logits = model(**batch, use_cache=False).logits
             
-            loss = torch.nn.functional.cross_entropy(
-                logits.view(-1, logits.size(-1)),
-                labels.view(-1),
-                ignore_index=-100
-            )
+            loss = compute_unit_mask_loss(logits, labels)
 
             loss.backward()
             

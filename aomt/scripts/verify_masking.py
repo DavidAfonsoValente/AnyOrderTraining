@@ -7,8 +7,11 @@ import yaml
 import argparse
 import json
 
-# Add the project root to the Python path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+# Add the project root and dFactory to the Python path
+AOMT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(0, AOMT_ROOT)
+sys.path.insert(0, os.path.join(AOMT_ROOT, 'dFactory'))
+sys.path.insert(0, os.path.join(AOMT_ROOT, 'dFactory', 'VeOmni'))
 
 from datasets import load_from_disk
 from transformers import AutoTokenizer

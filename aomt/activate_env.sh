@@ -23,9 +23,8 @@ if [ -f "$VENV_PATH" ]; then
     # PARENT_DIR is the root of the whole project (contains aomt/)
     PARENT_DIR="$(dirname "$SCRIPT_DIR")"
     
-    # Ensure project root (for 'aomt.*' imports) and dFactory/VeOmni are in PYTHONPATH
-    # dFactory/VeOmni is added to support internal dFactory imports
-    export PYTHONPATH="${PARENT_DIR}:${SCRIPT_DIR}/dFactory:${SCRIPT_DIR}/dFactory/VeOmni:${PYTHONPATH:-}"
+    # Ensure project root, aomt root, and dFactory/VeOmni are in PYTHONPATH
+    export PYTHONPATH="${PARENT_DIR}:${SCRIPT_DIR}:${SCRIPT_DIR}/dFactory:${SCRIPT_DIR}/dFactory/VeOmni:${PYTHONPATH:-}"
     
     echo "AOMT Environment activated."
 else
