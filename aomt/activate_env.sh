@@ -5,12 +5,14 @@
 # Get the absolute path to the directory containing this script
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 
-echo "Attempting to load Python 3.11 module..."
-module load python/3.11 || true
+# Silently try to load the module if the command exists
+if command -v module &> /dev/null; then
+    module load python/3.11 &> /dev/null || true
+fi
 
-echo "Setting memory limits to unlimited..."
-ulimit -m unlimited || true
-ulimit -v unlimited || true
+# Silently try to set memory limits (frequently restricted on login nodes)
+ulimit -m unlimited &> /dev/null || true
+ulimit -v unlimited &> /dev/null || true
 
 echo "Activating uv environment at ${SCRIPT_DIR}/dFactory/VeOmni/.venv..."
 if [ -f "${SCRIPT_DIR}/dFactory/VeOmni/.venv/bin/activate" ]; then
