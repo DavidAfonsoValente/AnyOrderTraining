@@ -102,7 +102,7 @@ def main():
             out_path = os.path.join(args.output_dir, f"{name}_{split}.jsonl")
             with open(out_path, "w") as f:
                 for entry in data:
-                    f.write(json.dumps(entry) + "\n")
+                    f.write(json.dumps(entry, ensure_ascii=False) + "\n")
             print(f"  Wrote {len(data)} entries to {out_path}")
 
 if __name__ == "__main__":
