@@ -55,6 +55,7 @@ def compute_unit_mask_loss(logits: torch.Tensor, labels: torch.Tensor) -> torch.
     """
     mask = (labels != -100)
     if not mask.any():
+        # print("DEBUG: using tasks.train_standard_sft with empty mask")
         return torch.tensor(0.0, device=logits.device, requires_grad=True)
     return torch.nn.functional.cross_entropy(
         logits.view(-1, logits.size(-1)),

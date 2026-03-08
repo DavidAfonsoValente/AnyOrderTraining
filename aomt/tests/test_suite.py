@@ -59,6 +59,7 @@ except ImportError as e:
         # Flatten and check if any label is NOT -100
         mask = (labels != -100)
         if not mask.any():
+            # print("DEBUG: using stub with empty mask")
             return torch.tensor(0.0, device=logits.device, requires_grad=True)
         
         # Only compute loss where labels are not -100
