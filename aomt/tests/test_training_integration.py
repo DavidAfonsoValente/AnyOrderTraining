@@ -48,7 +48,7 @@ class TestTrainingIntegration(unittest.TestCase):
                 'gradient_clip': 1.0,
                 'per_device_batch_size': 1,
                 'num_epochs': 1,
-                'mixed_precision': 'bf16', # Use bf16 to save memory on GPU
+                'mixed_precision': 'bf16', # Use bf16 to save memory
                 'lr_scheduler': 'cosine',
                 'warmup_steps': 0,
                 'output_dir': os.path.join(self.test_dir, "output"),
@@ -78,35 +78,15 @@ class TestTrainingIntegration(unittest.TestCase):
         old_argv = sys.argv
         sys.argv = [old_argv[0], self.config_path]
         
-        # Mock build_foundation_model to return a tiny model
-        import aomt.tasks.train_aomt as train_aomt
-        from transformers import AutoConfig, AutoModelForCausalLM
-        
-        # Use a tiny Llama config for testing pipeline logic
-        tiny_config = AutoConfig.from_pretrained("gpt2") # Use a small built-in config
-        tiny_config.num_hidden_layers = 1
-        tiny_config.hidden_size = 128
-        tiny_config.intermediate_size = 256
-        tiny_config.num_attention_heads = 4
-        tiny_config.vocab_size = 157184 # Match LLaDA vocab size for data consistency
-        
-        tiny_model = AutoModelForCausalLM.from_config(tiny_config)
-        
-        old_build_model = train_aomt.build_foundation_model
-        train_aomt.build_foundation_model = lambda **kwargs: tiny_model
-        
         try:
             # Run the task's training loop
             run_training()
             self.assertTrue(True)
             print("Test passed: Single training step completed successfully.")
         except Exception as e:
-            import traceback
-            traceback.print_exc()
             self.fail(f"Training integration test failed with an exception: {e}")
         finally:
             sys.argv = old_argv
-            train_aomt.build_foundation_model = old_build_model
 
 if __name__ == '__main__':
     unittest.main()
