@@ -5,8 +5,9 @@ import yaml
 import os
 import sys
 import shutil
+import json
 
-from ..training.trainer import run_training
+from aomt.tasks.train_aomt import run_training
 
 class TestTrainingIntegration(unittest.TestCase):
 
@@ -16,66 +17,76 @@ class TestTrainingIntegration(unittest.TestCase):
         """
         self.test_dir = "test_integration_workspace"
         os.makedirs(self.test_dir, exist_ok=True)
+        os.makedirs(os.path.join(self.test_dir, "data"), exist_ok=True)
+
+        # Create a dummy JSONL file
+        self.jsonl_path = os.path.join(self.test_dir, "data", "dummy.jsonl")
+        dummy_entry = {
+            "unit_texts": ["Observation 1", "Action 1", "Observation 2"],
+            "unit_types": ["obs", "act", "obs"]
+        }
+        with open(self.jsonl_path, "w") as f:
+            f.write(json.dumps(dummy_entry) + "\n")
 
         # --- 1. Create a minimal config file ---
-        # This uses the now-correct dFactory model loading mechanism
         self.config = {
             'name': 'integration_test',
             'model': {
-                'config_path': 'dFactory/configs/model_configs/llada2_mini',
                 'model_path': 'models/LLaDA2.0-mini',
                 'tokenizer_path': 'models/LLaDA2.0-mini',
-                'attn_implementation': 'sdpa',
             },
-            'mask_mode': 'mixed',
-            'mask_prob': 0.25,
-            'learning_rate': 1e-5,
-            'weight_decay': 0.1,
-            'gradient_clip': 1.0,
-            'per_device_batch_size': 1,
-            'num_epochs': 1,
-            'train_split': 'train', # Use the actual train split for a real data sample
+            'data': {
+                'train_path': self.jsonl_path,
+            },
+            'aomt': {
+                'mode': 'mixed',
+                'mask_prob': 0.25,
+            },
+            'train': {
+                'learning_rate': 1e-5,
+                'weight_decay': 0.1,
+                'gradient_clip': 1.0,
+                'per_device_batch_size': 1,
+                'num_epochs': 1,
+                'mixed_precision': 'fp32',
+                'lr_scheduler': 'cosine',
+                'warmup_steps': 0,
+                'output_dir': os.path.join(self.test_dir, "output"),
+            }
         }
         self.config_path = os.path.join(self.test_dir, "test_config.yaml")
         with open(self.config_path, 'w') as f:
             yaml.dump(self.config, f)
 
         # --- 2. Check for the required local model files ---
-        self.assertTrue(
-            os.path.exists(self.config['model']['model_path']),
-            f"Model files not found at {self.config['model']['model_path']}. "
-            "Please run the download script as previously instructed."
-        )
+        if not os.path.exists(self.config['model']['model_path']):
+            self.skipTest(f"Model files not found at {self.config['model']['model_path']}. Skipping integration test.")
 
     def tearDown(self):
         """Clean up the test workspace."""
         if os.path.exists(self.test_dir):
             shutil.rmtree(self.test_dir)
-        # Also clean up the checkpoints created by the trainer
-        if os.path.exists("./checkpoints/integration_test"):
-            shutil.rmtree("./checkpoints/integration_test")
 
     def test_single_step_run(self):
         """
-        Sanity Check 11.4: Verify that the full training pipeline can execute a single
-        step without crashing. This tests the integration of data loading, model
-        building (via dFactory), the forward pass, and the backward pass.
+        Sanity Check 11.4: Verify that the full training pipeline can execute.
         """
         print("\nRunning test: test_single_step_run")
+        
+        # Patch sys.argv to pass the config path to run_training
+        import sys
+        old_argv = sys.argv
+        sys.argv = [old_argv[0], self.config_path]
+        
         try:
-            # We run the main training function, but it will only run for a very
-            # small number of steps due to the tiny dataset and batch size.
-            # We are not using distributed training for this simple test.
-            run_training(self.config_path, is_distributed=False)
-            
-            # If it completes without raising an exception, the integration is successful.
+            # Run the task's training loop
+            run_training()
             self.assertTrue(True)
             print("Test passed: Single training step completed successfully.")
-
         except Exception as e:
             self.fail(f"Training integration test failed with an exception: {e}")
+        finally:
+            sys.argv = old_argv
 
 if __name__ == '__main__':
-    # Note: This test requires the data and model to be present.
-    # It's intended to be run after `prepare_data.sh` and the model download.
     unittest.main()

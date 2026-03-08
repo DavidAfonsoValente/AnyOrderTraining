@@ -15,6 +15,14 @@ TOP_LEVEL_DIR=$(dirname "$PROJECT_ROOT")
 echo "Using Python executable: $(which python)"
 echo "PYTHONPATH is set to: ${PYTHONPATH}"
 
-python -m unittest discover -s "${PROJECT_ROOT}/tests" -t "$TOP_LEVEL_DIR"
+# Run the suite of lightweight tests
+echo "Running unit tests..."
+python -m unittest tests/test_suite.py
+
+echo -e "\nRunning attention correctness tests (requires GPU)..."
+python -m unittest tests/test_attention_correctness.py
+
+echo -e "\nRunning training integration tests..."
+python -m unittest tests/test_training_integration.py
 
 echo "--- Test suite finished. ---"
