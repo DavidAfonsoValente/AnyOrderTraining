@@ -134,7 +134,7 @@ def main():
 
     model = build_parallelize_model(model, weights_path=config["model"]["model_path"],
                                     enable_gradient_checkpointing=config["train"].get("gradient_checkpointing", True),
-                                    enable_mixed_precision=(config["train"]["mixed_precision"] == "bf16"),
+                                    enable_mixed_precision=False, # Keep in bf16 for fused MoE kernels
                                     basic_modules=["LLaDA2MoeDecoderLayer"],
                                     init_device=device_type)
 
