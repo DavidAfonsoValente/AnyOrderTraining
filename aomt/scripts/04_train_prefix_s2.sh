@@ -24,8 +24,8 @@ if [ ! -d "./models/prefix_sft_s1_merged" ]; then
 fi
 
 echo "[$(date)] Starting Prefix SFT Stage 2 | Job: $SLURM_JOB_ID"
-source aomt/scripts/_train_common.sh
+source scripts/_train_common.sh
 
-launch_training aomt/tasks/train_standard_sft.py aomt/configs/prefix_sft_stage2.yaml
+launch_training tasks/train_standard_sft.py configs/prefix_sft_stage2.yaml
 
 echo "[$(date)] Prefix SFT Stage 2 done."

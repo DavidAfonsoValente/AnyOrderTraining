@@ -15,30 +15,30 @@ set -euo pipefail
 mkdir -p logs data/cache
 
 REPO_ROOT="$(pwd)"
-export PYTHONPATH="$REPO_ROOT/VeOmni:$REPO_ROOT/aomt:$PYTHONPATH"
+# The scripts are now inside aomt/, so REPO_ROOT is aomt/. 
+# We need the parent of aomt/ in PYTHONPATH to support 'import aomt...'
+PARENT_DIR="$(dirname "$REPO_ROOT")"
+export PYTHONPATH="$REPO_ROOT/dFactory/VeOmni:$PARENT_DIR:$PYTHONPATH"
 
 echo "[$(date)] Starting data preparation..."
 echo "Node: $(hostname)"
 
 # --- 1. Download dataset -------------------------------------------------
 echo "[$(date)] Downloading agent-eto/eto-sft-trajectory..."
-python aomt/data/download.py --output_dir ./data/raw/
+python data/download.py --output_dir ./data/raw/
 
 # --- 2. Length analysis (REQUIRED before training) -----------------------
 echo "[$(date)] Running length analysis..."
-python aomt/data/measure_lengths.py \
+python data/measure_lengths.py \
     --raw_dir     ./data/raw/ \
     --tokenizer   ./models/llada2-mini-sep \
     --gen_length  256 \
     --max_seq_len 2048 \
     | tee logs/length_analysis.txt
 
-# If measure_lengths.py exits non-zero (gen_length too small), the job fails
-# here and downstream training jobs will not run (dependency: afterok).
-
 # --- 3. Generate JSONL files per training mode ---------------------------
 echo "[$(date)] Generating training JSONL files..."
-python aomt/data/prepare_data.py \
+python data/prepare_data.py \
     --raw_dir    ./data/raw/ \
     --output_dir ./data/cache/ \
     --tokenizer  ./models/llada2-mini-sep

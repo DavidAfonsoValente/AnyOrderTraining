@@ -36,12 +36,12 @@ set -euo pipefail
 mkdir -p logs checkpoints/sft_standard
 
 echo "[$(date)] Starting Standard SFT | Job: $SLURM_JOB_ID"
-source aomt/scripts/_train_common.sh
+source scripts/_train_common.sh
 
 # Smoke test on first GPU only before full run
-# run_smoke_test aomt/tasks/train_standard_sft.py aomt/configs/sft_standard.yaml
+# run_smoke_test tasks/train_standard_sft.py configs/sft_standard.yaml
 
-launch_training aomt/tasks/train_standard_sft.py aomt/configs/sft_standard.yaml
+launch_training tasks/train_standard_sft.py configs/sft_standard.yaml
 
 echo "[$(date)] Standard SFT done."
 echo "Checkpoint: $(ls -td checkpoints/sft_standard/*/  | head -1)"

@@ -2,8 +2,8 @@
 # =============================================================================
 # submit_pipeline.sh
 # Submits all AOMT training jobs with correct Slurm dependencies.
-# Run from the dFactory root directory.
-# Usage: bash aomt/scripts/submit_pipeline.sh [--email user @comp.nus.edu.sg]
+# Run from the aomt/ directory.
+# Usage: bash scripts/submit_pipeline.sh [--email user@comp.nus.edu.sg]
 # =============================================================================
 
 set -euo pipefail
@@ -13,7 +13,7 @@ if [[ "$1" == "--email" ]]; then
     EMAIL="$2"
 fi
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SCRIPT_DIR="scripts"
 
 echo "=== AOMT Training Pipeline Submission ==="
 echo "Working dir: $(pwd)"
@@ -22,10 +22,12 @@ echo ""
 
 # ---- Step 0: Data preparation (CPU, fast) -----------------------------------
 echo "Submitting: data preparation..."
+# Use 01_prepare_data.sh which is the Slurm-wrapped version
 JOB_DATA=$(sbatch --parsable \
     ${EMAIL:+--mail-type=END,FAIL} \
     ${EMAIL:+--mail-user=$EMAIL} \
     "$SCRIPT_DIR/01_prepare_data.sh")
+
 echo "  Job ID: $JOB_DATA"
 
 # ---- Step 1: All independent training runs (can run in parallel) ------------

@@ -118,7 +118,8 @@ def main():
     print("========================================")
     
     script_dir = os.path.dirname(__file__)
-    default_data_path = os.path.join(script_dir, '../data/processed_dataset')
+    # Updated to match data/cache/ structure
+    default_data_path = os.path.join(script_dir, '../data/cache/')
 
     check_attention_masks()
     check_loss_range()

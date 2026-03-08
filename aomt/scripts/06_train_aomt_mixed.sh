@@ -16,8 +16,8 @@ set -euo pipefail
 mkdir -p logs checkpoints/aomt_mixed
 
 echo "[$(date)] Starting AOMT-Mixed | Job: $SLURM_JOB_ID"
-source aomt/scripts/_train_common.sh
+source scripts/_train_common.sh
 
-launch_training aomt/tasks/train_aomt.py aomt/configs/aomt_mixed.yaml
+launch_training tasks/train_aomt.py configs/aomt_mixed.yaml
 
 echo "[$(date)] AOMT-Mixed done."

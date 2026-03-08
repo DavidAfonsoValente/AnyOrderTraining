@@ -18,7 +18,8 @@ set -euo pipefail
 mkdir -p logs results
 
 REPO_ROOT="$(pwd)"
-export PYTHONPATH="$REPO_ROOT/VeOmni:$REPO_ROOT/aomt:${PYTHONPATH:-}"
+PARENT_DIR="$(dirname "$REPO_ROOT")"
+export PYTHONPATH="$REPO_ROOT/dFactory/VeOmni:$PARENT_DIR:${PYTHONPATH:-}"
 
 echo "[$(date)] Starting evaluation | Job: $SLURM_JOB_ID"
 echo "Node: $(hostname)"
@@ -57,7 +58,7 @@ for MODEL in $MODELS; do
     echo "[$(date)] Evaluating: $MODEL"
     for BENCH in $BENCHMARKS; do
         echo "  Benchmark: $BENCH"
-        python aomt/eval/task_eval.py \
+        python eval/task_eval.py \
             --model_path "./models/${MODEL}-sep" \
             --tokenizer  "./models/llada2-mini-sep" \
             --benchmark  "$BENCH" \
@@ -72,7 +73,7 @@ done
 # --- Steps=1 consistency check (AOMT-Mixed on ALFWorld) ----------------------
 echo ""
 echo "[$(date)] Steps=1 consistency check: AOMT-Mixed on ALFWorld..."
-python aomt/eval/task_eval.py \
+python eval/task_eval.py \
     --model_path ./models/aomt_mixed-sep \
     --tokenizer  ./models/llada2-mini-sep \
     --benchmark  alfworld \
@@ -86,7 +87,7 @@ python aomt/eval/task_eval.py \
 echo ""
 echo "[$(date)] Computing NLL-obs..."
 for MODEL in aomt_action aomt_mixed; do
-    python aomt/eval/nll_obs.py \
+    python eval/nll_obs.py \
         --model_path "./models/${MODEL}-sep" \
         --tokenizer  ./models/llada2-mini-sep \
         --data_path  ./data/cache/aomt_test.jsonl \
@@ -98,7 +99,7 @@ echo ""
 echo "[$(date)] Running robustness evaluation..."
 for RHO in 0.1 0.2 0.3; do
     for MODEL in sft_standard aomt_action aomt_mixed; do
-        python aomt/eval/noise_robustness.py \
+        python eval/noise_robustness.py \
             --model_path "./models/${MODEL}-sep" \
             --tokenizer  ./models/llada2-mini-sep \
             --benchmark  alfworld \
@@ -111,7 +112,7 @@ done
 # --- Collate results into a summary table ------------------------------------
 echo ""
 echo "[$(date)] Collating results..."
-python aomt/eval/collate_results.py --results_dir results/ \
+python eval/collate_results.py --results_dir results/ \
     | tee results/summary_table.txt
 
 echo ""

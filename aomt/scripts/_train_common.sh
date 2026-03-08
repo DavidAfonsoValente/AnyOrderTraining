@@ -27,7 +27,8 @@ echo "=========================="
 
 # ---- PYTHONPATH (dFactory + aomt) ------------------------------------------
 REPO_ROOT="$(pwd)"
-export PYTHONPATH="$REPO_ROOT/VeOmni:$REPO_ROOT/aomt:${PYTHONPATH:-}"
+PARENT_DIR="$(dirname "$REPO_ROOT")"
+export PYTHONPATH="$REPO_ROOT/dFactory/VeOmni:$PARENT_DIR:${PYTHONPATH:-}"
 
 # ---- GPU binding -----------------------------------------------------------
 # One process per GPU. CUDA_VISIBLE_DEVICES is set by Slurm's GRES.

@@ -17,9 +17,9 @@ set -euo pipefail
 mkdir -p logs checkpoints/aomt_action_only
 
 echo "[$(date)] Starting AOMT-Action-Only | Job: $SLURM_JOB_ID"
-source aomt/scripts/_train_common.sh
+source scripts/_train_common.sh
 
-launch_training aomt/tasks/train_aomt.py aomt/configs/aomt_action_only.yaml
+launch_training tasks/train_aomt.py configs/aomt_action_only.yaml
 
 echo "[$(date)] AOMT-Action-Only done."
 
@@ -27,8 +27,8 @@ echo "[$(date)] AOMT-Action-Only done."
 # Uncomment to run ablations after the primary experiment.
 # for P in 0.15 0.40 0.50; do
 #     sed "s/mask_prob: 0.25/mask_prob: $P/" \
-#         aomt/configs/aomt_action_only.yaml > /tmp/aomt_act_p${P}.yaml
+#         configs/aomt_action_only.yaml > /tmp/aomt_act_p${P}.yaml
 #     sed -i "s|output_dir:.*|output_dir: ./checkpoints/aomt_act_p${P}|" \
 #         /tmp/aomt_act_p${P}.yaml
-#     launch_training aomt/tasks/train_aomt.py /tmp/aomt_act_p${P}.yaml
+#     launch_training tasks/train_aomt.py /tmp/aomt_act_p${P}.yaml
 # done

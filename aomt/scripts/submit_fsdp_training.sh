@@ -27,15 +27,25 @@ CONFIG_FILE=$1
 # submitting this job, which handles all pathing.
 PROJECT_ROOT=$(pwd)
 
+# --- Select Task Script ---
+if grep -q "aomt:" "$CONFIG_FILE"; then
+    TASK_SCRIPT="tasks/train_aomt.py"
+else
+    TASK_SCRIPT="tasks/train_standard_sft.py"
+fi
+
 echo "--- Launching dFactory Training ---"
+echo "Task script: $TASK_SCRIPT"
 echo "Using Python from: $(which python)"
 echo "PYTHONPATH is: ${PYTHONPATH}"
 export NPROC_PER_NODE=2
 
-# dFactory's train.sh calls torchrun, which will execute the trainer module.
-"${PROJECT_ROOT}/dFactory/train.sh" \
-    -m aomt.training.trainer \
-    --config "$CONFIG_FILE" \
-    --distributed
+# Use torchrun directly for distributed training
+srun torchrun \
+    --nproc_per_node=$NPROC_PER_NODE \
+    --rdzv_id=$SLURM_JOB_ID \
+    --rdzv_backend=c10d \
+    --rdzv_endpoint=$(scontrol show hostname "$SLURM_NODELIST" | head -n 1):29500 \
+    "$TASK_SCRIPT" "$CONFIG_FILE"
 
 echo "--- Training Finished ---"
