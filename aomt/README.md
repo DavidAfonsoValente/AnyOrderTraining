@@ -14,6 +14,8 @@ Perform these steps in order from the `aomt/` directory.
 *One-time setup. Installs Miniconda, creates a py311 environment, and sets up dependencies.*
 ```bash
 ./full_setup.sh
+# Initialize conda for the current session and activate
+source ~/miniconda3/etc/profile.d/conda.sh
 conda activate py311 && source activate_env.sh
 ```
 
@@ -24,8 +26,9 @@ conda activate py311 && source activate_env.sh
 salloc --time=2:00:00 --mem=128G --cpus-per-task=8 --gpus=1 --ntasks=1
 
 # Once on the compute node:
-cd ~/AnyOrderTraining/aomt # Adjust path if necessary
-source activate_env.sh
+cd ~/AnyOrderTraining/aomt
+source ~/miniconda3/etc/profile.d/conda.sh
+conda activate py311 && source activate_env.sh
 
 # A. Prepare model weights (converts to merged-expert format)
 srun ./scripts/prepare_model.sh
