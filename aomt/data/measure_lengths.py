@@ -8,6 +8,7 @@ import argparse
 import numpy as np
 from datasets import load_dataset
 from transformers import AutoTokenizer
+from data.utils import load_robust_dataset
 
 def parse_units(conversations):
     """Strictly alternating obs/act units. First turn always obs."""
@@ -30,8 +31,7 @@ def main():
     print(f"Loading tokenizer from {args.tokenizer}...")
     tokenizer = AutoTokenizer.from_pretrained(args.tokenizer, trust_remote_code=True)
     
-    print("Loading dataset agent-eto/eto-sft-trajectory...")
-    dataset = load_dataset("agent-eto/eto-sft-trajectory")
+    dataset = load_robust_dataset()
 
     action_lengths, obs_lengths, traj_lengths = [], [], []
 

@@ -10,6 +10,7 @@ import os
 from pathlib import Path
 from datasets import load_dataset
 from transformers import AutoTokenizer
+from data.utils import load_robust_dataset
 
 def parse_units(conversations):
     """Strictly alternating obs/act units. First turn always obs."""
@@ -77,9 +78,7 @@ def main():
 
     os.makedirs(args.output_dir, exist_ok=True)
 
-    # Note: Using load_dataset directly if raw_dir is empty or doesn't exist
-    print("Loading dataset agent-eto/eto-sft-trajectory...")
-    dataset = load_dataset("agent-eto/eto-sft-trajectory")
+    dataset = load_robust_dataset()
 
     for split in ["train", "test"]:
         print(f"Processing {split} split...")

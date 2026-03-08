@@ -26,7 +26,6 @@ conda activate py311 && source activate_env.sh
 salloc --time=2:00:00 --mem=128G --cpus-per-task=8 --gpus=1 --ntasks=1
 
 # Once on the compute node:
-cd ~/AnyOrderTraining/aomt
 source ~/miniconda3/etc/profile.d/conda.sh
 conda activate py311 && source activate_env.sh
 
