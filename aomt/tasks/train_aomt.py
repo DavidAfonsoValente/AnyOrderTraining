@@ -139,6 +139,11 @@ def main():
                                     init_device=device_type)
 
     optimizer = build_optimizer(model, lr=float(config["train"]["learning_rate"]), weight_decay=config["train"]["weight_decay"], fused=True)
+    
+    # Mixed precision setup
+    use_bf16 = (config["train"]["mixed_precision"] == "bf16")
+    scaler = torch.amp.GradScaler("cuda", enabled=(not use_bf16 and config["train"]["mixed_precision"] != "fp32"))
+
     num_steps = len(dataloader) * config["train"]["num_epochs"]
     scheduler = build_lr_scheduler(optimizer, train_steps=num_steps, lr=float(config["train"]["learning_rate"]),
                                    lr_min=float(config["train"].get("min_lr", 0)),
@@ -150,17 +155,26 @@ def main():
         for batch in dataloader:
             batch = {k: v.to(device_name, non_blocking=True) for k, v in batch.items()}
             labels = batch.pop("labels")
-            # Bidirectional 2D attention mask (float needed for transformers utilities)
-            batch["attention_mask"] = (batch["input_ids"] != (tokenizer.pad_token_id or 0)).to(model.dtype if hasattr(model, "dtype") else torch.float32)
+            # Bidirectional 2D attention mask
+            batch["attention_mask"] = (batch["input_ids"] != (tokenizer.pad_token_id or 0)).to(torch.bfloat16 if use_bf16 else torch.float32)
             
-            logits = model(**batch, use_cache=False).logits
-            loss = compute_unit_mask_loss(logits, labels)
-            loss.backward()
-            
-            if hasattr(model, "clip_grad_norm_"): model.clip_grad_norm_(config["train"]["gradient_clip"])
-            else: torch.nn.utils.clip_grad_norm_(model.parameters(), config["train"]["gradient_clip"])
+            with torch.amp.autocast("cuda", enabled=use_bf16, dtype=torch.bfloat16):
+                logits = model(**batch, use_cache=False).logits
+                loss = compute_unit_mask_loss(logits, labels)
 
-            optimizer.step(); scheduler.step(); optimizer.zero_grad()
+            scaler.scale(loss).backward()
+            
+            if hasattr(model, "clip_grad_norm_"): 
+                scaler.unscale_(optimizer)
+                model.clip_grad_norm_(config["train"]["gradient_clip"])
+            else: 
+                scaler.unscale_(optimizer)
+                torch.nn.utils.clip_grad_norm_(model.parameters(), config["train"]["gradient_clip"])
+
+            scaler.step(optimizer)
+            scaler.update()
+            scheduler.step()
+            optimizer.zero_grad()
             if ps.global_rank == 0: print(f"Epoch {epoch} Loss: {all_reduce(loss.detach(), group=ps.fsdp_group).item():.4f}", end="\r")
 
         if ps.global_rank == 0:
