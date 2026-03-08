@@ -12,10 +12,10 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 AOMT_DIR=$(dirname "$SCRIPT_DIR")
 VENV_PYTHON="$AOMT_DIR/dFactory/VeOmni/.venv/bin/python"
 
-MODELS_DIR="$AOMT_DIR/models"
+MODELS_DIR="$AOMT_DIR/weights"
 REPO_ID="inclusionAI/LLaDA2.0-mini"
 ORIGINAL_MODEL_PATH="$MODELS_DIR/LLaDA2.0-mini"
-MERGED_MODEL_PATH="$MODELS_DIR/LLaDA2.0-mini-merged"
+MERGED_MODEL_PATH="$MODELS_DIR/llada2-mini-merged"
 DOWNLOAD_SCRIPT="$AOMT_DIR/dFactory/scripts/download_hf_model.py"
 CONVERTOR_SCRIPT="$AOMT_DIR/dFactory/scripts/moe_convertor.py"
 
@@ -75,9 +75,9 @@ fi
 # LLaDA uses trust_remote_code=True, so it needs the .py and .json files in the merged directory.
 echo "Ensuring all required code and config files are in the merged directory..."
 # IMPORTANT: Use the dFactory version of modeling code which supports the merged experts format
-cp "$AOMT_DIR/dFactory/weights/llada2_moe/modeling_llada2_moe.py" "$MERGED_MODEL_PATH"/
-cp "$AOMT_DIR/dFactory/weights/llada2_moe/configuration_llada2_moe.py" "$MERGED_MODEL_PATH"/
-cp "$AOMT_DIR/dFactory/weights/llada2_moe/parallel_plan.py" "$MERGED_MODEL_PATH"/
+cp "$AOMT_DIR/dFactory/models/llada2_moe/modeling_llada2_moe.py" "$MERGED_MODEL_PATH"/
+cp "$AOMT_DIR/dFactory/models/llada2_moe/configuration_llada2_moe.py" "$MERGED_MODEL_PATH"/
+cp "$AOMT_DIR/dFactory/models/llada2_moe/parallel_plan.py" "$MERGED_MODEL_PATH"/
 
 # --- Fix relative imports for HuggingFace Dynamic Module loading ---
 # When loaded via trust_remote_code, relative imports like 'from .parallel_plan' 

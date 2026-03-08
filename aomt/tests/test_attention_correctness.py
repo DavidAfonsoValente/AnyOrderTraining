@@ -18,7 +18,7 @@ class TestAttentionMaskCorrectness(unittest.TestCase):
     """
 
     def setUp(self):
-        self.model_path = "weights/LLaDA2.0-mini-merged"
+        self.model_path = "weights/llada2-mini-merged"
         if not torch.cuda.is_available():
             self.skipTest("No GPU available.")
         if not os.path.exists(self.model_path):

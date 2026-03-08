@@ -676,13 +676,18 @@ class TestSmokeForward(unittest.TestCase):
     @unittest.skipUnless(torch.cuda.is_available(), "CUDA not available")
     @unittest.skipUnless(os.path.exists("weights/LLaDA2.0-mini"), "Model weights not found")
     def test_forward_pass_standard_sft(self):
-        from transformers import AutoModelForCausalLM, AutoTokenizer
-        tok = AutoTokenizer.from_pretrained("weights/LLaDA2.0-mini", trust_remote_code=True)
-        model = AutoModelForCausalLM.from_pretrained(
-            "weights/LLaDA2.0-mini-merged",
-            trust_remote_code=True,
-            torch_dtype=torch.bfloat16,
-        ).cuda().eval()
+        from aomt.tasks.train_aomt import build_foundation_model, build_tokenizer
+        model_path = "weights/llada2-mini-merged"
+        
+        # Load using standard project loader
+        model = build_foundation_model(
+            weights_path=model_path,
+            config_path=model_path,
+            torch_dtype="bfloat16",
+            attn_implementation="sdpa",
+            init_device="cuda"
+        ).eval()
+        tokenizer = build_tokenizer("weights/LLaDA2.0-mini")
 
         B, L = 1, 64
         input_ids = torch.randint(100, 5000, (B, L)).cuda()
@@ -691,7 +696,10 @@ class TestSmokeForward(unittest.TestCase):
         masked_ids, labels = apply_response_unit_mask(input_ids.cpu(), prompt_lengths)
         masked_ids = masked_ids.cuda()
         labels = labels.cuda()
-        attn_mask = (masked_ids != tok.pad_token_id).long()
+        
+        # 4D bidirectional mask
+        padding_mask = torch.ones_like(masked_ids)
+        attn_mask = padding_mask.unsqueeze(1).unsqueeze(2).expand(-1, 1, L, L)
 
         with torch.no_grad():
             logits = model(input_ids=masked_ids, attention_mask=attn_mask).logits
