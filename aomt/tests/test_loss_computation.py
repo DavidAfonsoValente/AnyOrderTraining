@@ -81,7 +81,9 @@ class TestLossComputation(unittest.TestCase):
         # To make the connection, we can add the embedded inputs to a slice of logits
         # This is a bit of a hack, but it establishes the graph for autograd
         # The actual values don't matter, only the gradient path.
-        dummy_logits[:, :, :16] += embedded_inputs
+        # Use out-of-place addition to avoid RuntimeError
+        dummy_logits = dummy_logits.clone()
+        dummy_logits[:, :, :16] = dummy_logits[:, :, :16] + embedded_inputs
 
         loss = masked_unit_cross_entropy(dummy_logits, target_ids, loss_mask)
         

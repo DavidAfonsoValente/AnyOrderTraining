@@ -23,8 +23,8 @@ class TestTrainingIntegration(unittest.TestCase):
             'name': 'integration_test',
             'model': {
                 'config_path': 'dFactory/configs/model_configs/llada2_mini',
-                'model_path': './LLaDA2.0-mini',
-                'tokenizer_path': './LLaDA2.0-mini',
+                'model_path': 'models/LLaDA2.0-mini',
+                'tokenizer_path': 'models/LLaDA2.0-mini',
                 'attn_implementation': 'sdpa',
             },
             'mask_mode': 'mixed',

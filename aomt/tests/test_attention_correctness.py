@@ -66,7 +66,7 @@ class TestAttentionMaskCorrectness(unittest.TestCase):
         self.aomt_config['mask_mode'] = 'action_only'
         self.aomt_config['mask_prob'] = 1.0 # Mask all actions
         self.aomt_config_path = self.test_dir / "aomt_config.yaml"
-        with open(self.aomt_config, 'w') as f:
+        with open(self.aomt_config_path, 'w') as f:
             yaml.dump(self.aomt_config, f)
 
         # --- 2. Create a small, fixed, and representative dataset ---
