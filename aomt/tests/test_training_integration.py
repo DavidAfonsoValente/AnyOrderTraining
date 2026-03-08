@@ -7,7 +7,7 @@ import sys
 import shutil
 import json
 
-from aomt.tasks.train_aomt import run_training
+from aomt.tasks.train_aomt import main as run_training
 
 class TestTrainingIntegration(unittest.TestCase):
 

@@ -25,7 +25,7 @@ from veomni.utils.dist_utils import all_reduce
 from veomni.models.registry import ModelRegistry
 
 # Ensure custom modeling is registered
-ModelRegistry.register_modeling_path("models.llada2_moe")
+ModelRegistry.register_modeling_path("dFactory.models.llada2_moe")
 
 # ---- Spec Section 6: Masking logic ------------------------------------------
 

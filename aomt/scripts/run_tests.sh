@@ -9,7 +9,8 @@ echo "--- Running AOMT Test Suite ---"
 # Ensure all relevant paths are in PYTHONPATH
 SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &> /dev/null && pwd)
 AOMT_ROOT=$(dirname "$SCRIPT_DIR")
-export PYTHONPATH="${AOMT_ROOT}/dFactory:${AOMT_ROOT}/dFactory/VeOmni:${AOMT_ROOT}:${PYTHONPATH:-}"
+PARENT_DIR=$(dirname "$AOMT_ROOT")
+export PYTHONPATH="${AOMT_ROOT}/dFactory:${AOMT_ROOT}/dFactory/VeOmni:${AOMT_ROOT}:${PARENT_DIR}:${PYTHONPATH:-}"
 
 echo "Using Python executable: $(which python)"
 echo "PYTHONPATH is set to: ${PYTHONPATH}"
