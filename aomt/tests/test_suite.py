@@ -62,11 +62,9 @@ except ImportError as e:
             return torch.tensor(0.0, device=logits.device, requires_grad=True)
         
         # Only compute loss where labels are not -100
-        return torch.nn.functional.cross_entropy(
-            logits.view(-1, logits.size(-1)),
-            labels.view(-1),
-            ignore_index=-100,
-        )
+        active_logits = logits.view(-1, logits.size(-1))[mask.view(-1)]
+        active_labels = labels.view(-1)[mask.view(-1)]
+        return torch.nn.functional.cross_entropy(active_logits, active_labels)
 
     def apply_unit_mask(unit_texts, unit_types, tokenizer, mask_prob, mode, rng, mask_token_id=156895):
         messages = []

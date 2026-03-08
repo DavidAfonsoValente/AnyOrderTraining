@@ -6,11 +6,10 @@ set -e
 
 echo "--- Running AOMT Test Suite ---"
 
-# The activate_env.sh script should have already set up the environment and PYTHONPATH.
-# We just need to define the project root for the test discovery path.
+# Ensure all relevant paths are in PYTHONPATH
 SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &> /dev/null && pwd)
-PROJECT_ROOT=$(dirname "$SCRIPT_DIR")
-TOP_LEVEL_DIR=$(dirname "$PROJECT_ROOT")
+AOMT_ROOT=$(dirname "$SCRIPT_DIR")
+export PYTHONPATH="${AOMT_ROOT}/dFactory:${AOMT_ROOT}/dFactory/VeOmni:${AOMT_ROOT}:${PYTHONPATH:-}"
 
 echo "Using Python executable: $(which python)"
 echo "PYTHONPATH is set to: ${PYTHONPATH}"
