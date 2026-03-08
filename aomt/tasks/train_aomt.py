@@ -178,7 +178,8 @@ def run_training():
         weights_path=model_path,
         config_path=config_path,
         torch_dtype="bfloat16" if config["train"]["mixed_precision"] == "bf16" else "float32",
-        attn_implementation="sdpa"
+        attn_implementation="sdpa",
+        init_device=device
     )
     model.to(device)
 

@@ -78,6 +78,11 @@ class TestTrainingIntegration(unittest.TestCase):
         old_argv = sys.argv
         sys.argv = [old_argv[0], self.config_path]
         
+        # Force CPU to avoid OOM on limited GPU memory
+        import torch
+        old_cuda_is_available = torch.cuda.is_available
+        torch.cuda.is_available = lambda: False
+        
         try:
             # Run the task's training loop
             run_training()
@@ -87,6 +92,7 @@ class TestTrainingIntegration(unittest.TestCase):
             self.fail(f"Training integration test failed with an exception: {e}")
         finally:
             sys.argv = old_argv
+            torch.cuda.is_available = old_cuda_is_available
 
 if __name__ == '__main__':
     unittest.main()
