@@ -4,6 +4,7 @@ import torch
 import torch.nn.functional as F
 from transformers import AutoModelForCausalLM, AutoTokenizer
 import numpy as np
+import os
 
 # Import the core masking logic directly from the task scripts
 from aomt.tasks.train_standard_sft import apply_response_unit_mask
