@@ -158,15 +158,20 @@ class TestLossFunction(unittest.TestCase):
         self.assertEqual(loss.item(), 0.0)
         self.assertFalse(torch.isnan(loss))
 
-class TestSmokeForward(unittest.TestCase):
     @unittest.skipUnless(torch.cuda.is_available(), "No GPU")
     @unittest.skipUnless(os.path.exists("weights/LLaDA2.0-mini"), "No weights")
     def test_forward(self):
-        from aomt.tasks.train_aomt import build_foundation_model
+        from tasks.train_aomt import build_foundation_model
         path = "weights/llada2-mini-merged"
-        model = build_foundation_model(weights_path=path, config_path=path, torch_dtype="bfloat16", init_device="cuda").eval()
+        model = build_foundation_model(
+            weights_path=path, 
+            config_path=path, 
+            torch_dtype="bfloat16", 
+            attn_implementation="sdpa",
+            init_device="cuda"
+        ).eval()
         ids = torch.randint(100, 1000, (1, 32)).cuda()
-        mask = torch.ones_like(ids).float() # SDPA float mask
+        mask = torch.ones_like(ids).to(torch.bfloat16) # SDPA float mask
         logits = model(input_ids=ids, attention_mask=mask).logits
         self.assertTrue(torch.isfinite(logits).all())
 

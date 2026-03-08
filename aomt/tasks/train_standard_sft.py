@@ -24,7 +24,7 @@ from veomni.utils.dist_utils import all_reduce
 from veomni.models.registry import ModelRegistry
 
 # Register custom architecture
-ModelRegistry.register_modeling_path("llada2_moe")
+ModelRegistry.register_modeling_path("models.llada2_moe")
 
 def compute_unit_mask_loss(logits: torch.Tensor, labels: torch.Tensor) -> torch.Tensor:
     """Shared loss function: Cross-entropy over masked positions only."""
