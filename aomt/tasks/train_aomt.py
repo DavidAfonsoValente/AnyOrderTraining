@@ -158,9 +158,13 @@ def run_training():
                             collate_fn=lambda b: collate_fn(b, tokenizer.pad_token_id),
                             shuffle=True)
 
+    model_path = config["model"]["model_path"]
+    config_path = config["model"].get("config_path", model_path)
+    if config_path is None: config_path = model_path
+
     model = build_foundation_model(
-        weights_path=config["model"]["model_path"],
-        config_path=config["model"].get("config_path"),
+        weights_path=model_path,
+        config_path=config_path,
         torch_dtype=torch.bfloat16 if config["train"]["mixed_precision"] == "bf16" else torch.float32
     )
     model.to(device)

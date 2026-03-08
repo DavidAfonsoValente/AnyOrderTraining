@@ -53,7 +53,7 @@ def verify_experiment_data(config_path: str):
     if "aomt" in config:
         mode = config["aomt"]["mode"]
         mask_prob = config["aomt"]["mask_prob"]
-        dataset = AOMTDataset(train_path, tokenizer, mask_prob, mode)
+        dataset = AOMTDataset(train_path, tokenizer, mask_prob, mode, mask_token_id)
         
         print(f"\nDisplaying one AOMT example:\n")
         example_data = dataset[0]
