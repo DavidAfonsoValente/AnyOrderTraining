@@ -78,6 +78,12 @@ echo "Ensuring all required code and config files are in the merged directory...
 cp "$AOMT_DIR/dFactory/models/llada2_moe/modeling_llada2_moe.py" "$MERGED_MODEL_PATH"/
 cp "$AOMT_DIR/dFactory/models/llada2_moe/configuration_llada2_moe.py" "$MERGED_MODEL_PATH"/
 cp "$AOMT_DIR/dFactory/models/llada2_moe/parallel_plan.py" "$MERGED_MODEL_PATH"/
+
+# --- Fix relative imports for HuggingFace Dynamic Module loading ---
+# When loaded via trust_remote_code, relative imports like 'from .parallel_plan' 
+# often fail in the HF cache. We convert them to local imports.
+sed -i 's/from \.parallel_plan/from parallel_plan/' "$MERGED_MODEL_PATH/modeling_llada2_moe.py"
+
 cp "$ORIGINAL_MODEL_PATH"/*.json "$MERGED_MODEL_PATH"/ 2>/dev/null || true
 # Tokenizer files are also needed
 cp "$ORIGINAL_MODEL_PATH"/*.model "$MERGED_MODEL_PATH"/ 2>/dev/null || true
