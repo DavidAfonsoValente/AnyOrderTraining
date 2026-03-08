@@ -9,9 +9,10 @@
 #SBATCH --time=08:00:00
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
-#SBATCH --gpus-per-node=a100-40:1    # Single GPU OK for inference
+#SBATCH --gpus-per-node=nv:1
+#SBATCH -C titanrtx    # Titan RTX (24GB) is perfect for inference
 #SBATCH --cpus-per-task=8
-#SBATCH --mem=128G
+#SBATCH --mem=64G
 #SBATCH --partition=normal
 
 set -euo pipefail

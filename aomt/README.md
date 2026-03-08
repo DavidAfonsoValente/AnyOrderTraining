@@ -20,13 +20,14 @@ conda activate py311 && source activate_env.sh
 ```
 
 ### 2. Preparation & Verification (Compute Node)
-*Heavy lifting: merging MoE weights, processing trajectories, and running the verification suite. LLaDA 2.0 Mini (MoE) requires >16GB VRAM for stable execution.*
+*Heavy lifting: merging MoE weights, processing trajectories, and running the verification suite. LLaDA 2.0 Mini (MoE) is a **16B parameter model** requiring ~32GB VRAM for the weights alone in bf16.*
 ```bash
-# Request an interactive compute node (Titan RTX 24GB recommended for availability and memory)
+# Request an interactive compute node
+# For weight merging and data processing (CPU-heavy, low VRAM):
 salloc --time=2:00:00 --mem=128G --cpus-per-task=8 --gres=gpu:nv:1 -C titanrtx
 
-# Alternative: A100 40GB
-# salloc --time=2:00:00 --mem=128G --cpus-per-task=8 --gres=gpu:a100-40:1
+# Note: Integration tests now use a tiny mock model to verify pipeline logic
+# without requiring a high-end GPU for verification.
 ```
 
 Once the allocation is granted:
@@ -41,6 +42,7 @@ srun ./scripts/prepare_model.sh
 srun ./scripts/01_prepare_data.sh
 
 # C. Run verification suite (Unit tests + integration)
+# This will now pass on any GPU node.
 srun scripts/run_tests.sh
 
 # D. Visualize masking (Sanity check configs)
@@ -50,7 +52,7 @@ exit # Return to login node
 ```
 
 ### 3. Launch Full Pipeline (Login Node)
-*Submits all training variants and evaluation to Slurm. Training scripts (`02-06`) target **H100** by default for maximum speed.*
+*Submits all training variants and evaluation to Slurm. Training scripts (`02-06`) target **multi-GPU A100/H100** to handle the 16B parameter MoE weights via FSDP.*
 ```bash
 source activate_env.sh
 bash scripts/submit_pipeline.sh --email your_email@comp.nus.edu.sg
@@ -63,11 +65,11 @@ bash scripts/submit_pipeline.sh --email your_email@comp.nus.edu.sg
 | Purpose | Recommended GPU | Slurm Flag |
 | :--- | :--- | :--- |
 | **Interactive Debug** | Titan RTX (24GB) | `--gres=gpu:nv:1 -C titanrtx` |
-| **Verification** | Titan RTX (24GB) | `--gres=gpu:nv:1 -C titanrtx` |
-| **Standard Training** | A100 (40GB) | `--gres=gpu:a100-40:1` |
-| **High-Perf Training**| H100 (96GB/141GB)| `--gpus-per-node=h100-96:1` |
+| **Weight Merging** | Titan RTX (24GB) | `--gres=gpu:nv:1 -C titanrtx` |
+| **Training (FSDP)** | 4x A100 (40GB) | `--gpus-per-node=a100-40:4` |
+| **High-Perf (FSDP)** | 4x H100 (96GB) | `--gpus-per-node=h100-96:4` |
 
-*Note: The LLaDA 2.0 Mini MoE model will OOM on Tesla T4 (16GB) when using standard precision. Use `bf16` and at least 24GB VRAM for single-GPU interactive tasks.*
+*Note: Training requires at least 4 GPUs using FSDP ZeRO-3 to shard the 32GB weight footprint of the MoE experts.*
 
 ---
 
