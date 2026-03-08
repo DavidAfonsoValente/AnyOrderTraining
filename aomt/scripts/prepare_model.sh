@@ -12,8 +12,11 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 AOMT_DIR=$(dirname "$SCRIPT_DIR")
 VENV_PYTHON="$AOMT_DIR/dFactory/VeOmni/.venv/bin/python"
 
-ORIGINAL_MODEL_PATH="$AOMT_DIR/models/LLaDA2.0-mini"
-MERGED_MODEL_PATH="$AOMT_DIR/models/LLaDA2.0-mini-merged"
+MODELS_DIR="$AOMT_DIR/models"
+REPO_ID="inclusionAI/LLaDA2.0-mini"
+ORIGINAL_MODEL_PATH="$MODELS_DIR/LLaDA2.0-mini"
+MERGED_MODEL_PATH="$MODELS_DIR/LLaDA2.0-mini-merged"
+DOWNLOAD_SCRIPT="$AOMT_DIR/dFactory/scripts/download_hf_model.py"
 CONVERTOR_SCRIPT="$AOMT_DIR/dFactory/scripts/moe_convertor.py"
 
 # --- Pre-flight Checks ---
@@ -22,11 +25,25 @@ if [ ! -f "$VENV_PYTHON" ]; then
     echo "Please run the './setup.sh' script from the 'aomt' directory first."
     exit 1
 fi
-if [ ! -d "$ORIGINAL_MODEL_PATH" ]; then
-    echo "Error: Original model not found at $ORIGINAL_MODEL_PATH."
-    echo "Please run './setup.sh' to download the base model."
-    exit 1
+
+# --- Download Model if Missing ---
+# Check if any .safetensors files exist in the target directory
+if [ ! -d "$ORIGINAL_MODEL_PATH" ] || [ -z "$(ls -A "$ORIGINAL_MODEL_PATH"/*.safetensors 2>/dev/null)" ]; then
+    echo "Original model weights missing or incomplete at $ORIGINAL_MODEL_PATH."
+    echo "Downloading from HuggingFace ($REPO_ID)..."
+    
+    mkdir -p "$MODELS_DIR"
+    
+    # download_hf_model.py appends the repo name to local_dir
+    "$VENV_PYTHON" "$DOWNLOAD_SCRIPT" \
+        --repo_id "$REPO_ID" \
+        --local_dir "$MODELS_DIR"
+    
+    echo "Download complete."
+else
+    echo "Original model weights found at $ORIGINAL_MODEL_PATH."
 fi
+
 if [ ! -f "$CONVERTOR_SCRIPT" ]; then
     echo "Error: MoE convertor script not found at $CONVERTOR_SCRIPT."
     echo "Please ensure the 'dFactory' submodule is cloned correctly."
