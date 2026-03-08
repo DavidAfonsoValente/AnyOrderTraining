@@ -19,13 +19,14 @@ source ~/miniconda3/etc/profile.d/conda.sh
 conda activate py311 && source activate_env.sh
 ```
 
-### 2. Model & Data Preparation (Compute Node)
-*Heavy lifting: merging model weights (MoE) and processing trajectories. Requires high memory (~128G).*
+### 2. Preparation & Verification (Compute Node)
+*Merging weights, processing data, and running tests. Requires high memory (~128G).*
 ```bash
 # Request an interactive compute node
 salloc --time=2:00:00 --mem=128G --cpus-per-task=8 --gpus=1 --ntasks=1
 
 # Once on the compute node:
+cd ~/AnyOrderTraining/aomt
 source ~/miniconda3/etc/profile.d/conda.sh
 conda activate py311 && source activate_env.sh
 
@@ -35,20 +36,19 @@ srun ./scripts/prepare_model.sh
 # B. Download and process trajectories
 srun ./scripts/01_prepare_data.sh
 
+# C. Run tests (ensure logic is correct)
+srun scripts/run_tests.sh
+
+# D. Visualize masking (sanity check)
+srun scripts/visualize_experiments.sh
+
 exit # Return to login node
 ```
 
-### 3. Verification (Login Node)
-*Ensure masking and core logic are correct before submitting long jobs.*
-```bash
-source activate_env.sh
-bash scripts/run_tests.sh
-bash scripts/visualize_experiments.sh
-```
-
-### 4. Launch Experiments (Login Node)
+### 3. Launch Experiments (Login Node)
 *Submits all training variants and evaluation to Slurm with correct dependencies.*
 ```bash
+source activate_env.sh
 bash scripts/submit_pipeline.sh --email your_email@comp.nus.edu.sg
 ```
 
