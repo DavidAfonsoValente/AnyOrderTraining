@@ -6,6 +6,7 @@ import os
 import sys
 import shutil
 import json
+import torch.distributed as dist
 
 from aomt.tasks.train_aomt import main as run_training
 
@@ -48,7 +49,7 @@ class TestTrainingIntegration(unittest.TestCase):
                 'gradient_clip': 1.0,
                 'per_device_batch_size': 1,
                 'num_epochs': 1,
-                'mixed_precision': 'bf16', # Use bf16 to save memory
+                'mixed_precision': 'bf16', 
                 'lr_scheduler': 'cosine',
                 'warmup_steps': 0,
                 'output_dir': os.path.join(self.test_dir, "output"),
@@ -62,10 +63,19 @@ class TestTrainingIntegration(unittest.TestCase):
         if not os.path.exists(self.config['model']['model_path']):
             self.skipTest(f"Model files not found at {self.config['model']['model_path']}. Skipping integration test.")
 
+        # --- 3. Mock Distributed Env for single-process test ---
+        os.environ["RANK"] = "0"
+        os.environ["WORLD_SIZE"] = "1"
+        os.environ["MASTER_ADDR"] = "localhost"
+        os.environ["MASTER_PORT"] = "29505"
+        os.environ["LOCAL_RANK"] = "0"
+
     def tearDown(self):
         """Clean up the test workspace."""
         if os.path.exists(self.test_dir):
             shutil.rmtree(self.test_dir)
+        if dist.is_initialized():
+            dist.destroy_process_group()
 
     def test_single_step_run(self):
         """
@@ -74,7 +84,6 @@ class TestTrainingIntegration(unittest.TestCase):
         print("\nRunning test: test_single_step_run")
         
         # Patch sys.argv to pass the config path to run_training
-        import sys
         old_argv = sys.argv
         sys.argv = [old_argv[0], self.config_path]
         
@@ -84,6 +93,8 @@ class TestTrainingIntegration(unittest.TestCase):
             self.assertTrue(True)
             print("Test passed: Single training step completed successfully.")
         except Exception as e:
+            import traceback
+            traceback.print_exc()
             self.fail(f"Training integration test failed with an exception: {e}")
         finally:
             sys.argv = old_argv
