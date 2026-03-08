@@ -75,21 +75,17 @@ class SFTDataset(torch.utils.data.Dataset):
 
     def __getitem__(self, idx):
         ex = self.examples[idx]
-        # dFactory-style chat template application
-        # This mirrors how dFactory handles "messages" field
-        full_text = self.tokenizer.apply_chat_template(ex["messages"], tokenize=False, add_generation_prompt=False)
+        messages = ex["messages"]
         
-        # We need prompt_length. In dFactory it's usually computed during tokenization.
-        # For simplicity in this standalone script:
-        prompt_text = self.tokenizer.apply_chat_template(ex["messages"][:1], tokenize=False, add_generation_prompt=True)
+        # Tokenize using apply_chat_template for consistency with LLaDA/dFactory
+        input_ids = self.tokenizer.apply_chat_template(messages, tokenize=True, truncation=True, max_length=self.max_seq_length)
         
-        tokens = self.tokenizer(full_text, truncation=True, max_length=self.max_seq_length, return_tensors="pt")
-        prompt_tokens = self.tokenizer(prompt_text, truncation=True, max_length=self.max_seq_length, return_tensors="pt")
+        # Determine prompt length by tokenizing messages[:-1] with generation prompt
+        prompt_str = self.tokenizer.apply_chat_template(messages[:-1], tokenize=False, add_generation_prompt=True)
+        prompt_ids = self.tokenizer(prompt_str, add_special_tokens=False)["input_ids"]
+        prompt_len = min(len(prompt_ids), len(input_ids))
         
-        input_ids = tokens["input_ids"].squeeze(0)
-        prompt_len = min(len(prompt_tokens["input_ids"].squeeze(0)), len(input_ids))
-        
-        return {"input_ids": input_ids, "prompt_len": prompt_len}
+        return {"input_ids": torch.tensor(input_ids), "prompt_len": prompt_len}
 
 def collate_fn(batch, pad_token_id):
     input_ids = [item["input_ids"] for item in batch]
@@ -143,7 +139,7 @@ def run_training():
     model = build_foundation_model(
         weights_path=model_path,
         config_path=config_path,
-        torch_dtype=torch.bfloat16 if config["train"]["mixed_precision"] == "bf16" else torch.float32
+        torch_dtype="bfloat16" if config["train"]["mixed_precision"] == "bf16" else "float32"
     )
     model.to(device)
     

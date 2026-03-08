@@ -59,8 +59,12 @@ def verify_experiment_data(config_path: str):
         example_data = dataset[0]
         input_ids = example_data['input_ids']
         labels = example_data['labels']
-        
-        print("INPUT (with masks):")
+
+        num_tokens = len(input_ids)
+        num_masked = (labels != -100).sum().item()
+        print(f"Stats: Total Tokens={num_tokens}, Masked Tokens={num_masked} ({num_masked/num_tokens:.1%})")
+
+        print("\nINPUT (with masks):")
         print(tokenizer.decode(input_ids, skip_special_tokens=False))
         print("\nTARGET (reconstructed from labels):")
         target_ids = input_ids.clone()
@@ -88,6 +92,11 @@ def verify_experiment_data(config_path: str):
         # Apply SFT masking logic
         masked_ids, labels = apply_response_unit_mask(input_ids.unsqueeze(0), torch.tensor([prompt_len]), mask_token_id)
         masked_ids = masked_ids[0]
+        labels = labels[0]
+        
+        num_tokens = len(masked_ids)
+        num_masked = (labels != -100).sum().item()
+        print(f"Stats: Total Tokens={num_tokens}, Prompt Tokens={prompt_len}, Masked Tokens={num_masked} ({num_masked/num_tokens:.1%})")
         
         print("PROMPT (unmasked context):")
         print(tokenizer.decode(input_ids[:prompt_len], skip_special_tokens=False))

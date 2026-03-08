@@ -35,24 +35,36 @@ def apply_unit_mask(unit_texts: list,
                     rng,
                     mask_token_id: int) -> tuple:
     """
-    Tokenises the full trajectory flat and applies unit-level Bernoulli masking.
+    Tokenises using the chat template and applies unit-level Bernoulli masking.
     """
-    sep = tokenizer.eos_token_id
+    # 1. Convert units to messages
+    messages = []
+    for text, utype in zip(unit_texts, unit_types):
+        role = "user" if utype == "obs" else "assistant"
+        messages.append({"role": role, "content": text})
 
-    all_ids, spans = [], []
-    for i, (text, utype) in enumerate(zip(unit_texts, unit_types)):
-        ids = tokenizer.encode(text, add_special_tokens=False)
-        start = len(all_ids)
-        all_ids.extend(ids)
-        spans.append((start, len(all_ids), utype))
-        if i < len(unit_texts) - 1:
-            all_ids.append(sep)
-
+    # 2. Get spans for each message by iteratively tokenizing prefixes
+    # This ensures we match the chat template exactly.
+    all_ids = tokenizer.apply_chat_template(messages, tokenize=True, add_generation_prompt=False)
     input_ids = torch.tensor(all_ids, dtype=torch.long)
-    labels    = torch.full_like(input_ids, -100)
+    labels = torch.full_like(input_ids, -100)
 
+    # To find spans, we tokenize prefixes
+    spans = []
+    for i in range(1, len(messages) + 1):
+        prefix_ids = tokenizer.apply_chat_template(messages[:i], tokenize=True, add_generation_prompt=False)
+        start = spans[-1][1] if spans else 0
+        end = len(prefix_ids)
+        if end > len(all_ids): end = len(all_ids) # Truncation safety
+        
+        # Determine unit type
+        utype = unit_types[i-1]
+        spans.append((start, end, utype))
+
+    # 3. Apply masking
     masked_any = False
     for start, end, utype in spans:
+        if start >= end: continue
         if mode == "action_only" and utype != "act":
             continue
         if rng.random() < mask_prob:
@@ -60,12 +72,12 @@ def apply_unit_mask(unit_texts: list,
             input_ids[start:end] = mask_token_id
             masked_any = True
 
+    # Fallback: mask at least one eligible unit
     if not masked_any:
-        eligible = [(s, e, ut) for s, e, ut in spans
-                    if mode == "mixed" or ut == "act"]
+        eligible = [(s, e) for s, e, ut in spans if (mode == "mixed" or ut == "act") and s < e]
         if eligible:
             idx = rng.integers(len(eligible))
-            s, e, _ = eligible[idx]
+            s, e = eligible[idx]
             labels[s:e] = input_ids[s:e].clone()
             input_ids[s:e] = mask_token_id
 
@@ -165,7 +177,7 @@ def run_training():
     model = build_foundation_model(
         weights_path=model_path,
         config_path=config_path,
-        torch_dtype=torch.bfloat16 if config["train"]["mixed_precision"] == "bf16" else torch.float32
+        torch_dtype="bfloat16" if config["train"]["mixed_precision"] == "bf16" else "float32"
     )
     model.to(device)
 
