@@ -27,8 +27,9 @@ class TestAttentionMaskCorrectness(unittest.TestCase):
         cls.model = AutoModelForCausalLM.from_pretrained(
             cls.model_path, 
             trust_remote_code=True,
-            torch_dtype=torch.bfloat16
-        ).cuda().eval()
+            torch_dtype=torch.bfloat16,
+            device_map="auto" # Enable CPU offloading to avoid OOM
+        ).eval()
 
     def setUp(self):
         if not torch.cuda.is_available() or not torch.os.path.exists(self.model_path):
@@ -55,19 +56,19 @@ class TestAttentionMaskCorrectness(unittest.TestCase):
         # 2. Run Forward Pass with Causal Mask (Standard SFT)
         # In SFT, model only sees obs0 to predict act0.
         messages = [{"role": "user", "content": obs0}, {"role": "assistant", "content": act0}]
-        input_ids_sft = self.tokenizer.apply_chat_template(messages, return_tensors="pt").cuda()
+        input_ids_sft = self.tokenizer.apply_chat_template(messages, return_tensors="pt").to(self.model.device)
         # Prompt length is everything before 'act0'
         prompt_text = self.tokenizer.apply_chat_template(messages[:1], add_generation_prompt=True, tokenize=False)
         prompt_len = len(self.tokenizer.encode(prompt_text))
         
         # Apply deterministic unit mask for SFT
         masked_ids_sft, labels_sft = apply_response_unit_mask(input_ids_sft.cpu(), torch.tensor([prompt_len]))
-        masked_ids_sft = masked_ids_sft.cuda()
-        labels_sft = labels_sft.cuda()
+        masked_ids_sft = masked_ids_sft.to(self.model.device)
+        labels_sft = labels_sft.to(self.model.device)
         
         # Construct CAUSAL mask (Standard SFT behavior)
         seq_len = input_ids_sft.shape[1]
-        causal_mask = torch.tril(torch.ones((seq_len, seq_len), device="cuda")).unsqueeze(0).unsqueeze(0)
+        causal_mask = torch.tril(torch.ones((seq_len, seq_len), device=self.model.device)).unsqueeze(0).unsqueeze(0)
         
         with torch.no_grad():
             logits_sft = self.model(input_ids=masked_ids_sft, attention_mask=causal_mask).logits
@@ -87,8 +88,8 @@ class TestAttentionMaskCorrectness(unittest.TestCase):
             unit_texts, unit_types, self.tokenizer, 
             mask_prob=1.0, mode="action_only", rng=ForceMaskAct()
         )
-        input_ids_aomt = input_ids_aomt.unsqueeze(0).cuda()
-        labels_aomt = labels_aomt.unsqueeze(0).cuda()
+        input_ids_aomt = input_ids_aomt.unsqueeze(0).to(self.model.device)
+        labels_aomt = labels_aomt.unsqueeze(0).to(self.model.device)
         
         # Full bidirectional mask (AOMT behavior)
         with torch.no_grad():

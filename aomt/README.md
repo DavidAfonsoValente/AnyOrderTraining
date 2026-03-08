@@ -26,23 +26,6 @@ conda activate py311 && source activate_env.sh
 salloc --time=2:00:00 --mem=128G --cpus-per-task=8 --gpus=1 --ntasks=1
 
 # Once on the compute node:
-cd ~/AnyOrderTraining/aomt
-source ~/miniconda3/etc/profile.d/conda.sh
-conda activate py311 && source activate_env.sh
-
-# A. Prepare model weights (converts to merged-expert format)
-srun ./scripts/prepare_model.sh
-
-# B. Download and process trajectories
-srun ./scripts/01_prepare_data.sh
-
-# C. Run tests (ensure logic is correct)
-srun scripts/run_tests.sh
-
-# D. Visualize masking (sanity check)
-srun scripts/visualize_experiments.sh
-
-exit # Return to login node
 ```
 
 ### 3. Launch Experiments (Login Node)

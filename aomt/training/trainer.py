@@ -1,4 +1,10 @@
 # aomt/training/trainer.py
+"""
+LEGACY/UTILITY MODULE:
+This trainer is deprecated in favor of the task-specific scripts in aomt/tasks/
+(e.g., train_aomt.py and train_standard_sft.py). It remains for utility functions
+only. Use scripts/submit_pipeline.sh for training.
+"""
 import sys
 import os
 import torch
