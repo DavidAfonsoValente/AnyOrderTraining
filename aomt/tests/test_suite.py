@@ -62,19 +62,27 @@ except ImportError as e:
         )
 
     def apply_unit_mask(unit_texts, unit_types, tokenizer, mask_prob, mode, rng, mask_token_id=156895):
-        sep = getattr(tokenizer, "eos_token_id", 2)
-        all_ids, spans = [], []
-        for i, (text, utype) in enumerate(zip(unit_texts, unit_types)):
-            ids = tokenizer.encode(text, add_special_tokens=False)
-            start = len(all_ids)
-            all_ids.extend(ids)
-            spans.append((start, len(all_ids), utype))
-            if i < len(unit_texts) - 1:
-                all_ids.append(sep)
+        messages = []
+        for text, utype in zip(unit_texts, unit_types):
+            role = "user" if utype == "obs" else "assistant"
+            messages.append({"role": role, "content": text})
+
+        all_ids = tokenizer.apply_chat_template(messages, tokenize=True, add_generation_prompt=False)
         input_ids = torch.tensor(all_ids, dtype=torch.long)
         labels = torch.full_like(input_ids, -100)
+
+        spans = []
+        for i in range(1, len(messages) + 1):
+            prefix_ids = tokenizer.apply_chat_template(messages[:i], tokenize=True, add_generation_prompt=False)
+            start = spans[-1][1] if spans else 0
+            end = len(prefix_ids)
+            if end > len(all_ids): end = len(all_ids)
+            utype = unit_types[i-1]
+            spans.append((start, end, utype))
+
         masked_any = False
         for start, end, utype in spans:
+            if start >= end: continue
             if mode == "action_only" and utype != "act":
                 continue
             if rng.random() < mask_prob:
@@ -82,8 +90,7 @@ except ImportError as e:
                 input_ids[start:end] = mask_token_id
                 masked_any = True
         if not masked_any:
-            eligible = [(s, e) for s, e, ut in spans
-                        if mode == "mixed" or ut == "act"]
+            eligible = [(s, e) for s, e, ut in spans if (mode == "mixed" or ut == "act") and s < e]
             if eligible:
                 s, e = eligible[rng.integers(len(eligible))]
                 labels[s:e] = input_ids[s:e].clone()
@@ -370,16 +377,21 @@ class TestAOMTMasking(unittest.TestCase):
         self.unit_types = [u["type"] for u in units]
 
     def _get_spans(self):
-        """Recompute spans the same way apply_unit_mask does."""
-        sep = self.tok.eos_token_id
-        all_ids, spans = [], []
-        for i, (text, utype) in enumerate(zip(self.unit_texts, self.unit_types)):
-            ids = self.tok.encode(text, add_special_tokens=False)
-            s = len(all_ids)
-            all_ids.extend(ids)
-            spans.append((s, len(all_ids), utype))
-            if i < len(self.unit_texts) - 1:
-                all_ids.append(sep)
+        """Recompute spans by iteratively tokenizing chat template prefixes."""
+        messages = []
+        for text, utype in zip(self.unit_texts, self.unit_types):
+            role = "user" if utype == "obs" else "assistant"
+            messages.append({"role": role, "content": text})
+
+        all_ids = self.tok.apply_chat_template(messages, tokenize=True, add_generation_prompt=False)
+        spans = []
+        for i in range(1, len(messages) + 1):
+            prefix_ids = self.tok.apply_chat_template(messages[:i], tokenize=True, add_generation_prompt=False)
+            start = spans[-1][1] if spans else 0
+            end = len(prefix_ids)
+            if end > len(all_ids): end = len(all_ids)
+            utype = self.unit_types[i-1]
+            spans.append((start, end, utype))
         return spans
 
     def test_action_only_masks_only_act_units(self):
