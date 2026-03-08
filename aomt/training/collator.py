@@ -72,7 +72,7 @@ def build_prefix_sft_examples(
                 "input_ids": full_input_ids,
                 "target_ids": full_target_ids,
                 "loss_mask": loss_mask,
-                "use_causal_mask": False, # Always use bidirectional attention for this task
+                "use_causal_mask": True, # User-directed change to make Stage 1 causal
             })
 
     return examples
@@ -137,7 +137,7 @@ def build_prefix_sft_stage2_examples(
                 "input_ids": full_input_ids,
                 "target_ids": full_target_ids,
                 "loss_mask": loss_mask,
-                "use_causal_mask": False,
+                "use_causal_mask": True,
             })
 
     return examples
@@ -209,7 +209,7 @@ def build_standard_sft_examples(
                 "input_ids": full_input_ids,
                 "target_ids": full_target_ids,
                 "loss_mask": loss_mask,
-                "use_causal_mask": False,
+                "use_causal_mask": True,
             })
             
     return examples

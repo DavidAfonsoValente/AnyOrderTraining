@@ -1,36 +1,29 @@
 # configs/aomt_action_only.yaml
-# Baseline 3: AOMT with masking restricted to ACTION units only.
-name: aomt_action_only
+# Baseline 3: Any-Order Masked Training (Action-Only masking)
 model:
-  config_path: dFactory/configs/model_configs/llada2_mini
-  model_path: models/LLaDA2.0-mini
-  tokenizer_path: models/LLaDA2.0-mini
-  attn_implementation: sdpa
-  moe_implementation: fused
-data_cache_path: "data/processed_dataset"
+  model_path:      ./models/llada2-mini-merged
+  tokenizer_path:  ./models/llada2-mini-sep
 
-# --- Training Objective ---
-mask_mode: "action_only"
-mask_prob: 0.25 # Probability of masking any given action unit
-use_causal_mask: false # CRITICAL: Use bidirectional attention
+data:
+  train_path:  ./data/cache/aomt_train.jsonl
+  test_path:   ./data/cache/aomt_test.jsonl
 
-# --- dFactory Training Defaults ---
-learning_rate: 2.5e-5
-warmup_steps: 50
-lr_schedule: "cosine"
-min_lr: 2.5e-6
-weight_decay: 0.1
-gradient_clip: 1.0
-global_batch_size: 64
-per_device_batch_size: 2
-gradient_accumulation_steps: 8
-max_seq_length: 2048
-mixed_precision: "bf16"
-# Use more epochs as each epoch shows a different view of the data
-num_epochs: 5
+train:
+  output_dir:                    ./checkpoints/aomt_action_only
+  num_epochs:                    5
+  learning_rate:                 2.5e-5
+  lr_scheduler:                  cosine
+  min_lr:                        2.5e-6
+  warmup_steps:                  50
+  weight_decay:                  0.1
+  gradient_clip:                 1.0
+  per_device_batch_size:         1      # full trajectories are longer
+  gradient_accumulation_steps:   16     # effective batch = 1 × 4 × 16 = 64
+  max_seq_length:                2048
+  mixed_precision:               bf16
+  save_steps:                    500
+  gradient_checkpointing:        true
 
-# --- Evaluation ---
-eval_nll_obs: true # This model has bidirectional attention
-eval_task: true
-eval_splits: ["seen", "unseen"]
-noise_fractions: [0.0, 0.1, 0.2, 0.3]
+aomt:
+  mode:       action_only
+  mask_prob:  0.25

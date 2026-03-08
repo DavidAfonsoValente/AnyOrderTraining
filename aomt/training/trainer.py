@@ -77,7 +77,7 @@ class AOMTDataset(Dataset):
             "input_ids": masked_ids,
             "target_ids": traj.input_ids.clone(),
             "loss_mask": loss_mask,
-            "use_causal_mask": False,
+            "use_causal_mask": self.mode == MaskMode.STANDARD_SFT,
         }
 
 class BenchmarkUniformSampler(Sampler):
@@ -181,20 +181,46 @@ class SummarizedTrajectoryDataset(Dataset):
 
 def training_step(model, batch, device):
     """
-    Performs a single training step (forward pass, loss calculation).
+    Performs a single training step, correctly handling causal vs. bidirectional attention.
     """
+    # Move all tensor data to the correct device
     for key, val in batch.items():
         if isinstance(val, torch.Tensor):
             batch[key] = val.to(device)
-    
+
+    input_ids = batch["input_ids"]
+    target_ids = batch["target_ids"]
+    loss_mask = batch["loss_mask"]
+    attn_mask = batch["attention_mask"] # This is the padding mask from the collator
+    use_causal_mask = batch["use_causal_mask"][0].item() # Extract boolean value
+
+    # --- Correctly construct attention mask based on mode ---
+    if use_causal_mask:
+        # STANDARD SFT: Apply a causal (lower-triangular) mask on top of the padding mask
+        seq_len = input_ids.shape[1]
+        # Create a causal mask (1s on and below the diagonal, 0s above)
+        causal_mask = torch.tril(torch.ones((seq_len, seq_len), device=device, dtype=torch.bool))
+        # Expand both masks to 4D for broadcasting and combine them
+        # (Batch, 1, To, From) & (1, 1, To, To) -> (Batch, 1, To, From)
+        # The model's attention mechanism will use this combined mask.
+        # We expand the padding mask to match the shape expected by the model's attention layers.
+        expanded_attn_mask = attn_mask.unsqueeze(1).unsqueeze(2).expand(-1, -1, seq_len, -1)
+        final_attention_mask = expanded_attn_mask & causal_mask.unsqueeze(0).unsqueeze(0)
+    else:
+        # AOMT MODES: Use standard bidirectional attention, just accounting for padding.
+        # We still need to expand the padding mask to the 4D shape.
+        final_attention_mask = attn_mask.unsqueeze(1).unsqueeze(2)
+
+
+    # Forward pass with the correctly shaped attention mask
     outputs = model(
-        input_ids=batch["input_ids"],
-        attention_mask=batch["attention_mask"],
+        input_ids=input_ids,
+        attention_mask=final_attention_mask,
         use_cache=False,
     )
-    logits = outputs[0]
-    
-    loss = masked_unit_cross_entropy(logits, batch["target_ids"], batch["loss_mask"])
+    logits = outputs.logits if hasattr(outputs, 'logits') else outputs[0]
+
+    loss = masked_unit_cross_entropy(logits, target_ids, loss_mask)
     return loss
 
 def run_training(config_path: str, is_distributed: bool):
@@ -268,7 +294,7 @@ def run_training(config_path: str, is_distributed: bool):
     else:
         model = model.to(rank)
 
-    steps_per_epoch = len(processed_dataset) // (config.get("per_device_batch_size", 2) * world_size)
+    steps_per_epoch = len(dataset) // (config.get("global_batch_size", 64))
     num_training_steps = int(steps_per_epoch * config["num_epochs"])
 
     if rank == 0:

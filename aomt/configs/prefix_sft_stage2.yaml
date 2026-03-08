@@ -1,35 +1,28 @@
 # configs/prefix_sft_stage2.yaml
-# Baseline 2, Stage 2: Fine-tuning the world-model checkpoint with standard SFT
-name: prefix_sft_stage2
+# Baseline 2 Stage 2: Policy restoration (Next-action prediction)
+model:
+  model_path:      ./models/prefix_sft_s1_merged   # Stage 1 ckpt, re-merged
+  tokenizer_path:  ./models/llada2-mini-sep
 
-# CRITICAL: This path points to the output of the Stage 1 training.
-# It will need to be updated by the user/script after Stage 1 completes.
-model: "checkpoints/prefix_sft_stage1/final_checkpoint"
-data_cache_path: "aomt/data/processed_dataset"
+data:
+  train_path:  ./data/cache/sft_standard_train.jsonl
+  test_path:   ./data/cache/sft_standard_test.jsonl
 
-# --- Training Objective ---
-# This stage fine-tunes the IWM model on a policy objective.
-mask_mode: "prefix_sft_stage2"
-mask_prob: null
-use_causal_mask: false # Causal context is handled by data prep
+train:
+  output_dir:                    ./checkpoints/prefix_sft_s2
+  num_epochs:                    3
+  learning_rate:                 2.5e-5
+  lr_scheduler:                  cosine
+  min_lr:                        2.5e-6
+  warmup_steps:                  50
+  weight_decay:                  0.1
+  gradient_clip:                 1.0
+  per_device_batch_size:         2
+  gradient_accumulation_steps:   8
+  max_seq_length:                2048
+  mixed_precision:               bf16
+  save_steps:                    500
+  gradient_checkpointing:        true
 
-# --- dFactory Training Defaults ---
-learning_rate: 2.5e-5
-warmup_steps: 50
-lr_schedule: "cosine"
-min_lr: 2.5e-6
-weight_decay: 0.1
-gradient_clip: 1.0
-global_batch_size: 64
-per_device_batch_size: 2
-gradient_accumulation_steps: 8
-max_seq_length: 2048
-mixed_precision: "bf16"
-num_epochs: 3
-
-# --- Evaluation ---
-# Evaluate the final, task-ready model.
-eval_nll_obs: false # Causal policy models cannot compute this
-eval_task: true
-eval_splits: ["seen", "unseen"]
-noise_fractions: [0.0, 0.1, 0.2, 0.3]
+masking:
+  mode: standard

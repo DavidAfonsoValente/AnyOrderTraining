@@ -54,12 +54,60 @@ class TestLossComputation(unittest.TestCase):
         self.assertAlmostEqual(computed_loss.item(), manual_loss.item(), places=5)
         print("Test passed.")
 
-    def test_zero_mask_returns_zero_loss(self):
+    def test_gradients_only_from_masked_positions(self):
         """
-        Sanity Check 11.3: Verifies that if no tokens are masked, the loss is 0.
+        Sanity Check 11.3: Verifies that gradients are non-zero only for tokens
+        that contributed to the loss (i.e., where loss_mask is True).
         """
-        print("\nRunning test: test_zero_mask_returns_zero_loss")
-        zero_mask = torch.zeros(self.batch_size, self.seq_len, dtype=torch.bool)
-        loss = masked_unit_cross_entropy(self.logits, self.target_ids, zero_mask)
-        self.assertEqual(loss.item(), 0.0)
+        print("\nRunning test: test_gradients_only_from_masked_positions")
+        
+        # --- 1. Setup a minimal model and data ---
+        # Make IDs simple and non-overlapping to easily check gradients
+        input_ids = torch.tensor([[1, 2, 3, 4, 5, 6]], dtype=torch.long) # Batch size 1
+        target_ids = torch.tensor([[1, 2, 3, 4, 5, 6]], dtype=torch.long)
+        loss_mask = torch.tensor([[False, False, True, True, False, False]], dtype=torch.bool)
+        
+        # A simple model: just an embedding layer
+        embedding = torch.nn.Embedding(self.vocab_size, 16)
+        # The embedding weights require gradients
+        embedding.weight.requires_grad = True
+
+        # --- 2. Forward pass and loss calculation ---
+        embedded_inputs = embedding(input_ids)
+        # Create dummy logits; we only care about the gradient flow
+        # We need to make this operation differentiable wrt embeddings
+        dummy_logits = torch.randn(1, embedded_inputs.shape[1], self.vocab_size, requires_grad=True)
+
+        # To make the connection, we can add the embedded inputs to a slice of logits
+        # This is a bit of a hack, but it establishes the graph for autograd
+        # The actual values don't matter, only the gradient path.
+        dummy_logits[:, :, :16] += embedded_inputs
+
+        loss = masked_unit_cross_entropy(dummy_logits, target_ids, loss_mask)
+        
+        # --- 3. Backward pass ---
+        loss.backward()
+
+        # --- 4. Check gradients on the embedding weights ---
+        grads = embedding.weight.grad
+        self.assertIsNotNone(grads, "Gradients were not computed.")
+
+        # The IDs of the context tokens (loss_mask is False)
+        context_token_ids = [1, 2, 5, 6]
+        # The IDs of the target tokens (loss_mask is True)
+        target_token_ids = [3, 4]
+
+        # Gradients for context tokens should be zero
+        for token_id in context_token_ids:
+            self.assertEqual(
+                grads[token_id].sum().item(), 0,
+                f"Gradient for context token {token_id} should be zero but was not."
+            )
+
+        # Gradients for target tokens should be non-zero
+        for token_id in target_token_ids:
+            self.assertNotEqual(
+                grads[token_id].sum().item(), 0,
+                f"Gradient for target token {token_id} should be non-zero but was zero."
+            )
         print("Test passed.")

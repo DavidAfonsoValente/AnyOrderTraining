@@ -1,0 +1,31 @@
+#!/bin/bash
+# =============================================================================
+# 04_train_prefix_s2.sh — Prefix SFT Stage 2 (policy fine-tuning)
+# Depends on 03_train_prefix_s1.sh. Stage 1 script handles checkpoint conversion.
+# =============================================================================
+#SBATCH --job-name=aomt_pfx_s2
+#SBATCH --output=logs/04_prefix_s2_%j.log
+#SBATCH --time=12:00:00
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=4
+#SBATCH --gpus-per-node=h200-141:4
+#SBATCH --cpus-per-task=8
+#SBATCH --mem=512G
+#SBATCH --partition=normal
+
+set -euo pipefail
+mkdir -p logs checkpoints/prefix_sft_s2
+
+# Verify the Stage 1 merged checkpoint exists before starting
+if [ ! -d "./models/prefix_sft_s1_merged" ]; then
+    echo "ERROR: ./models/prefix_sft_s1_merged not found."
+    echo "Ensure 03_train_prefix_s1.sh completed successfully."
+    exit 1
+fi
+
+echo "[$(date)] Starting Prefix SFT Stage 2 | Job: $SLURM_JOB_ID"
+source aomt/scripts/_train_common.sh
+
+launch_training aomt/tasks/train_standard_sft.py aomt/configs/prefix_sft_stage2.yaml
+
+echo "[$(date)] Prefix SFT Stage 2 done."

@@ -1,35 +1,28 @@
 # configs/prefix_sft_stage1.yaml
-# Baseline 2, Stage 1: Pre-training on ALEE's Implicit World Modeling objective
-name: prefix_sft_stage1
+# Baseline 2 Stage 1: Implicit World Modeling (O_{t+1} prediction from local context)
 model:
-  config_path: dFactory/configs/model_configs/llada2_mini
-  model_path: models/LLaDA2.0-mini
-  tokenizer_path: models/LLaDA2.0-mini
-  attn_implementation: sdpa
-  moe_implementation: fused
-data_cache_path: "aomt/data/processed_dataset"
+  model_path:      ./models/llada2-mini-merged
+  tokenizer_path:  ./models/llada2-mini-sep
 
-# --- Training Objective ---
-mask_mode: "prefix_sft_stage1"
-use_causal_mask: false # Use bidirectional attention for this objective
+data:
+  train_path:  ./data/cache/prefix_sft_s1_train.jsonl
+  test_path:   ./data/cache/prefix_sft_s1_test.jsonl
 
-# --- dFactory Training Defaults ---
-learning_rate: 2.5e-5
-warmup_steps: 50
-lr_schedule: "cosine"
-min_lr: 2.5e-6
-weight_decay: 0.1
-gradient_clip: 1.0
-global_batch_size: 64
-per_device_batch_size: 8 # Can use a larger batch size for shorter sequences
-gradient_accumulation_steps: 2
-max_seq_length: 512 # Examples are short (O_t, A_t, O_{t+1})
-mixed_precision: "bf16"
-num_epochs: 3
+train:
+  output_dir:                    ./checkpoints/prefix_sft_s1
+  num_epochs:                    3
+  learning_rate:                 2.5e-5
+  lr_scheduler:                  cosine
+  min_lr:                        2.5e-6
+  warmup_steps:                  50
+  weight_decay:                  0.1
+  gradient_clip:                 1.0
+  per_device_batch_size:         4      # shorter sequences
+  gradient_accumulation_steps:   4      # effective batch = 4 × 4 × 4 = 64
+  max_seq_length:                512
+  mixed_precision:               bf16
+  save_steps:                    500
+  gradient_checkpointing:        true
 
-# --- Evaluation ---
-# This model is not directly deployable for tasks as it only predicts observations.
-# We evaluate its world-model capabilities before Stage 2 fine-tuning.
-eval_nll_obs: true
-eval_task: false
-save_for_stage2: true # Flag to save checkpoint for the next stage
+masking:
+  mode: standard

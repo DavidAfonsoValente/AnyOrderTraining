@@ -1,36 +1,29 @@
 # configs/aomt_mixed.yaml
-# Baseline 4: Full AOMT with mixed masking of Observation and Action units.
-name: aomt_mixed
+# Main Method: Any-Order Masked Training (Joint Observation & Action masking)
 model:
-  config_path: dFactory/configs/model_configs/llada2_mini
-  model_path: models/LLaDA2.0-mini
-  tokenizer_path: models/LLaDA2.0-mini
-  attn_implementation: sdpa
-  moe_implementation: fused
-data_cache_path: "data/processed_dataset"
+  model_path:      ./models/llada2-mini-merged
+  tokenizer_path:  ./models/llada2-mini-sep
 
-# --- Training Objective ---
-mask_mode: "mixed"
-mask_prob: 0.25 # Primary probability; will be swept in ablations
-use_causal_mask: false # CRITICAL: Use bidirectional attention
+data:
+  train_path:  ./data/cache/aomt_train.jsonl
+  test_path:   ./data/cache/aomt_test.jsonl
 
-# --- dFactory Training Defaults ---
-learning_rate: 2.5e-5
-warmup_steps: 50
-lr_schedule: "cosine"
-min_lr: 2.5e-6
-weight_decay: 0.1
-gradient_clip: 1.0
-global_batch_size: 64
-per_device_batch_size: 2
-gradient_accumulation_steps: 8
-max_seq_length: 2048
-mixed_precision: "bf16"
-# Use more epochs as each epoch shows a different view of the data
-num_epochs: 5
+train:
+  output_dir:                    ./checkpoints/aomt_mixed
+  num_epochs:                    5
+  learning_rate:                 2.5e-5
+  lr_scheduler:                  cosine
+  min_lr:                        2.5e-6
+  warmup_steps:                  50
+  weight_decay:                  0.1
+  gradient_clip:                 1.0
+  per_device_batch_size:         1
+  gradient_accumulation_steps:   16
+  max_seq_length:                2048
+  mixed_precision:               bf16
+  save_steps:                    500
+  gradient_checkpointing:        true
 
-# --- Evaluation ---
-eval_nll_obs: true
-eval_task: true
-eval_splits: ["seen", "unseen"]
-noise_fractions: [0.0, 0.1, 0.2, 0.3]
+aomt:
+  mode:       mixed
+  mask_prob:  0.25   # ablation: [0.15, 0.25, 0.40, 0.50]

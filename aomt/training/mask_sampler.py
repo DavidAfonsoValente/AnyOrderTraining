@@ -37,14 +37,10 @@ def _select_units_to_mask(
         List[TokenizedUnit]: A list of the specific units that should be masked.
     """
     if mode == MaskMode.STANDARD_SFT:
-        # For diffusion-based SFT, we mask the final action and predict it.
-        # Find the last unit with type "act" in the trajectory.
-        last_action_unit = None
-        for u in reversed(units):
-            if u.unit_type == "act":
-                last_action_unit = u
-                break
-        return [last_action_unit] if last_action_unit else []
+        # For standard SFT, all action units are the targets to be predicted
+        # from their respective causal prefixes. The causal mask itself is handled
+        # by the training step, but here we identify all actions as masked.
+        return [u for u in units if u.unit_type == "act"]
 
     elif mode == MaskMode.PREFIX_SFT_STAGE1:
         # This mode is handled by a special collator (`build_prefix_sft_examples`)

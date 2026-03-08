@@ -1,34 +1,28 @@
 # configs/sft_standard.yaml
 # Baseline 1: Standard Supervised Fine-Tuning (Next-Action Prediction)
-name: standard_sft
 model:
-  config_path: dFactory/configs/model_configs/llada2_mini
-  model_path: models/LLaDA2.0-mini
-  tokenizer_path: models/LLaDA2.0-mini
-  attn_implementation: sdpa
-  moe_implementation: fused
-data_cache_path: "aomt/data/processed_dataset"
+  model_path:      ./models/llada2-mini-merged
+  tokenizer_path:  ./models/llada2-mini-sep
 
-# --- Training Objective ---
-mask_mode: "standard_sft"
-mask_prob: null  # Not applicable; all actions are always targeted
-use_causal_mask: false # Causal context is handled by data prep for bidirectional models
+data:
+  train_path:  ./data/cache/sft_standard_train.jsonl
+  test_path:   ./data/cache/sft_standard_test.jsonl
 
-# --- dFactory Training Defaults (as per spec) ---
-learning_rate: 2.5e-5
-warmup_steps: 50
-lr_schedule: "cosine"
-min_lr: 2.5e-6
-weight_decay: 0.1
-gradient_clip: 1.0
-global_batch_size: 64
-per_device_batch_size: 2
-gradient_accumulation_steps: 8
-max_seq_length: 2048
-mixed_precision: "bf16"
-num_epochs: 3
+train:
+  output_dir:                    ./checkpoints/sft_standard
+  num_epochs:                    3
+  learning_rate:                 2.5e-5
+  lr_scheduler:                  cosine
+  min_lr:                        2.5e-6
+  warmup_steps:                  50
+  weight_decay:                  0.1
+  gradient_clip:                 1.0
+  per_device_batch_size:         2
+  gradient_accumulation_steps:   8      # effective batch = 2 × 4 GPUs × 8 = 64
+  max_seq_length:                2048
+  mixed_precision:               bf16
+  save_steps:                    500
+  gradient_checkpointing:        true   # required for A100-40 nodes
 
-# --- Evaluation ---
-eval_nll_obs: false # Cannot be computed by a causal model
-eval_splits: ["seen", "unseen"]
-noise_fractions: [0.0, 0.1, 0.2, 0.3]
+masking:
+  mode: standard   # parsed by train_standard_sft.py

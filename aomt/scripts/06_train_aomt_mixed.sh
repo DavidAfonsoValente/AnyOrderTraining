@@ -1,0 +1,23 @@
+#!/bin/bash
+# =============================================================================
+# 06_train_aomt_mixed.sh — AOMT-Mixed (full method)
+# =============================================================================
+#SBATCH --job-name=aomt_mixed
+#SBATCH --output=logs/06_aomt_mixed_%j.log
+#SBATCH --time=20:00:00
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=4
+#SBATCH --gpus-per-node=h200-141:4
+#SBATCH --cpus-per-task=8
+#SBATCH --mem=512G
+#SBATCH --partition=normal
+
+set -euo pipefail
+mkdir -p logs checkpoints/aomt_mixed
+
+echo "[$(date)] Starting AOMT-Mixed | Job: $SLURM_JOB_ID"
+source aomt/scripts/_train_common.sh
+
+launch_training aomt/tasks/train_aomt.py aomt/configs/aomt_mixed.yaml
+
+echo "[$(date)] AOMT-Mixed done."

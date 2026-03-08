@@ -39,35 +39,52 @@ class TestMaskSampler(unittest.TestCase):
 
     def test_standard_sft_masking(self):
         """
-        Sanity Check 11.2: `STANDARD_SFT` should mask ONLY the last action unit.
+        Sanity Check 11.2 (Corrected): `STANDARD_SFT` should mask ALL action units.
+        The causal attention mask is handled later; the sampler's job is to identify
+        all actions as targets.
         """
         print("\nRunning test: test_standard_sft_masking")
         masked_ids, loss_mask = apply_unit_mask(
             self.tokenized_traj, 0.0, MaskMode.STANDARD_SFT, self.mask_token_id, self.rng
         )
 
-        # Input IDs should now be different from original
+        # Input IDs should now be different from original because actions are masked
         self.assertFalse(torch.equal(masked_ids, self.sample_input_ids))
 
-        # Find the last action unit
-        last_act_unit = None
-        for unit in reversed(self.sample_spans):
-            if unit.unit_type == "act":
-                last_act_unit = unit
-                break
-        
-        self.assertIsNotNone(last_act_unit, "Sample trajectory has no action unit to test.")
-
-        # Loss mask should be True ONLY at the last action unit's position
+        # Loss mask should be True ONLY at action unit positions
         for unit in self.sample_spans:
             span_mask = loss_mask[unit.token_start:unit.token_end]
-            span_masked_ids = masked_ids[unit.token_start:unit.token_end]
             
-            if unit == last_act_unit:
-                self.assertTrue(torch.all(span_mask), "Last action unit should be in the loss mask.")
-                self.assertTrue(torch.all(span_masked_ids == self.mask_token_id), "Last action unit should be replaced by mask tokens.")
+            if unit.unit_type == "act":
+                self.assertTrue(torch.all(span_mask), f"Action unit {unit.unit_index} should be in the loss mask.")
             else:
-                self.assertFalse(torch.any(span_mask), f"Unit {unit.unit_index} should NOT be in the loss mask.")
+                self.assertFalse(torch.any(span_mask), f"Observation unit {unit.unit_index} should NOT be in the loss mask.")
+        print("Test passed.")
+
+    def test_context_integrity_and_zero_partial_masking(self):
+        """
+        Sanity Checks 11.2:
+        - For any masked unit, all tokens must be the mask token (zero partial masking).
+        - For any context unit, all tokens must be unchanged (context integrity).
+        """
+        print("\nRunning test: test_context_integrity_and_zero_partial_masking")
+        # Use MIXED mode to ensure we get a mix of masked and unmasked units
+        masked_ids, loss_mask = apply_unit_mask(
+            self.tokenized_traj, 0.5, MaskMode.MIXED, self.mask_token_id, self.rng
+        )
+
+        for unit in self.sample_spans:
+            span_loss_mask = loss_mask[unit.token_start:unit.token_end]
+            span_masked_ids = masked_ids[unit.token_start:unit.token_end]
+            span_original_ids = self.sample_input_ids[unit.token_start:unit.token_end]
+
+            if torch.any(span_loss_mask):
+                # This unit is masked
+                self.assertTrue(torch.all(span_loss_mask), f"Unit {unit.unit_index} is partially masked, which is invalid.")
+                self.assertTrue(torch.all(span_masked_ids == self.mask_token_id), f"Masked unit {unit.unit_index} contains non-mask tokens.")
+            else:
+                # This unit is context
+                self.assertTrue(torch.equal(span_masked_ids, span_original_ids), f"Context unit {unit.unit_index} was altered.")
         print("Test passed.")
 
     def test_action_only_masking(self):

@@ -1,26 +1,75 @@
-# Any-Order Motion Transformer (AOMT)
+# Any-Order Masked Training (AOMT)
 
-This document provides the canonical workflow for setting up the environment, running tests, and executing the full experiment suite.
+This repository contains the implementation for "Any-Order Masked Training for Trajectory-Level Supervised Learning in LLM-Based Agents," a supervised fine-tuning (SFT) paradigm that reframes agent learning as a trajectory-level reconstruction problem. It uses a masked diffusion language model to reconstruct arbitrarily masked observation/action units from bidirectional context.
 
-## 1. Automated Full Setup
+This document provides the canonical workflow for setting up the environment, preparing data, and running experiments.
 
-The `full_setup.sh` script provides a comprehensive, automated setup process. It is the recommended way to get started.
+---
 
-From the `aomt/` directory, simply run:
+## 1. Setup and Workflow
+
+The setup is a **3-step process**. You will first set up the environment on a login node, then prepare the model, and finally prepare the dataset on a compute node.
+
+**Prerequisite:** You must be logged into the Hugging Face Hub. If you are not, run the following command and provide your access token:
 ```bash
-./full_setup.sh
+huggingface-cli login
 ```
 
-This script will:
-1.  Install a local copy of Miniconda in your home directory (`~/miniconda3`) if it's not already present.
-2.  Create a dedicated `py311` Conda environment with Python 3.11.
-3.  Execute the main `setup.sh` script, which clones all dependencies and installs the required packages in a final project-specific virtual environment.
+### Step 1: Environment Setup (Login Node)
 
-After the setup is complete, the script will provide instructions on how to activate the environment for your work.
+From the `aomt/` directory, run the main setup script. This script will prepare your environment by installing all necessary dependencies, cloning the `dFactory` framework, and downloading the `LLaDA-2.0-mini` base model.
 
-## 2. Activating the Environment
+```bash
+./setup.sh
+```
+This script creates the virtual environment and a helper script, `activate_env.sh`, for easy activation.
 
-For all subsequent work (running tests, data prep, training), you must be in the correct environment. The setup script creates a helper script for this.
+### Step 2: Model Preparation (Login Node)
+
+The `dFactory` framework requires the model's weights to be in a special 'merged-expert' format for efficient training. After setting up the environment, you must run the model preparation script.
+
+First, activate the environment you just created:
+```bash
+source activate_env.sh
+```
+
+Then, run the preparation script:
+```bash
+./scripts/prepare_model.sh
+```
+This will create a new directory, `aomt/models/LLaDA2.0-mini-merged`, containing the model weights in the correct format for training.
+
+**Important:** Before running training, you must update your experiment config files in `aomt/configs/` to point to this new merged model path. For example, change `model_path: models/LLaDA2.0-mini` to `model_path: models/LLaDA2.0-mini-merged`.
+
+### Step 3: Data Preparation (Compute Node)
+
+This step downloads and processes the `agent-eto/eto-sft-trajectory` dataset. It is memory-intensive and **must be run on a compute node.**
+
+1.  **Request an interactive Slurm session:**
+    ```bash
+    salloc --time=2:00:00 --mem=128G --gpus=1 --ntasks=1
+    ```
+
+2.  **Navigate to the `aomt/` directory and activate the environment:**
+    ```bash
+    cd /path/to/your/AnyOrderTraining/aomt
+    source activate_env.sh
+    ```
+
+3.  **Run the data preparation script:**
+    You must use `srun` to ensure the script executes on the allocated compute node.
+    ```bash
+    srun ./scripts/prepare_data.sh
+    ```
+    This will download the raw dataset to `aomt/data/dataset_cache/raw` and then process it into `aomt/data/dataset_cache/train` and `aomt/data/dataset_cache/validation`.
+
+---
+
+## 2. Running the Project
+
+For all subsequent work (running tests, training, evaluation), you must first activate the environment.
+
+### Activating the Environment
 
 From the `aomt/` directory, run:
 ```bash
@@ -28,40 +77,17 @@ source activate_env.sh
 ```
 This will activate the correct virtual environment and set all necessary paths.
 
-## 3. Data Preparation (on a Compute Node)
+### Running the Test Suite
 
-After activating the environment, process the raw dataset. This is memory-intensive and **must be run on a compute node**.
-
-1.  **Request an interactive Slurm session:**
-    ```bash
-    salloc --time=1:00:00 --mem=128G --gpus=1 --ntasks=1
-    ```
-
-2.  **Activate the environment (inside the Slurm session):**
-    ```bash
-    # Navigate to the aomt/ directory first
-    source activate_env.sh
-    ```
-
-3.  **Run the data preparation script using `srun`:**
-    You must use `srun` to ensure the script executes on the compute node you allocated, where the 128GB of memory is available.
-    ```bash
-    srun ./scripts/prepare_data.sh
-    ```
-
-## 4. Running the Test Suite
-
-From the `aomt/` directory, with the environment activated (`source activate_env.sh`), run the test suite:
-
+With the environment activated, run the test suite to verify the core components:
 ```bash
 ./scripts/run_tests.sh
 ```
 
-## 5. Running Experiments
+### Running Experiments
 
-From the `aomt/` directory on a login node, with the environment activated (`source activate_env.sh`), execute the master script to submit all training jobs:
-
+From a login node, with the environment activated, execute the master script to submit all training jobs to the Slurm scheduler:
 ```bash
 ./scripts/run_all_experiments.sh
 ```
-You can monitor the jobs with `squeue -u $USER`.
+You can monitor your jobs with `squeue -u $USER`. The script will submit separate jobs for each experiment configuration defined in the `aomt/configs/` directory. Results and checkpoints will be saved to the path configured in the respective YAML files.
