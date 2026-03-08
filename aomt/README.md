@@ -20,37 +20,54 @@ conda activate py311 && source activate_env.sh
 ```
 
 ### 2. Preparation & Verification (Compute Node)
-*Heavy lifting: merging MoE weights, processing trajectories, and running the verification suite. Requires high memory (~128G).*
+*Heavy lifting: merging MoE weights, processing trajectories, and running the verification suite. LLaDA 2.0 Mini (MoE) requires >16GB VRAM for stable execution.*
 ```bash
-# Request an interactive compute node
-salloc --time=2:00:00 --mem=128G --cpus-per-task=8 --gpus=1 --ntasks=1
+# Request an interactive compute node (Titan RTX 24GB recommended for availability and memory)
+salloc --time=2:00:00 --mem=128G --cpus-per-task=8 --gres=gpu:nv:1 -C titanrtx
 
-# Once the allocation is granted and you are on the compute node:
+# Alternative: A100 40GB
+# salloc --time=2:00:00 --mem=128G --cpus-per-task=8 --gres=gpu:a100-40:1
+```
+
+Once the allocation is granted:
+```bash
 cd ~/AnyOrderTraining/aomt
-source ~/miniconda3/etc/profile.d/conda.sh
-conda activate py311 && source activate_env.sh
+source activate_env.sh
 
-# A. Prepare model weights (converts to merged-expert format)
+# A. Prepare model weights (merged-expert format)
 srun ./scripts/prepare_model.sh
 
-# B. Download and process trajectories into JSONL files
+# B. Download and process trajectories
 srun ./scripts/01_prepare_data.sh
 
-# C. Run the verification tests (Ensure scientific logic is correct)
+# C. Run verification suite (Unit tests + integration)
 srun scripts/run_tests.sh
 
-# D. Visualize masking (Sanity check for all experiment configs)
+# D. Visualize masking (Sanity check configs)
 srun scripts/visualize_experiments.sh
 
 exit # Return to login node
 ```
 
 ### 3. Launch Full Pipeline (Login Node)
-*Submits all training variants and the evaluation suite to Slurm with correct job dependencies.*
+*Submits all training variants and evaluation to Slurm. Training scripts (`02-06`) target **H100** by default for maximum speed.*
 ```bash
 source activate_env.sh
 bash scripts/submit_pipeline.sh --email your_email@comp.nus.edu.sg
 ```
+
+---
+
+## 🖥️ Cluster GPU Guide
+
+| Purpose | Recommended GPU | Slurm Flag |
+| :--- | :--- | :--- |
+| **Interactive Debug** | Titan RTX (24GB) | `--gres=gpu:nv:1 -C titanrtx` |
+| **Verification** | Titan RTX (24GB) | `--gres=gpu:nv:1 -C titanrtx` |
+| **Standard Training** | A100 (40GB) | `--gres=gpu:a100-40:1` |
+| **High-Perf Training**| H100 (96GB/141GB)| `--gpus-per-node=h100-96:1` |
+
+*Note: The LLaDA 2.0 Mini MoE model will OOM on Tesla T4 (16GB) when using standard precision. Use `bf16` and at least 24GB VRAM for single-GPU interactive tasks.*
 
 ---
 

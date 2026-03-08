@@ -48,7 +48,7 @@ class TestTrainingIntegration(unittest.TestCase):
                 'gradient_clip': 1.0,
                 'per_device_batch_size': 1,
                 'num_epochs': 1,
-                'mixed_precision': 'fp32',
+                'mixed_precision': 'bf16', # Use bf16 to save memory on GPU
                 'lr_scheduler': 'cosine',
                 'warmup_steps': 0,
                 'output_dir': os.path.join(self.test_dir, "output"),
@@ -78,11 +78,6 @@ class TestTrainingIntegration(unittest.TestCase):
         old_argv = sys.argv
         sys.argv = [old_argv[0], self.config_path]
         
-        # Force CPU to avoid OOM on limited GPU memory
-        import torch
-        old_cuda_is_available = torch.cuda.is_available
-        torch.cuda.is_available = lambda: False
-        
         try:
             # Run the task's training loop
             run_training()
@@ -92,7 +87,6 @@ class TestTrainingIntegration(unittest.TestCase):
             self.fail(f"Training integration test failed with an exception: {e}")
         finally:
             sys.argv = old_argv
-            torch.cuda.is_available = old_cuda_is_available
 
 if __name__ == '__main__':
     unittest.main()
