@@ -27,7 +27,7 @@ echo "Node: $(hostname)"
 echo "[$(date)] Running length analysis..."
 # This script will download agent-eto/eto-sft-trajectory automatically via HF datasets
 python data/measure_lengths.py \
-    --tokenizer   ./models/llada2-mini-sep \
+    --tokenizer   ./models/LLaDA2.0-mini \
     --gen_length  256 \
     --max_seq_len 2048 \
     | tee logs/length_analysis.txt
@@ -37,7 +37,7 @@ echo "[$(date)] Generating training JSONL files..."
 # This script also downloads/loads the dataset automatically
 python data/prepare_data.py \
     --output_dir ./data/cache/ \
-    --tokenizer  ./models/llada2-mini-sep
+    --tokenizer  ./models/LLaDA2.0-mini
 
 echo ""
 echo "=== Generated files ==="

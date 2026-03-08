@@ -2,7 +2,7 @@
 # Baseline 2 Stage 1: Implicit World Modeling (O_{t+1} prediction from local context)
 model:
   model_path:      ./models/llada2-mini-merged
-  tokenizer_path:  ./models/llada2-mini-sep
+  tokenizer_path:  ./models/LLaDA2.0-mini
 
 data:
   train_path:  ./data/cache/prefix_sft_s1_train.jsonl

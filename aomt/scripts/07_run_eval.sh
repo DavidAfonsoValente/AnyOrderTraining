@@ -40,7 +40,7 @@ convert_ckpt() {
         --input-path  "${BEST}/hf_ckpt" \
         --output-path "./models/${NAME}-sep" \
         --mode split
-    cp ./models/llada2-mini-sep/modeling_llada2_moe.py "./models/${NAME}-sep/"
+    cp ./models/LLaDA2.0-mini/modeling_llada2_moe.py "./models/${NAME}-sep/"
 }
 
 echo "[$(date)] Converting checkpoints..."
@@ -60,7 +60,7 @@ for MODEL in $MODELS; do
         echo "  Benchmark: $BENCH"
         python eval/task_eval.py \
             --model_path "./models/${MODEL}-sep" \
-            --tokenizer  "./models/llada2-mini-sep" \
+            --tokenizer  "./models/LLaDA2.0-mini" \
             --benchmark  "$BENCH" \
             --gen_length 256 \
             --block_length 32 \
@@ -75,7 +75,7 @@ echo ""
 echo "[$(date)] Steps=1 consistency check: AOMT-Mixed on ALFWorld..."
 python eval/task_eval.py \
     --model_path ./models/aomt_mixed-sep \
-    --tokenizer  ./models/llada2-mini-sep \
+    --tokenizer  ./models/LLaDA2.0-mini \
     --benchmark  alfworld \
     --gen_length 256 \
     --block_length 256 \
@@ -89,7 +89,7 @@ echo "[$(date)] Computing NLL-obs..."
 for MODEL in aomt_action aomt_mixed; do
     python eval/nll_obs.py \
         --model_path "./models/${MODEL}-sep" \
-        --tokenizer  ./models/llada2-mini-sep \
+        --tokenizer  ./models/LLaDA2.0-mini \
         --data_path  ./data/cache/aomt_test.jsonl \
         --output_file "results/${MODEL}_nll_obs.json"
 done
@@ -101,7 +101,7 @@ for RHO in 0.1 0.2 0.3; do
     for MODEL in sft_standard aomt_action aomt_mixed; do
         python eval/noise_robustness.py \
             --model_path "./models/${MODEL}-sep" \
-            --tokenizer  ./models/llada2-mini-sep \
+            --tokenizer  ./models/LLaDA2.0-mini \
             --benchmark  alfworld \
             --split      seen \
             --rho        "$RHO" \

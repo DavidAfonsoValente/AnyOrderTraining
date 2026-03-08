@@ -2,7 +2,7 @@
 # Baseline 3: Any-Order Masked Training (Action-Only masking)
 model:
   model_path:      ./models/llada2-mini-merged
-  tokenizer_path:  ./models/llada2-mini-sep
+  tokenizer_path:  ./models/LLaDA2.0-mini
 
 data:
   train_path:  ./data/cache/aomt_train.jsonl

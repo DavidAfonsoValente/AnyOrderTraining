@@ -2,7 +2,7 @@
 # Baseline 1: Standard Supervised Fine-Tuning (Next-Action Prediction)
 model:
   model_path:      ./models/llada2-mini-merged
-  tokenizer_path:  ./models/llada2-mini-sep
+  tokenizer_path:  ./models/LLaDA2.0-mini
 
 data:
   train_path:  ./data/cache/sft_standard_train.jsonl
