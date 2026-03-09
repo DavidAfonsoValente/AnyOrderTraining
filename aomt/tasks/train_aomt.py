@@ -175,11 +175,12 @@ def main():
             scaler.update()
             scheduler.step()
             optimizer.zero_grad()
-            if ps.global_rank == 0: print(f"Epoch {epoch} Loss: {all_reduce(loss.detach(), group=ps.fsdp_group):.4f}", end="\r")
+            avg_loss = all_reduce(loss.detach(), group=ps.fsdp_group)
+            if ps.global_rank == 0: print(f"Epoch {epoch} Loss: {avg_loss:.4f}", end="\r")
 
         if ps.global_rank == 0:
             save_path = os.path.join(config["train"]["output_dir"], f"epoch_{epoch}")
-            save_model_weights(model, save_path, model.state_dict())
+            save_model_weights(save_path, model.state_dict())
 
     if dist.is_initialized(): dist.destroy_process_group()
 
