@@ -90,7 +90,7 @@ if [ -d "$WEBSHOP_PATH" ]; then
     UV_CONCURRENT_BUILDS=1 uv pip install \
                gdown pandas numpy spacy pyserini==0.21.0 Flask beautifulsoup4 cleantext gym scikit-learn \
                PyYAML requests requests_mock rich selenium tqdm rank-bm25 thefuzz faiss-cpu \
-               "torch==2.5.0" "transformers==4.38.0"
+               "torch>=2.5.0" "transformers>=4.56.2"
     
     # 1. Download data (Conditional on existence)
     echo "Checking for WebShop data..."
