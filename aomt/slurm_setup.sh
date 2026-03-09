@@ -14,9 +14,10 @@ set -e
 
 echo "--- AOMT Slurm Setup Started (Job ID: ${SLURM_JOB_ID}) ---"
 echo "Running on node: ${SLURM_NODELIST}"
+echo "Submission directory: ${SLURM_SUBMIT_DIR}"
 
-# Ensure we are in the script's directory
-cd "$(dirname "$0")"
+# Navigate to the directory where sbatch was called
+cd "${SLURM_SUBMIT_DIR}"
 
 # Make scripts executable
 chmod +x full_setup.sh setup.sh
