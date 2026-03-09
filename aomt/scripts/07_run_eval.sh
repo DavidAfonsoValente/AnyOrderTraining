@@ -62,6 +62,8 @@ for MODEL in $MODELS; do
             --model_path "./weights/${MODEL}-sep" \
             --tokenizer  "./weights/LLaDA2.0-mini" \
             --benchmark  "$BENCH" \
+            --split      test \
+            --n_episodes 50 \
             --gen_length 256 \
             --block_length 32 \
             --steps 32 \

@@ -1,7 +1,7 @@
 """
 eval/nll_obs.py
 Observation-masked NLL evaluation for AOMT models.
-Verified implementation based on Engineering Specification v3.
+Updated to use unified unit_parser and chat templates.
 """
 
 import argparse
@@ -12,38 +12,37 @@ import numpy as np
 from tqdm import tqdm
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
+from aomt.data.unit_parser import parse_conversation_to_trajectory, tokenize_trajectory
+
 @torch.no_grad()
 def compute_nll_obs(model, tokenizer, aomt_examples: list) -> float:
     """
     For each obs unit O_t: mask it, keep all others as context, measure CE.
     Returns mean NLL over all obs units.
     """
-    MASK = tokenizer.mask_token_id
-    if MASK is None:
-        MASK = 156895 # Fallback for LLaDA2.0-mini
-    
-    SEP = tokenizer.eos_token_id
+    mask_token_id = tokenizer.mask_token_id or 156895
     all_nll = []
 
     for ex in tqdm(aomt_examples, desc="Computing NLL-obs"):
-        # Build token sequence
-        all_ids, spans = [], []
-        for i, (text, utype) in enumerate(zip(ex["unit_texts"], ex["unit_types"])):
-            ids = tokenizer.encode(text, add_special_tokens=False)
-            s = len(all_ids)
-            all_ids.extend(ids)
-            spans.append((s, len(all_ids), utype))
-            if i < len(ex["unit_texts"]) - 1:
-                all_ids.append(SEP)
+        # 1. Parse and Tokenize using unified logic (with chat template)
+        traj = parse_conversation_to_trajectory(ex)
+        tokenized_traj = tokenize_trajectory(traj, tokenizer)
+        
+        if tokenized_traj is None:
+            continue
 
-        clean_ids = torch.tensor(all_ids, dtype=torch.long)
-
-        for start, end, utype in spans:
-            if utype != "obs":
+        clean_ids = tokenized_traj.input_ids
+        
+        # 2. Iterate over observation units (excluding the objective at index 0)
+        for unit in tokenized_traj.unit_spans:
+            if unit.unit_type != "obs" or unit.unit_index == 0:
                 continue
             
+            if unit.token_start >= unit.token_end:
+                continue
+
             masked = clean_ids.clone()
-            masked[start:end] = MASK
+            masked[unit.token_start:unit.token_end] = mask_token_id
             
             # Bidirectional attention
             attn_mask = torch.ones((1, len(masked)), device=model.device)
@@ -53,13 +52,14 @@ def compute_nll_obs(model, tokenizer, aomt_examples: list) -> float:
                 attention_mask=attn_mask
             ).logits[0]
             
+            # CE loss for the masked unit
             nll = F.cross_entropy(
-                logits[start:end],
-                clean_ids[start:end].to(model.device),
+                logits[unit.token_start:unit.token_end],
+                clean_ids[unit.token_start:unit.token_end].to(model.device),
             ).item()
             all_nll.append(nll)
 
-    return float(np.mean(all_nll))
+    return float(np.mean(all_nll)) if all_nll else 0.0
 
 def main():
     parser = argparse.ArgumentParser()

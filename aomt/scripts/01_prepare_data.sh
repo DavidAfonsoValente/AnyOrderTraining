@@ -18,7 +18,7 @@ REPO_ROOT="$(pwd)"
 # The scripts are now inside aomt/, so REPO_ROOT is aomt/. 
 # We need the parent of aomt/ in PYTHONPATH to support 'import aomt...'
 PARENT_DIR="$(dirname "$REPO_ROOT")"
-export PYTHONPATH="$REPO_ROOT/dFactory/VeOmni:$PARENT_DIR:$PYTHONPATH"
+export PYTHONPATH="$REPO_ROOT/dFactory/VeOmni:$PARENT_DIR:${PYTHONPATH:-}"
 
 echo "[$(date)] Starting data preparation..."
 echo "Node: $(hostname)"

@@ -1,47 +1,35 @@
 # aomt/eval/nll_act.py
+"""
+eval/nll_act.py
+Action-masked NLL evaluation for AOMT models.
+Updated to use unified unit_parser and chat templates.
+"""
+
 import torch
 import torch.nn.functional as F
 import numpy as np
 from tqdm import tqdm
 from collections import defaultdict
+import json
+import argparse
 
-from aomt.data.unit_parser import TokenizedTrajectory
+from aomt.data.unit_parser import parse_conversation_to_trajectory, tokenize_trajectory
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
 @torch.no_grad()
 def compute_nll_act(
     model: AutoModelForCausalLM,
     tokenizer: AutoTokenizer,
-    tokenized_trajectories: list[TokenizedTrajectory],
-    batch_size: int = 4,
+    examples: list,
+    batch_size: int = 1, # Use 1 for simpler logic since trajectories vary in length
     device: str = "cuda"
 ) -> dict:
     """
     Computes the Action-Masked Negative Log-Likelihood (NLL-act).
-
-    This is a diagnostic metric, analogous to NLL-obs, but for actions. It
-    measures how well the model can reconstruct a single action (A_t) given
-    all other units in the trajectory as bidirectional context.
-
-    This metric is computable for any model that can use bidirectional attention
-    (i.e., AOMT models). It helps diagnose policy learning.
-
-    Args:
-        model: The trained model to evaluate.
-        tokenizer: The tokenizer used for training.
-        tokenized_trajectories: A list of tokenized trajectories for the eval set.
-        batch_size (int): The batch size for evaluation.
-        device (str): The device to run evaluation on ("cuda" or "cpu").
-
-    Returns:
-        dict: A dictionary containing the mean NLL-act, and breakdowns by
-              environment and by step position.
     """
     model.eval()
     model.to(device)
-    mask_token_id = tokenizer.mask_token_id
-    if mask_token_id is None:
-        raise ValueError("Tokenizer must have a `mask_token_id`.")
+    mask_token_id = tokenizer.mask_token_id or 156895
 
     results = {
         "all_nll": [],
@@ -49,58 +37,39 @@ def compute_nll_act(
         "nll_by_position": defaultdict(list),
     }
 
-    eval_inputs = []
-    for traj in tokenized_trajectories:
-        act_units = [u for u in traj.unit_spans if u.unit_type == "act"]
+    for ex in tqdm(examples, desc="Evaluating NLL-act"):
+        traj = parse_conversation_to_trajectory(ex)
+        tokenized_traj = tokenize_trajectory(traj, tokenizer)
+        
+        if tokenized_traj is None:
+            continue
+
+        clean_ids = tokenized_traj.input_ids
+        
+        act_units = [u for u in tokenized_traj.unit_spans if u.unit_type == "act"]
         for act_unit in act_units:
             if act_unit.token_start >= act_unit.token_end:
                 continue
 
-            masked_ids = traj.input_ids.clone()
+            masked_ids = clean_ids.clone()
             masked_ids[act_unit.token_start:act_unit.token_end] = mask_token_id
             
-            eval_inputs.append({
-                "masked_ids": masked_ids,
-                "target_ids": traj.input_ids,
-                "target_span": slice(act_unit.token_start, act_unit.token_end),
-                "env": traj.env,
-                "step": act_unit.unit_index // 2,
-            })
+            # Bidirectional attention
+            attn_mask = torch.ones((1, len(masked_ids)), device=device)
 
-    print(f"Starting NLL-act evaluation on {len(eval_inputs)} action units...")
-    for i in tqdm(range(0, len(eval_inputs), batch_size), desc="Evaluating NLL-act"):
-        batch_data = eval_inputs[i:i+batch_size]
-        
-        max_len = max(len(d["masked_ids"]) for d in batch_data)
-        input_ids_batch = []
-        attention_mask_batch = []
-        
-        for data in batch_data:
-            padding_len = max_len - len(data["masked_ids"])
-            input_ids_batch.append(F.pad(data["masked_ids"], (0, padding_len), value=tokenizer.pad_token_id))
-            attention_mask_batch.append(F.pad(torch.ones_like(data["masked_ids"]), (0, padding_len), value=0))
+            logits = model(
+                input_ids=masked_ids.unsqueeze(0).to(device),
+                attention_mask=attn_mask,
+            ).logits[0]
 
-        input_ids_tensor = torch.stack(input_ids_batch).to(device)
-        attention_mask_tensor = torch.stack(attention_mask_batch).to(device)
-
-        logits = model(
-            input_ids=input_ids_tensor,
-            attention_mask=attention_mask_tensor,
-        ).logits
-
-        for j, data in enumerate(batch_data):
-            target_span = data["target_span"]
-            act_logits = logits[j, target_span]
-            act_target = data["target_ids"][target_span].to(device)
-
-            if act_logits.shape[0] == 0:
-                continue
+            act_logits = logits[act_unit.token_start:act_unit.token_end]
+            act_target = clean_ids[act_unit.token_start:act_unit.token_end].to(device)
 
             nll = F.cross_entropy(act_logits, act_target, reduction="mean").item()
 
             results["all_nll"].append(nll)
-            results["nll_by_env"][data["env"]].append(nll)
-            results["nll_by_position"][data["step"]].append(nll)
+            results["nll_by_env"][tokenized_traj.env].append(nll)
+            results["nll_by_position"][act_unit.unit_index // 2].append(nll)
 
     final_metrics = {
         "mean_nll_act": float(np.mean(results["all_nll"])) if results["all_nll"] else 0.0,
@@ -113,3 +82,29 @@ def compute_nll_act(
     }
 
     return final_metrics
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--model_path", type=str, required=True)
+    parser.add_argument("--tokenizer", type=str, required=True)
+    parser.add_argument("--data_path", type=str, required=True)
+    parser.add_argument("--output_file", type=str, required=True)
+    args = parser.parse_args()
+
+    print(f"Loading model from {args.model_path}...")
+    model = AutoModelForCausalLM.from_pretrained(args.model_path, trust_remote_code=True, torch_dtype=torch.bfloat16, device_map="auto")
+    tokenizer = AutoTokenizer.from_pretrained(args.tokenizer, trust_remote_code=True)
+
+    examples = []
+    with open(args.data_path, "r") as f:
+        for line in f:
+            examples.append(json.loads(line))
+
+    results = compute_nll_act(model, tokenizer, examples)
+    print(f"Mean NLL-act: {results['mean_nll_act']:.4f}")
+
+    with open(args.output_file, "w") as f:
+        json.dump(results, f, indent=4)
+
+if __name__ == "__main__":
+    main()

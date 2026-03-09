@@ -25,36 +25,9 @@ def _select_units_to_mask(
 ) -> List[TokenizedUnit]:
     """
     Selects a list of units to be masked based on the specified mode.
-    This is the core logic for the different training objectives.
-
-    Args:
-        units (List[TokenizedUnit]): The list of all unit spans in a trajectory.
-        mask_prob (float): The probability of masking a unit (for stochastic modes).
-        mode (MaskMode): The masking strategy to apply.
-        rng (np.random.Generator): A random number generator for reproducibility.
-
-    Returns:
-        List[TokenizedUnit]: A list of the specific units that should be masked.
     """
     if mode == MaskMode.STANDARD_SFT:
-        # For standard SFT, all action units are the targets to be predicted
-        # from their respective causal prefixes. The causal mask itself is handled
-        # by the training step, but here we identify all actions as masked.
         return [u for u in units if u.unit_type == "act"]
-
-    elif mode == MaskMode.PREFIX_SFT_STAGE1:
-        # This mode is handled by a special collator (`build_prefix_sft_examples`)
-        # which creates many small examples from a single trajectory.
-        # This function should not be called directly for Stage 1.
-        raise NotImplementedError(
-            "PREFIX_SFT_STAGE1 masking is handled by the collator, not the sampler."
-        )
-
-    elif mode == MaskMode.PREFIX_SFT_STAGE2:
-        # This mode is also handled by a special collator.
-        raise NotImplementedError(
-            "PREFIX_SFT_STAGE2 masking is handled by the collator, not the sampler."
-        )
 
     elif mode == MaskMode.ACTION_ONLY:
         # AOMT-Action-Only: Randomly mask a subset of *action* units.
@@ -64,22 +37,19 @@ def _select_units_to_mask(
         # AOMT-Mixed: Randomly mask thought, action, and observation units, but NOT the objective.
         units_to_mask = []
         for i, u in enumerate(units):
-            # The objective is the first unit (index 0) and has type "obs".
-            # We explicitly exclude the objective from masking.
-            is_objective = i == 0 and u.unit_type == "obs"
+            # The objective is the first unit (index 0).
+            is_objective = i == 0
             
-            # Thoughts and actions are contained within "act" units.
-            is_action_or_thought = u.unit_type == "act"
-
             # Observations are "obs" units that are not the objective.
             is_observation = u.unit_type == "obs" and not is_objective
+            is_action = u.unit_type == "act"
 
-            if (is_action_or_thought or is_observation) and rng.random() < mask_prob:
+            if (is_action or is_observation) and rng.random() < mask_prob:
                 units_to_mask.append(u)
         return units_to_mask
 
     else:
-        raise ValueError(f"Unknown MaskMode: {mode}")
+        return []
 
 def apply_unit_mask(
     tokenized_traj: TokenizedTrajectory,
@@ -90,24 +60,7 @@ def apply_unit_mask(
 ) -> Tuple[torch.LongTensor, torch.LongTensor]:
     """
     Applies masking to a tokenized trajectory based on the selected mode.
-
-    It returns a new tensor with mask tokens and a boolean mask indicating
-    which tokens contribute to the loss.
-
-    Args:
-        tokenized_traj (TokenizedTrajectory): The input trajectory to mask.
-        mask_prob (float): Probability of masking for stochastic modes.
-        mode (MaskMode): The masking strategy.
-        mask_token_id (int): The ID of the `[MASK]` token.
-        rng (Optional[np.random.Generator]): Random number generator. If None, a new
-                                             one is created.
-
-    Returns:
-        Tuple[torch.LongTensor, torch.LongTensor]:
-        - masked_input_ids: A copy of the input IDs with selected units replaced
-                            by the `mask_token_id`.
-        - loss_mask: A boolean tensor of the same shape, where `True` marks
-                     the positions of the masked units for loss calculation.
+    Ensures at least one unit is masked for stochastic modes.
     """
     if rng is None:
         rng = np.random.default_rng()
@@ -120,14 +73,22 @@ def apply_unit_mask(
         tokenized_traj.unit_spans, mask_prob, mode, rng
     )
 
+    # Force-mask at least one unit for AOMT modes if none were selected stochastically
+    if not units_to_mask and mode in [MaskMode.ACTION_ONLY, MaskMode.MIXED]:
+        eligible = []
+        for i, u in enumerate(tokenized_traj.unit_spans):
+            if mode == MaskMode.ACTION_ONLY and u.unit_type == "act":
+                eligible.append(u)
+            elif mode == MaskMode.MIXED and i > 0: # Anything but the objective
+                eligible.append(u)
+        
+        if eligible:
+            units_to_mask = [rng.choice(eligible)]
+
     # Apply the mask to the selected units
     for unit in units_to_mask:
-        if unit.token_start < unit.token_end: # Ensure span is valid
-            # For all diffusion-based modes, we replace the target tokens
-            # with the mask token.
+        if unit.token_start < unit.token_end:
             input_ids[unit.token_start:unit.token_end] = mask_token_id
-            
-            # The loss mask is True for all tokens within the targeted unit.
             loss_mask[unit.token_start:unit.token_end] = True
 
     return input_ids, loss_mask

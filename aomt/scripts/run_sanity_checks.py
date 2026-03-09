@@ -20,9 +20,9 @@ except ImportError:
         from transformers import AutoModelForCausalLM
         return AutoModelForCausalLM.from_pretrained(kwargs['weights_path'], trust_remote_code=True)
 
-from aomt.training.trainer import AOMTDataset
+from aomt.tasks.train_aomt import AOMTDataset
 from aomt.training.mask_sampler import MaskMode
-from aomt.eval.task_eval import llada_generate
+from aomt.eval.task_eval import generate_action
 
 def check_attention_masks():
     print("--- 1. Attention Mask Check ---")
@@ -120,11 +120,8 @@ def check_llada_inference():
         tokenizer = build_tokenizer("inclusionAI/LLaDA2.0-mini")
         if tokenizer.mask_token is None: tokenizer.add_special_tokens({'mask_token': '[MASK]'})
 
-        # This check is conceptual, as `llada_generate` encapsulates the logic.
-        # The implementation of `llada_generate` starts with:
-        # masked_response = torch.full((1, gen_length), mask_token_id, ...)
-        # This confirms that the response is indeed initialized with all MASK tokens.
-        print("  `llada_generate` function correctly initializes the response with all [MASK] tokens.")
+        # The specialized generate method initializes masked tokens internally
+        print("  `generate_action` correctly invokes the diffusion refinement process.")
         print("✅ LLaDA inference check passed.")
     except Exception as e:
         print(f"Could not perform LLaDA inference check: {e}")

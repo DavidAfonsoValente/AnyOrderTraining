@@ -39,11 +39,11 @@ def run_evaluation_suite(
     tokenizer = AutoTokenizer.from_pretrained(checkpoint_path)
     
     try:
-        model = AutoModelForCausalLM.from_pretrained(checkpoint_path).to(device)
+        model = AutoModelForCausalLM.from_pretrained(checkpoint_path, trust_remote_code=True).to(device)
     except Exception as e:
         print(f"Could not load model directly: {e}. This may be an FSDP checkpoint.")
         # As a fallback for demonstration, load the base model
-        model = AutoModelForCausalLM.from_pretrained("models/LLaDA2.0-mini").to(device)
+        model = AutoModelForCausalLM.from_pretrained("weights/LLaDA2.0-mini", trust_remote_code=True).to(device)
         print("Loaded base model for demonstration purposes.")
     
     model.eval()

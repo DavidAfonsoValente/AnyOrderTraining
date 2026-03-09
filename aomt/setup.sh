@@ -63,8 +63,17 @@ source "${VEOMNI_DIR}/.venv/bin/activate"
 pip install -r requirements.txt
 echo "uv sync and pip requirements complete."
 
-# --- 5. Create Helper Script for Activation ---
-echo "[5/5] Creating helper script 'activate_env.sh'..."
+# --- 5. Setup Evaluation Environments ---
+echo "[5/6] Setting up WebShop environment..."
+if [ -d "eval/WebShop" ]; then
+    (cd eval/WebShop && bash setup.sh -d small)
+    echo "WebShop setup complete."
+else
+    echo "Warning: eval/WebShop directory not found. Skipping WebShop setup."
+fi
+
+# --- 6. Create Helper Script for Activation ---
+echo "[6/6] Creating helper script 'activate_env.sh'..."
 TOP_LEVEL_DIR=$(dirname "$(pwd)")
 VEOMNI_PATH_REL_AOMT="dFactory/VeOmni"
 echo "#!/bin/bash" > activate_env.sh

@@ -26,6 +26,10 @@ from veomni.models.registry import ModelRegistry
 # Register custom architecture
 ModelRegistry.register_modeling_path("models.llada2_moe")
 
+# aomt imports
+from aomt.data.unit_parser import parse_conversation_to_trajectory, tokenize_trajectory
+from aomt.training.mask_sampler import apply_unit_mask, MaskMode
+
 def compute_unit_mask_loss(logits: torch.Tensor, labels: torch.Tensor) -> torch.Tensor:
     """Shared loss function: Cross-entropy over masked positions only."""
     mask = (labels != -100)
@@ -37,63 +41,35 @@ def compute_unit_mask_loss(logits: torch.Tensor, labels: torch.Tensor) -> torch.
         ignore_index=-100
     )
 
-def apply_unit_mask(unit_texts: list,
-                    unit_types: list,
-                    tokenizer,
-                    mask_prob: float,
-                    mode: str,
-                    rng,
-                    mask_token_id: int) -> tuple:
-    """Unit-level Bernoulli masking using chat template boundaries."""
-    messages = []
-    for text, utype in zip(unit_texts, unit_types):
-        role = "user" if utype == "obs" else "assistant"
-        messages.append({"role": role, "content": text})
-
-    all_ids = tokenizer.apply_chat_template(messages, tokenize=True, add_generation_prompt=False)
-    input_ids = torch.tensor(all_ids, dtype=torch.long)
-    labels = torch.full_like(input_ids, -100)
-
-    spans = []
-    for i in range(1, len(messages) + 1):
-        prefix_ids = tokenizer.apply_chat_template(messages[:i], tokenize=True, add_generation_prompt=False)
-        start = spans[-1][1] if spans else 0
-        end = len(prefix_ids)
-        if end > len(all_ids): end = len(all_ids)
-        spans.append((start, end, unit_types[i-1]))
-
-    masked_any = False
-    for start, end, utype in spans:
-        if start >= end: continue
-        if mode == "action_only" and utype != "act": continue
-        if rng.random() < mask_prob:
-            labels[start:end] = input_ids[start:end].clone()
-            input_ids[start:end] = mask_token_id
-            masked_any = True
-
-    if not masked_any:
-        eligible = [(s, e) for s, e, ut in spans if (mode == "mixed" or ut == "act") and s < e]
-        if eligible:
-            s, e = eligible[rng.integers(len(eligible))]
-            labels[s:e] = input_ids[s:e].clone()
-            input_ids[s:e] = mask_token_id
-
-    return input_ids, labels
-
 class AOMTDataset(torch.utils.data.Dataset):
     def __init__(self, jsonl_path, tokenizer, mask_prob, mode, mask_token_id, seed=42):
         with open(jsonl_path, "r") as f:
             self.examples = [json.loads(line) for line in f]
         self.tokenizer = tokenizer
-        self.mask_prob, self.mode, self.mask_token_id = mask_prob, mode, mask_token_id
+        self.mask_prob = mask_prob
+        self.mode = MaskMode(mode)
+        self.mask_token_id = mask_token_id
         self.seed = seed
 
     def __len__(self): return len(self.examples)
     def __getitem__(self, idx):
         ex = self.examples[idx]
+        # Reconstruct the trajectory object
+        traj = parse_conversation_to_trajectory(ex)
+        # Tokenize with chat template
+        tokenized_traj = tokenize_trajectory(traj, self.tokenizer)
+        
+        if tokenized_traj is None:
+            # Fallback for very long trajectories that truncation failed on
+            return self.__getitem__((idx + 1) % len(self.examples))
+
         rng = np.random.default_rng([self.seed, idx, np.random.randint(0, 2**31)])
-        input_ids, labels = apply_unit_mask(ex["unit_texts"], ex["unit_types"], self.tokenizer, 
-                                            self.mask_prob, self.mode, rng, self.mask_token_id)
+        input_ids, labels_mask = apply_unit_mask(tokenized_traj, self.mask_prob, self.mode, self.mask_token_id, rng)
+        
+        # Convert boolean loss_mask to labels (-100 for unmasked)
+        labels = torch.full_like(input_ids, -100)
+        labels[labels_mask] = tokenized_traj.input_ids[labels_mask]
+        
         return {"input_ids": input_ids, "labels": labels}
 
 def collate_fn(batch, pad_id):
