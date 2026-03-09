@@ -99,10 +99,14 @@ if [ -d "$WEBSHOP_PATH" ]; then
     
     # 2. Download spaCy model
     echo "Downloading spaCy model..."
+    # 'spacy download' uses pip internally, so we ensure pip is present in the uv env
+    uv pip install pip
     python -m spacy download en_core_web_lg
     
     # 3. Build search engine index
     echo "Building search engine index (this may take a few minutes)..."
+    # We set PYTHONPATH so the conversion script can find 'web_agent_site'
+    export PYTHONPATH="$WEBSHOP_PATH:$PYTHONPATH"
     (cd "$WEBSHOP_PATH/search_engine" && \
         mkdir -p resources resources_100 resources_1k resources_100k indexes && \
         python convert_product_file_format.py && \
