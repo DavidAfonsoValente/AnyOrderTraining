@@ -33,10 +33,11 @@ echo "Terms of Service accepted."
 echo "[3/4] Creating and activating Python 3.11 Conda environment..."
 CONDA_ENV_NAME="py311"
 if ! conda env list | grep -q "$CONDA_ENV_NAME"; then
-    echo "Creating conda environment '$CONDA_ENV_NAME' with Python 3.11..."
-    conda create -n "$CONDA_ENV_NAME" python=3.11 -y
+    echo "Creating conda environment '$CONDA_ENV_NAME' with Python 3.11, OpenJDK, and Faiss..."
+    conda create -n "$CONDA_ENV_NAME" python=3.11 openjdk=11 faiss-cpu -c conda-forge -c pytorch -y
 else
-    echo "Conda environment '$CONDA_ENV_NAME' already exists."
+    echo "Conda environment '$CONDA_ENV_NAME' already exists. Ensuring openjdk and faiss-cpu are installed..."
+    conda install -n "$CONDA_ENV_NAME" openjdk=11 faiss-cpu -c conda-forge -c pytorch -y
 fi
 conda activate "$CONDA_ENV_NAME"
 echo "Conda environment '$CONDA_ENV_NAME' activated."

@@ -78,21 +78,41 @@ if [ ! -f "$WEBSHOP_PATH/setup.sh" ]; then
 fi
 
 if [ -d "$WEBSHOP_PATH" ]; then
-    echo "Preparing environment for WebShop..."
+    echo "Manually setting up WebShop in $WEBSHOP_PATH..."
     source "${VEOMNI_DIR}/.venv/bin/activate"
     
-    # Pre-install critical dependencies to avoid build failures with old pinned versions
-    # and ensure tools like gdown are available even if WebShop's pip install fails.
-    echo "Installing build tools and dependencies..."
-    pip install --upgrade gdown pandas numpy spacy pyserini Flask beautifulsoup4 cleantext gym faiss-cpu scikit-learn
-    pip install PyYAML requests requests_mock rich selenium tqdm
+    # Pre-install all required Python packages with compatible versions for Python 3.11
+    echo "Installing WebShop dependencies into AOMT environment..."
+    pip install --upgrade gdown pandas numpy spacy pyserini Flask beautifulsoup4 cleantext gym scikit-learn
+    pip install PyYAML requests requests_mock rich selenium tqdm rank-bm25 thefuzz
     
-    echo "Running WebShop setup in $WEBSHOP_PATH..."
-    # We call WebShop's setup.sh. It will try to install requirements.txt and might fail
-    # on some pinned versions (like old pandas), but it doesn't have 'set -e' so it will continue.
-    # Since we pre-installed the key packages, the subsequent steps (gdown, indexing) should work.
-    (cd "$WEBSHOP_PATH" && bash "$WEBSHOP_PATH/setup.sh" -d small)
-    echo "WebShop setup complete."
+    # 1. Download data
+    echo "Downloading WebShop data..."
+    mkdir -p "$WEBSHOP_PATH/data"
+    (cd "$WEBSHOP_PATH/data" && \
+        gdown https://drive.google.com/uc?id=1EgHdxQ_YxqIQlvvq5iKlCrkEKR6-j0Ib && \
+        gdown https://drive.google.com/uc?id=1IduG0xl544V_A_jv3tHXC0kyFi7PnyBu && \
+        gdown https://drive.google.com/uc?id=14Kb5SPBk_jfdLZ_CDBNitW98QLDlKR5O)
+    
+    # 2. Download spaCy model
+    echo "Downloading spaCy model..."
+    python -m spacy download en_core_web_lg
+    
+    # 3. Build search engine index
+    echo "Building search engine index (this may take a few minutes)..."
+    (cd "$WEBSHOP_PATH/search_engine" && \
+        mkdir -p resources resources_100 resources_1k resources_100k indexes && \
+        python convert_product_file_format.py && \
+        chmod +x run_indexing.sh && \
+        ./run_indexing.sh)
+    
+    # 4. Download human trajectories
+    echo "Downloading human trajectories..."
+    mkdir -p "$WEBSHOP_PATH/user_session_logs"
+    (cd "$WEBSHOP_PATH/user_session_logs" && \
+        python -c "import gdown; url='https://drive.google.com/drive/u/1/folders/16H7LZe2otq4qGnKw_Ic1dkt-o3U9Zsto'; gdown.download_folder(url, quiet=True, remaining_ok=True)")
+        
+    echo "WebShop manual setup complete."
 else
     echo "ERROR: WebShop setup failed. Directory $WEBSHOP_PATH does not exist."
 fi
