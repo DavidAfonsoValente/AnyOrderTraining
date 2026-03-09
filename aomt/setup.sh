@@ -92,13 +92,30 @@ if [ -d "$WEBSHOP_PATH" ]; then
                PyYAML requests requests_mock rich selenium tqdm rank-bm25 thefuzz faiss-cpu \
                "torch==2.5.0" "transformers==4.38.0"
     
-    # 1. Download data
-    echo "Downloading WebShop data..."
+    # 1. Download data (Conditional on existence)
+    echo "Checking for WebShop data..."
     mkdir -p "$WEBSHOP_PATH/data"
-    (cd "$WEBSHOP_PATH/data" && \
-        gdown https://drive.google.com/uc?id=1EgHdxQ_YxqIQlvvq5iKlCrkEKR6-j0Ib && \
-        gdown https://drive.google.com/uc?id=1IduG0xl544V_A_jv3tHXC0kyFi7PnyBu && \
-        gdown https://drive.google.com/uc?id=14Kb5SPBk_jfdLZ_CDBNitW98QLDlKR5O)
+    DATA_FILES=("items_shuffle_1000.json" "items_ins_v2_1000.json" "items_human_ins.json")
+    DATA_IDS=("1EgHdxQ_YxqIQlvvq5iKlCrkEKR6-j0Ib" "1IduG0xl544V_A_jv3tHXC0kyFi7PnyBu" "14Kb5SPBk_jfdLZ_CDBNitW98QLDlKR5O")
+    
+    for i in "${!DATA_FILES[@]}"; do
+        FILE="${DATA_FILES[$i]}"
+        ID="${DATA_IDS[$i]}"
+        if [ ! -f "$WEBSHOP_PATH/data/$FILE" ]; then
+            echo "Downloading $FILE..."
+            # Try up to 3 times
+            for attempt in {1..3}; do
+                if gdown --id "$ID" -O "$WEBSHOP_PATH/data/$FILE"; then
+                    break
+                else
+                    echo "Attempt $attempt failed for $FILE. Waiting before retry..."
+                    sleep 5
+                fi
+            done
+        else
+            echo "$FILE already exists, skipping download."
+        fi
+    done
     
     # 2. Download spaCy model
     echo "Downloading spaCy model..."
