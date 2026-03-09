@@ -175,7 +175,7 @@ def main():
             scaler.update()
             scheduler.step()
             optimizer.zero_grad()
-            if ps.global_rank == 0: print(f"Epoch {epoch} Loss: {all_reduce(loss.detach(), group=ps.fsdp_group).item():.4f}", end="\r")
+            if ps.global_rank == 0: print(f"Epoch {epoch} Loss: {all_reduce(loss.detach(), group=ps.fsdp_group):.4f}", end="\r")
 
         if ps.global_rank == 0:
             save_path = os.path.join(config["train"]["output_dir"], f"epoch_{epoch}")
