@@ -120,9 +120,14 @@ if [ -d "$WEBSHOP_PATH" ]; then
     echo "Downloading human trajectories (this may fail due to Google Drive limits, but is non-fatal)..."
     mkdir -p "$WEBSHOP_PATH/user_session_logs"
     (cd "$WEBSHOP_PATH/user_session_logs" && \
-        python -c "import gdown; url='https://drive.google.com/drive/u/1/folders/16H7LZe2otq4qGnKw_Ic1dkt-o3U9Zsto'; \
-                   try: gdown.download_folder(url, quiet=True, remaining_ok=True, use_cookies=False)
-                   except Exception as e: print(f'Note: Human trajectories download skipped or failed: {e}')")
+        python -c "
+import gdown
+url='https://drive.google.com/drive/u/1/folders/16H7LZe2otq4qGnKw_Ic1dkt-o3U9Zsto'
+try:
+    gdown.download_folder(url, quiet=True, remaining_ok=True, use_cookies=False)
+except Exception as e:
+    print(f'Note: Human trajectories download skipped or failed: {e}')
+")
         
     echo "WebShop manual setup complete."
 else
