@@ -21,33 +21,41 @@ class Trajectory:
 
 def parse_conversation_to_trajectory(example: dict) -> Trajectory:
     """
-    Parses a raw conversation from the dataset into a structured Trajectory object.
+    Parses a raw conversation (from HF) or a processed AOMT example (from JSONL)
+    into a structured Trajectory object.
     """
     units = []
-    # Handle single or batched conversations
-    conversation_list = example["conversations"] if isinstance(example["conversations"], list) else [example["conversations"]]
     
-    # Check if we are dealing with the raw list of turns or a wrapped dict
-    if len(conversation_list) > 0 and not isinstance(conversation_list[0], dict):
-        # This handles the case where example['conversations'] is already the list of turns
-        pass
-    elif len(conversation_list) > 0 and "from" not in conversation_list[0]:
-        # This might be a list of lists if batched by Dataset.map
-        conversation_list = conversation_list[0]
+    # Case 1: Processed AOMT format (unit_texts/unit_types)
+    if "unit_texts" in example and "unit_types" in example:
+        for i, (text, utype) in enumerate(zip(example["unit_texts"], example["unit_types"])):
+            units.append(TrajectoryUnit(unit_type=utype, text=text, turn_index=i))
+    
+    # Case 2: Raw HF format (conversations)
+    elif "conversations" in example:
+        conversation_list = example["conversations"] if isinstance(example["conversations"], list) else [example["conversations"]]
+        # ... (rest of the logic handles lists of lists if needed)
+        if len(conversation_list) > 0 and isinstance(conversation_list[0], list):
+             conversation_list = conversation_list[0]
 
-    for i, turn in enumerate(conversation_list):
-        utype = "obs" if turn["from"] == "human" else "act"
-        units.append(TrajectoryUnit(unit_type=utype, text=turn["value"], turn_index=i))
+        for i, turn in enumerate(conversation_list):
+            utype = "obs" if turn["from"] == "human" else "act"
+            units.append(TrajectoryUnit(unit_type=utype, text=turn["value"], turn_index=i))
+    
+    # Case 3: SFT format (messages)
+    elif "messages" in example:
+        for i, msg in enumerate(example["messages"]):
+            utype = "obs" if msg["role"] == "user" else "act"
+            units.append(TrajectoryUnit(unit_type=utype, text=msg["content"], turn_index=i))
+    
+    else:
+        raise KeyError(f"Example format not recognized. Keys: {example.keys()}")
 
-    # Validate that the turns strictly alternate between "obs" and "act"
-    for i, u in enumerate(units):
-        expected_utype = "obs" if i % 2 == 0 else "act"
-        if u.unit_type != expected_utype:
-            # For some benchmarks like WebShop, it might not be strictly alternating if history is messy.
-            # We log a warning instead of raising an error if it's not a critical failure.
-            pass
-
-    return Trajectory(id=example.get("id", "unknown"), env=example.get("env", example.get("task", "unknown")), units=units)
+    return Trajectory(
+        id=example.get("id", "unknown"), 
+        env=example.get("env", example.get("task", "unknown")), 
+        units=units
+    )
 
 
 # Section 4: Trajectory Unit Parser

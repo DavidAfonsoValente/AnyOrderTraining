@@ -23,13 +23,20 @@ sys.path.insert(0, str(AOMT_ROOT / "dFactory" / "VeOmni"))
 # ---- Import the functions under test ----------------------------------------
 try:
     from tasks.train_standard_sft import apply_response_unit_mask, compute_unit_mask_loss
-    from tasks.train_aomt import apply_unit_mask, AOMTDataset
+    from tasks.train_aomt import AOMTDataset
+    from training.mask_sampler import apply_unit_mask, MaskMode
+    from data.unit_parser import parse_conversation_to_trajectory, tokenize_trajectory
     from data.prepare_data import make_standard_sft, make_prefix_sft_s1, make_aomt_datapoint, parse_units
 except ImportError as e:
     print(f"WARNING: Could not import project modules ({e}).")
     print("Running with inline stubs for CI environments without full dFactory install.")
 
     MASK_TOKEN_ID = 156895
+
+    class MaskMode:
+        STANDARD_SFT = "standard_sft"
+        ACTION_ONLY = "action_only"
+        MIXED = "mixed"
 
     def apply_response_unit_mask(input_ids, prompt_lengths, mask_token_id=156895):
         B, L = input_ids.shape
@@ -49,36 +56,16 @@ except ImportError as e:
         active_labels = labels.view(-1)[mask.view(-1)]
         return torch.nn.functional.cross_entropy(active_logits, active_labels)
 
-    def apply_unit_mask(unit_texts, unit_types, tokenizer, mask_prob, mode, rng, mask_token_id=156895):
-        messages = []
-        for text, utype in zip(unit_texts, unit_types):
-            role = "user" if utype == "obs" else "assistant"
-            messages.append({"role": role, "content": text})
-        all_ids = tokenizer.apply_chat_template(messages, tokenize=True, add_generation_prompt=False)
-        input_ids = torch.tensor(all_ids, dtype=torch.long)
-        labels = torch.full_like(input_ids, -100)
-        spans = []
-        for i in range(1, len(messages) + 1):
-            prefix_ids = tokenizer.apply_chat_template(messages[:i], tokenize=True, add_generation_prompt=False)
-            start = spans[-1][1] if spans else 0
-            end = len(prefix_ids)
-            if end > len(all_ids): end = len(all_ids)
-            spans.append((start, end, unit_types[i-1]))
-        masked_any = False
-        for start, end, utype in spans:
-            if start >= end: continue
-            if mode == "action_only" and utype != "act": continue
-            if rng.random() < mask_prob:
-                labels[start:end] = input_ids[start:end].clone()
-                input_ids[start:end] = mask_token_id
-                masked_any = True
-        if not masked_any:
-            eligible = [(s, e) for s, e, ut in spans if (mode == "mixed" or ut == "act") and s < e]
-            if eligible:
-                s, e = eligible[rng.integers(len(eligible))]
-                labels[s:e] = input_ids[s:e].clone()
-                input_ids[s:e] = mask_token_id
-        return input_ids, labels
+    def apply_unit_mask(tokenized_traj, mask_prob, mode, mask_token_id, rng=None):
+        # Stub for apply_unit_mask that works with the test logic
+        input_ids = tokenized_traj.input_ids.clone()
+        loss_mask = torch.zeros_like(input_ids, dtype=torch.bool)
+        # Simple stub: mask all 'act' units if p=1.0
+        for unit in tokenized_traj.unit_spans:
+            if mode == "action_only" and unit.unit_type != "act": continue
+            input_ids[unit.token_start:unit.token_end] = mask_token_id
+            loss_mask[unit.token_start:unit.token_end] = True
+        return input_ids, loss_mask
 
     def parse_units(conversations):
         units = []
@@ -107,6 +94,50 @@ except ImportError as e:
 
     def make_aomt_datapoint(units):
         return {"unit_texts": [u["text"] for u in units], "unit_types": [u["type"] for u in units]}
+
+    def tokenize_trajectory(trajectory, tokenizer, max_length=2048):
+        # Minimal stub for testing
+        from dataclasses import dataclass
+        @dataclass
+        class TokenizedUnit:
+            unit_type: str
+            token_start: int
+            token_end: int
+            unit_index: int
+        @dataclass
+        class TokenizedTrajectory:
+            input_ids: torch.Tensor
+            unit_spans: list
+            env: str
+            trajectory_id: str
+
+        all_ids = []
+        unit_spans = []
+        for i, u in enumerate(trajectory.units):
+            start = len(all_ids)
+            ids = tokenizer.encode(u.text)
+            all_ids.extend(ids)
+            unit_spans.append(TokenizedUnit(u.unit_type, start, len(all_ids), i))
+        
+        return TokenizedTrajectory(torch.tensor(all_ids), unit_spans, trajectory.env, trajectory.id)
+
+    def parse_conversation_to_trajectory(example):
+        from dataclasses import dataclass
+        @dataclass
+        class TrajectoryUnit:
+            unit_type: str
+            text: str
+            turn_index: int
+        @dataclass
+        class Trajectory:
+            id: str
+            env: str
+            units: list
+        
+        units = []
+        for i, (t, ut) in enumerate(zip(example["unit_texts"], example["unit_types"])):
+            units.append(TrajectoryUnit(ut, t, i))
+        return Trajectory("test", "test", units)
 
 class MockTokenizer:
     mask_token_id, eos_token_id, pad_token_id, vocab_size = 156895, 2, 0, 131072
@@ -145,11 +176,16 @@ class TestBaselineMasking(unittest.TestCase):
 class TestAOMTMasking(unittest.TestCase):
     def setUp(self):
         self.tok = MockTokenizer()
-        self.texts, self.types = ["O0", "A0", "O1"], ["obs", "act", "obs"]
+        self.example = {
+            "unit_texts": ["O0", "A0", "O1"],
+            "unit_types": ["obs", "act", "obs"]
+        }
     def test_action_only(self):
         rng = np.random.default_rng(0)
-        _, labels = apply_unit_mask(self.texts, self.types, self.tok, 1.0, "action_only", rng, 156895)
-        self.assertTrue((labels != -100).any())
+        traj = parse_conversation_to_trajectory(self.example)
+        tokenized_traj = tokenize_trajectory(traj, self.tok)
+        _, loss_mask = apply_unit_mask(tokenized_traj, 1.0, "action_only", 156895, rng)
+        self.assertTrue(loss_mask.any())
 
 class TestLossFunction(unittest.TestCase):
     def test_empty_mask(self):
