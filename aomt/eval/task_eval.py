@@ -8,13 +8,10 @@ No mock results; handles real trajectories, history management, and LLaDA 2.0 ge
 import argparse
 import json
 import os
-import os
 import torch
 import numpy as np
 import yaml
-import yaml
 from tqdm import tqdm
-from transformers import AutoTokenizer
 from transformers import AutoTokenizer
 
 # Use local dFactory/VeOmni if available
@@ -379,7 +376,6 @@ def main():
     # Persist results to disk
     os.makedirs(os.path.dirname(args.output_file), exist_ok=True)
     with open(args.output_file, "w") as f:
-        json.dump(result, f, indent=4)
         json.dump(result, f, indent=4)
 
 if __name__ == "__main__":
