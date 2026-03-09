@@ -65,10 +65,12 @@ echo "uv sync and pip requirements complete."
 
 # --- 5. Setup Evaluation Environments ---
 echo "[5/6] Setting up WebShop environment..."
-WEBSHOP_PATH="$(pwd)/eval/WebShop"
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+WEBSHOP_PATH="$SCRIPT_DIR/eval/WebShop"
 if [ -d "$WEBSHOP_PATH" ]; then
     echo "Running WebShop setup in $WEBSHOP_PATH..."
-    (cd "$WEBSHOP_PATH" && bash ./setup.sh -d small)
+    # Use absolute path to the script to avoid any "No such file" issues
+    (cd "$WEBSHOP_PATH" && bash "$WEBSHOP_PATH/setup.sh" -d small)
     echo "WebShop setup complete."
 else
     echo "Warning: $WEBSHOP_PATH directory not found. Skipping WebShop setup."
@@ -76,16 +78,19 @@ fi
 
 # --- 6. Create Helper Script for Activation ---
 echo "[6/6] Creating helper script 'activate_env.sh'..."
-TOP_LEVEL_DIR=$(dirname "$(pwd)")
-VEOMNI_PATH_REL_AOMT="dFactory/VeOmni"
+# Use absolute path for robustness
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+TOP_LEVEL_DIR=$(dirname "$SCRIPT_DIR")
+VEOMNI_PATH="$SCRIPT_DIR/dFactory/VeOmni"
+
 echo "#!/bin/bash" > activate_env.sh
 echo "# This script loads the correct python module, sets memory limits, and activates the virtual environment." >> activate_env.sh
 echo "echo 'Attempting to load Python 3.11 module...'" >> activate_env.sh
 echo "module load python/3.11 || true" >> activate_env.sh
 echo "echo 'Setting memory limit to unlimited...'" >> activate_env.sh
 echo "ulimit -m unlimited" >> activate_env.sh
-echo "echo 'Activating uv environment at ${PWD}/${VEOMNI_PATH_REL_AOMT}/.venv...'" >> activate_env.sh
-echo "source ${PWD}/${VEOMNI_PATH_REL_AOMT}/.venv/bin/activate" >> activate_env.sh
+echo "echo 'Activating uv environment at ${VEOMNI_PATH}/.venv...'" >> activate_env.sh
+echo "source ${VEOMNI_PATH}/.venv/bin/activate" >> activate_env.sh
 echo "export PYTHONPATH=${TOP_LEVEL_DIR}:\${PYTHONPATH}" >> activate_env.sh
 echo "echo 'Environment activated.'" >> activate_env.sh
 chmod +x activate_env.sh
