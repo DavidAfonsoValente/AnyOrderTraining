@@ -9,16 +9,11 @@
 #SBATCH --time=08:00:00
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=2
-#SBATCH --gpus-per-node=h100-96:2
-#SBATCH --cpus-per-task=8
-#SBATCH --mem=512G
-#
-##SBATCH --nodes=2
-##SBATCH --ntasks-per-node=2
-##SBATCH --gpus-per-node=h100-96:2
-##SBATCH --mem=256G
-#
-#SBATCH --partition=normal
+#SBATCH --gres=gpu:2
+#SBATCH --constraint="h100|a100"
+#SBATCH --cpus-per-task=16
+#SBATCH --mem=256G
+#SBATCH --partition=gpu-long
 
 set -euo pipefail
 mkdir -p logs checkpoints/prefix_sft_s1
