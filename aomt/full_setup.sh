@@ -34,10 +34,18 @@ echo "[3/4] Creating and activating Python 3.11 Conda environment..."
 CONDA_ENV_NAME="py311"
 if ! conda env list | grep -q "$CONDA_ENV_NAME"; then
     echo "Creating conda environment '$CONDA_ENV_NAME' with Python 3.11, OpenJDK, and Faiss..."
-    conda create -n "$CONDA_ENV_NAME" python=3.11 openjdk=11 faiss-cpu -c conda-forge -c pytorch -y
+    # Try combined install first (more efficient)
+    conda create -n "$CONDA_ENV_NAME" python=3.11 openjdk=11 faiss-cpu -c conda-forge -c pytorch -y || {
+        echo "Combined conda create failed (likely memory). Retrying with basic env and individual installs..."
+        conda create -n "$CONDA_ENV_NAME" python=3.11 -y
+        conda install -n "$CONDA_ENV_NAME" openjdk=11 -c conda-forge -y
+        conda install -n "$CONDA_ENV_NAME" faiss-cpu -c pytorch -y
+    }
 else
     echo "Conda environment '$CONDA_ENV_NAME' already exists. Ensuring openjdk and faiss-cpu are installed..."
-    conda install -n "$CONDA_ENV_NAME" openjdk=11 faiss-cpu -c conda-forge -c pytorch -y
+    # Try individual installs to be safe with memory
+    conda install -n "$CONDA_ENV_NAME" openjdk=11 -c conda-forge -y || echo "Warning: Failed to install openjdk (might already be present or need more memory)"
+    conda install -n "$CONDA_ENV_NAME" faiss-cpu -c pytorch -y || echo "Warning: Failed to install faiss-cpu (might already be present or need more memory)"
 fi
 conda activate "$CONDA_ENV_NAME"
 echo "Conda environment '$CONDA_ENV_NAME' activated."

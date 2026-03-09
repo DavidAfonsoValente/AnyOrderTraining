@@ -8,28 +8,36 @@ AOMT uses a masked diffusion language model (LLaDA 2.0) to reconstruct arbitrari
 
 ## 🚀 Ideal Workflow (SoC Compute Cluster)
 
-Perform these steps in order from the `aomt/` directory.
+Perform these steps from the `aomt/` directory.
 
-### 1. Environment Setup (Login Node)
-*One-time setup. Installs Miniconda, creates a py311 environment, and sets up dependencies.*
+### 1. Environment Setup (Compute Node via Slurm)
+*One-time setup. Installs Miniconda, creates a py311 environment, and sets up all dependencies (including WebShop and Java).*
+
+**⚠️ DO NOT run this on a login node.** It will fail with `CondaMemoryError`.
+
 ```bash
-./full_setup.sh
-# Initialize conda for the current session and activate
-source ~/miniconda3/etc/profile.d/conda.sh
-conda activate py311 && source activate_env.sh
+# Submit the setup job to Slurm
+sbatch slurm_setup.sh
+
+# Monitor the job (takes ~10-15 minutes)
+squeue -u $USER
+# Check output when finished
+cat setup_<jobid>.out
+```
+
+Once the job is complete, you can activate the environment:
+```bash
+source activate_env.sh
 ```
 
 ### 2. Preparation & Verification (Compute Node)
-*Heavy lifting: merging MoE weights, processing trajectories, and running the verification suite. LLaDA 2.0 Mini (MoE) is a **16B parameter model**. Single-GPU verification requires **>64GB VRAM** due to float32 upcasting during loading.*
+*Heavy lifting: merging MoE weights, processing trajectories, and running the verification suite.*
 
-**⚠️ CRITICAL:** Do NOT use MIG (partitioned) GPUs (e.g., 40GB MIG partitions). You need a **Native** A100-80GB or H100 node.
+**⚠️ Native GPU Required:** Do NOT use MIG (partitioned) GPUs for model loading. Use a **Native** A100-80GB or H100 node.
 
 ```bash
-# Request a Native 80GB compute node (Best for verification)
+# Request a Native 80GB compute node
 salloc --time=2:00:00 --mem=128G --cpus-per-task=8 --gres=gpu:a100-80:1
-
-# Alternative: Request a High-Perf H100 node
-# salloc --time=2:00:00 --mem=128G --cpus-per-task=8 --gpus-per-node=h100-96:1
 ```
 
 Once the allocation is granted:
@@ -38,16 +46,13 @@ cd ~/AnyOrderTraining/aomt
 source activate_env.sh
 
 # A. Prepare model weights (merged-expert format)
-srun ./scripts/prepare_model.sh
+./scripts/prepare_model.sh
 
 # B. Download and process trajectories
-srun ./scripts/01_prepare_data.sh
+./scripts/01_prepare_data.sh
 
 # C. Run verification suite (Unit tests + integration)
-srun scripts/run_tests.sh
-
-# D. Visualize masking (Sanity check configs)
-srun scripts/visualize_experiments.sh
+scripts/run_tests.sh
 
 exit # Return to login node
 ```
