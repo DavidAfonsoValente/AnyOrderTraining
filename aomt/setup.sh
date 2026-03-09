@@ -65,11 +65,13 @@ echo "uv sync and pip requirements complete."
 
 # --- 5. Setup Evaluation Environments ---
 echo "[5/6] Setting up WebShop environment..."
-if [ -d "eval/WebShop" ]; then
-    (cd eval/WebShop && bash setup.sh -d small)
+WEBSHOP_PATH="$(pwd)/eval/WebShop"
+if [ -d "$WEBSHOP_PATH" ]; then
+    echo "Running WebShop setup in $WEBSHOP_PATH..."
+    (cd "$WEBSHOP_PATH" && bash ./setup.sh -d small)
     echo "WebShop setup complete."
 else
-    echo "Warning: eval/WebShop directory not found. Skipping WebShop setup."
+    echo "Warning: $WEBSHOP_PATH directory not found. Skipping WebShop setup."
 fi
 
 # --- 6. Create Helper Script for Activation ---
