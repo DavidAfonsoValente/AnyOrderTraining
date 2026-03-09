@@ -7,8 +7,8 @@
 #SBATCH --output=logs/05_aomt_action_%j.log
 #SBATCH --time=20:00:00           # 5 epochs, longer than baselines
 #SBATCH --nodes=1
-#SBATCH --ntasks-per-node=4
-#SBATCH --gpus-per-node=h200-141:4
+#SBATCH --ntasks-per-node=2
+#SBATCH --gpus-per-node=h100-96:2
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=512G
 #SBATCH --partition=normal

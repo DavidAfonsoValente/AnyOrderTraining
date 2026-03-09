@@ -77,7 +77,7 @@ bash scripts/submit_pipeline.sh --email your_email@comp.nus.edu.sg
 | **Interactive Debug** | A100 (40GB) | `--gres=gpu:a100-40:1` |
 | **Verification** | A100 (40GB) | `--gres=gpu:a100-40:1` |
 | **Training (FSDP)** | 4x A100 (40GB) | `--gpus-per-node=a100-40:4` |
-| **High-Perf (FSDP)** | 4x H100 (96GB) | `--gpus-per-node=h100-96:4` |
+| **High-Perf (FSDP)** | 2x H100 (96GB) | `--gpus-per-node=h100-96:2` |
 
 *Note: The LLaDA 2.0 Mini MoE model (16B) will OOM on Titan RTX (24GB) and Tesla T4 (16GB). Always use at least an A100 (40GB) for single-GPU tasks.*
 

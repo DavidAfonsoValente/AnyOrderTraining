@@ -2,29 +2,22 @@
 # =============================================================================
 # 02_train_sft_standard.sh — Standard SFT baseline
 #
-# Target: xgpk0 (4× H100 141GB, single node) — preferred
-# Fallback A: 2× xgpi nodes with native H100 96GB  (change -N 1 → -N 2, gpus 1→2)
-# Fallback B: 4× xgpg nodes (A100 40GB, 1 GPU each) — tight, needs grad ckpt
+# Target: xgpi (2× H100 96GB, single node) — preferred
+# Fallback A: 4× xgpg nodes (A100 40GB, 1 GPU each) — tight, needs grad ckpt
 #
-# Memory: 16B params × 2B (bf16) = 32GB weights. With FSDP2 ZeRO-3 across 4 GPUs:
+# Memory: 16B params × 2B (bf16) = 32GB weights. With FSDP2 ZeRO-3 across 2 GPUs:
 #   ~48GB (params+opt+grad) per GPU + ~12GB activations = ~60GB → fits in H100
 # =============================================================================
 #SBATCH --job-name=aomt_sft_std
 #SBATCH --output=logs/02_sft_standard_%j.log
 #SBATCH --time=12:00:00
 #SBATCH --nodes=1
-#SBATCH --ntasks-per-node=4
-#SBATCH --gpus-per-node=h200-141:4    # xgpk0: 4× H100 141GB
+#SBATCH --ntasks-per-node=2
+#SBATCH --gpus-per-node=h100-96:2    # xgpi: 2× H100 96GB
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=512G
 #
-# --- Fallback A: 2 nodes × 2 H100 96GB each (comment out above, uncomment below)
-##SBATCH --nodes=2
-##SBATCH --ntasks-per-node=2
-##SBATCH --gpus-per-node=h100-96:2
-##SBATCH --mem=256G
-#
-# --- Fallback B: 4 nodes × 1 A100 40GB each (comment out above, uncomment below)
+# --- Fallback A: 4 nodes × 1 A100 40GB each (comment out above, uncomment below)
 ##SBATCH --nodes=4
 ##SBATCH --ntasks-per-node=1
 ##SBATCH --gpus-per-node=a100-40:1

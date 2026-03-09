@@ -7,8 +7,8 @@
 #SBATCH --output=logs/04_prefix_s2_%j.log
 #SBATCH --time=12:00:00
 #SBATCH --nodes=1
-#SBATCH --ntasks-per-node=4
-#SBATCH --gpus-per-node=h200-141:4
+#SBATCH --ntasks-per-node=2
+#SBATCH --gpus-per-node=h100-96:2
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=512G
 #SBATCH --partition=normal
