@@ -46,13 +46,13 @@ cd ~/AnyOrderTraining/aomt
 source activate_env.sh
 
 # A. Prepare model weights (merged-expert format)
-./scripts/prepare_model.sh
+srun ./scripts/prepare_model.sh
 
 # B. Download and process trajectories
-./scripts/01_prepare_data.sh
+srun ./scripts/01_prepare_data.sh
 
 # C. Run verification suite (Unit tests + integration)
-scripts/run_tests.sh
+srun scripts/run_tests.sh
 
 exit # Return to login node
 ```
