@@ -60,6 +60,8 @@ export UV_PYTHON="$PYTHON_EXEC"
 (cd "$VEOMNI_DIR" && uv sync --extra gpu)
 # Install AOMT specific requirements into the same venv
 source "${VEOMNI_DIR}/.venv/bin/activate"
+# Install setuptools first to avoid build issues
+pip install --upgrade setuptools
 pip install -r requirements.txt
 echo "uv sync and pip requirements complete."
 
@@ -72,13 +74,23 @@ WEBSHOP_PATH="$SCRIPT_DIR/eval/WebShop"
 if [ ! -f "$WEBSHOP_PATH/setup.sh" ]; then
     echo "WebShop repository not found. Cloning now..."
     mkdir -p "$SCRIPT_DIR/eval"
-    # Use a temporary directory to clone and then move contents to avoid issues with non-empty dirs
     git clone https://github.com/princeton-nlp/WebShop.git "$WEBSHOP_PATH"
 fi
 
 if [ -d "$WEBSHOP_PATH" ]; then
+    echo "Preparing environment for WebShop..."
+    source "${VEOMNI_DIR}/.venv/bin/activate"
+    
+    # Pre-install critical dependencies to avoid build failures with old pinned versions
+    # and ensure tools like gdown are available even if WebShop's pip install fails.
+    echo "Installing build tools and dependencies..."
+    pip install --upgrade gdown pandas numpy spacy pyserini Flask beautifulsoup4 cleantext gym faiss-cpu scikit-learn
+    pip install PyYAML requests requests_mock rich selenium tqdm
+    
     echo "Running WebShop setup in $WEBSHOP_PATH..."
-    # Use absolute path to the script to avoid any "No such file" issues
+    # We call WebShop's setup.sh. It will try to install requirements.txt and might fail
+    # on some pinned versions (like old pandas), but it doesn't have 'set -e' so it will continue.
+    # Since we pre-installed the key packages, the subsequent steps (gdown, indexing) should work.
     (cd "$WEBSHOP_PATH" && bash "$WEBSHOP_PATH/setup.sh" -d small)
     echo "WebShop setup complete."
 else
@@ -97,7 +109,7 @@ echo "# This script loads the correct python module, sets memory limits, and act
 echo "echo 'Attempting to load Python 3.11 module...'" >> activate_env.sh
 echo "module load python/3.11 || true" >> activate_env.sh
 echo "echo 'Setting memory limit to unlimited...'" >> activate_env.sh
-echo "ulimit -m unlimited" >> activate_env.sh
+echo "ulimit -v unlimited || ulimit -m unlimited || true" >> activate_env.sh
 echo "echo 'Activating uv environment at ${VEOMNI_PATH}/.venv...'" >> activate_env.sh
 echo "source ${VEOMNI_PATH}/.venv/bin/activate" >> activate_env.sh
 echo "export PYTHONPATH=${TOP_LEVEL_DIR}:\${PYTHONPATH}" >> activate_env.sh
