@@ -128,6 +128,9 @@ echo "#!/bin/bash" > activate_env.sh
 echo "# This script loads the correct python module, sets memory limits, and activates the virtual environment." >> activate_env.sh
 echo "echo 'Attempting to load Python 3.11 module...'" >> activate_env.sh
 echo "module load python/3.11 || true" >> activate_env.sh
+echo "# Set JAVA_HOME for pyserini (WebShop search engine)" >> activate_env.sh
+echo "export JAVA_HOME=\$(conda info --base)/envs/py311" >> activate_env.sh
+echo "export PATH=\$JAVA_HOME/bin:\$PATH" >> activate_env.sh
 echo "echo 'Setting memory limit to unlimited...'" >> activate_env.sh
 echo "ulimit -v unlimited || ulimit -m unlimited || true" >> activate_env.sh
 echo "echo 'Activating uv environment at ${VEOMNI_PATH}/.venv...'" >> activate_env.sh
