@@ -2,6 +2,9 @@
 # AOMT Environment Setup Script (uv-based, correct version)
 set -e
 
+# Ensure the setup process itself has enough memory for large library loads (like torch/CUDA)
+ulimit -v unlimited || ulimit -m unlimited || true
+
 echo "--- AOMT Environment Setup (uv method) ---"
 
 # --- 1. Load Required Python Version ---
