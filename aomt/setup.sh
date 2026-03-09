@@ -81,11 +81,13 @@ if [ -d "$WEBSHOP_PATH" ]; then
     echo "Manually setting up WebShop in $WEBSHOP_PATH..."
     source "${VEOMNI_DIR}/.venv/bin/activate"
     
-    # Use 'uv pip' to install into the uv-managed environment. 
-    # This is much faster and more reliable than standard pip in this context.
-    echo "Installing WebShop dependencies into AOMT environment using uv..."
-    uv pip install gdown pandas numpy spacy pyserini Flask beautifulsoup4 cleantext gym scikit-learn \
-               PyYAML requests requests_mock rich selenium tqdm rank-bm25 thefuzz
+    # Use 'uv pip' with limited concurrency to avoid 'Resource temporarily unavailable' errors.
+    # We pin pyserini to a version compatible with the project's torch/transformers.
+    echo "Installing WebShop dependencies into AOMT environment using uv (limited concurrency)..."
+    UV_CONCURRENT_BUILDS=1 uv pip install \
+               gdown pandas numpy spacy pyserini==0.21.0 Flask beautifulsoup4 cleantext gym scikit-learn \
+               PyYAML requests requests_mock rich selenium tqdm rank-bm25 thefuzz \
+               "torch==2.5.0" "transformers==4.38.0"
     
     # 1. Download data
     echo "Downloading WebShop data..."
