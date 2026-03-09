@@ -184,7 +184,7 @@ class TestAOMTMasking(unittest.TestCase):
         rng = np.random.default_rng(0)
         traj = parse_conversation_to_trajectory(self.example)
         tokenized_traj = tokenize_trajectory(traj, self.tok)
-        _, loss_mask = apply_unit_mask(tokenized_traj, 1.0, "action_only", 156895, rng)
+        _, loss_mask = apply_unit_mask(tokenized_traj, 1.0, MaskMode.ACTION_ONLY, 156895, rng)
         self.assertTrue(loss_mask.any())
 
 class TestLossFunction(unittest.TestCase):

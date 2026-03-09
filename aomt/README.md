@@ -38,6 +38,7 @@ source activate_env.sh
 ```bash
 # Request a Native 80GB compute node
 salloc --time=2:00:00 --mem=128G --cpus-per-task=8 --gres=gpu:a100-80:1
+# salloc --time=2:00:00 --mem=128G --cpus-per-task=8 --gpus-per-node=h100-96:1
 ```
 
 Once the allocation is granted:
