@@ -20,6 +20,64 @@ class TestTrainingIntegration(unittest.TestCase):
         os.makedirs(self.test_dir, exist_ok=True)
         os.makedirs(os.path.join(self.test_dir, "data"), exist_ok=True)
 
+        # --- 1. Create a dummy small model ---
+        self.dummy_model_dir = os.path.join(self.test_dir, "dummy_model")
+        os.makedirs(self.dummy_model_dir, exist_ok=True)
+        
+        # Use a small config to avoid OOM
+        config_dict = {
+            "architectures": ["LLaDA2MoeModelLM"],
+            "auto_map": {
+                "AutoConfig": "configuration_llada2_moe.LLaDA2MoeConfig",
+                "AutoModel": "modeling_llada2_moe.LLaDA2MoeModel",
+                "AutoModelForCausalLM": "modeling_llada2_moe.LLaDA2MoeModelLM"
+            },
+            "model_type": "llada2_moe",
+            "num_hidden_layers": 1,
+            "hidden_size": 32,
+            "intermediate_size": 64,
+            "num_experts": 2,
+            "num_experts_per_tok": 1,
+            "num_attention_heads": 2,
+            "num_key_value_heads": 1,
+            "moe_intermediate_size": 32,
+            "vocab_size": 157184,  # Match tokenizer
+            "hidden_act": "silu",
+            "head_dim": 16,
+            "num_shared_experts": 1,
+            "max_position_embeddings": 512,
+            "rms_norm_eps": 1e-6,
+            "tie_word_embeddings": False,
+            "rope_theta": 600000,
+            "partial_rotary_factor": 0.5,
+            "rotary_dim": 16,
+            "n_group": 1,
+            "topk_group": 1,
+            "norm_topk_prob": True,
+            "router_dtype": "fp32",
+            "score_function": "sigmoid",
+            "moe_router_enable_expert_bias": True,
+            "routed_scaling_factor": 1.0,
+        }
+        with open(os.path.join(self.dummy_model_dir, "config.json"), "w") as f:
+            json.dump(config_dict, f)
+            
+        # Copy modeling files from existing model or dFactory
+        src_modeling = "weights/LLaDA2.0-mini/modeling_llada2_moe.py"
+        src_config = "weights/LLaDA2.0-mini/configuration_llada2_moe.py"
+        if not os.path.exists(src_modeling):
+            src_modeling = "dFactory/models/llada2_moe/modeling_llada2_moe.py"
+            src_config = "dFactory/models/llada2_moe/configuration_llada2_moe.py"
+            
+        if os.path.exists(src_modeling):
+            shutil.copy(src_modeling, self.dummy_model_dir)
+            shutil.copy(src_config, self.dummy_model_dir)
+        else:
+            self.skipTest(f"Modeling files not found. Skipping integration test.")
+
+        # Create an empty weights file to satisfy the loader
+        torch.save({}, os.path.join(self.dummy_model_dir, "pytorch_model.bin"))
+
         # Create a dummy JSONL file
         self.jsonl_path = os.path.join(self.test_dir, "data", "dummy.jsonl")
         dummy_entry = {
@@ -29,11 +87,11 @@ class TestTrainingIntegration(unittest.TestCase):
         with open(self.jsonl_path, "w") as f:
             f.write(json.dumps(dummy_entry) + "\n")
 
-        # --- 1. Create a minimal config file ---
+        # --- 2. Create a minimal config file ---
         self.config = {
             'name': 'integration_test',
             'model': {
-                'model_path': 'weights/llada2-mini-merged',
+                'model_path': self.dummy_model_dir,
                 'tokenizer_path': 'weights/LLaDA2.0-mini',
             },
             'data': {
@@ -53,17 +111,18 @@ class TestTrainingIntegration(unittest.TestCase):
                 'lr_scheduler': 'cosine',
                 'warmup_steps': 0,
                 'output_dir': os.path.join(self.test_dir, "output"),
+                'gradient_checkpointing': False, # Disable for tiny model
             }
         }
         self.config_path = os.path.join(self.test_dir, "test_config.yaml")
         with open(self.config_path, 'w') as f:
             yaml.dump(self.config, f)
 
-        # --- 2. Check for the required local model files ---
-        if not os.path.exists(self.config['model']['model_path']):
-            self.skipTest(f"Model files not found at {self.config['model']['model_path']}. Skipping integration test.")
+        # --- 3. Check for the required tokenizer ---
+        if not os.path.exists(self.config['model']['tokenizer_path']):
+            self.skipTest(f"Tokenizer not found at {self.config['model']['tokenizer_path']}. Skipping integration test.")
 
-        # --- 3. Mock Distributed Env for single-process test ---
+        # --- 4. Mock Distributed Env for single-process test ---
         os.environ["RANK"] = "0"
         os.environ["WORLD_SIZE"] = "1"
         os.environ["MASTER_ADDR"] = "localhost"
