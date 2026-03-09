@@ -86,7 +86,7 @@ if [ -d "$WEBSHOP_PATH" ]; then
     echo "Installing WebShop dependencies into AOMT environment using uv (limited concurrency)..."
     UV_CONCURRENT_BUILDS=1 uv pip install \
                gdown pandas numpy spacy pyserini==0.21.0 Flask beautifulsoup4 cleantext gym scikit-learn \
-               PyYAML requests requests_mock rich selenium tqdm rank-bm25 thefuzz \
+               PyYAML requests requests_mock rich selenium tqdm rank-bm25 thefuzz faiss-cpu \
                "torch==2.5.0" "transformers==4.38.0"
     
     # 1. Download data
