@@ -81,10 +81,11 @@ if [ -d "$WEBSHOP_PATH" ]; then
     echo "Manually setting up WebShop in $WEBSHOP_PATH..."
     source "${VEOMNI_DIR}/.venv/bin/activate"
     
-    # Pre-install all required Python packages with compatible versions for Python 3.11
-    echo "Installing WebShop dependencies into AOMT environment..."
-    pip install --upgrade gdown pandas numpy spacy pyserini Flask beautifulsoup4 cleantext gym scikit-learn
-    pip install PyYAML requests requests_mock rich selenium tqdm rank-bm25 thefuzz
+    # Use 'uv pip' to install into the uv-managed environment. 
+    # This is much faster and more reliable than standard pip in this context.
+    echo "Installing WebShop dependencies into AOMT environment using uv..."
+    uv pip install gdown pandas numpy spacy pyserini Flask beautifulsoup4 cleantext gym scikit-learn \
+               PyYAML requests requests_mock rich selenium tqdm rank-bm25 thefuzz
     
     # 1. Download data
     echo "Downloading WebShop data..."
