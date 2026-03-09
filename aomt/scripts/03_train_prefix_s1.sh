@@ -10,9 +10,9 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=2
 #SBATCH --gres=gpu:2
-#SBATCH --constraint="h100|a100"
-#SBATCH --cpus-per-task=16
-#SBATCH --mem=256G
+#SBATCH --constraint=h100
+#SBATCH --cpus-per-task=8
+#SBATCH --mem=200G
 #SBATCH --partition=gpu-long
 
 set -euo pipefail
