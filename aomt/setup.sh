@@ -67,13 +67,22 @@ echo "uv sync and pip requirements complete."
 echo "[5/6] Setting up WebShop environment..."
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 WEBSHOP_PATH="$SCRIPT_DIR/eval/WebShop"
+
+# Clone WebShop if directory is empty or setup.sh is missing
+if [ ! -f "$WEBSHOP_PATH/setup.sh" ]; then
+    echo "WebShop repository not found. Cloning now..."
+    mkdir -p "$SCRIPT_DIR/eval"
+    # Use a temporary directory to clone and then move contents to avoid issues with non-empty dirs
+    git clone https://github.com/princeton-nlp/WebShop.git "$WEBSHOP_PATH"
+fi
+
 if [ -d "$WEBSHOP_PATH" ]; then
     echo "Running WebShop setup in $WEBSHOP_PATH..."
     # Use absolute path to the script to avoid any "No such file" issues
     (cd "$WEBSHOP_PATH" && bash "$WEBSHOP_PATH/setup.sh" -d small)
     echo "WebShop setup complete."
 else
-    echo "Warning: $WEBSHOP_PATH directory not found. Skipping WebShop setup."
+    echo "ERROR: WebShop setup failed. Directory $WEBSHOP_PATH does not exist."
 fi
 
 # --- 6. Create Helper Script for Activation ---
