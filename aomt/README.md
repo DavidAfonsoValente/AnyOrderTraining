@@ -55,6 +55,9 @@ srun ./scripts/01_prepare_data.sh
 # C. Run verification suite (Unit tests + integration)
 srun scripts/run_tests.sh
 
+# D. Visualize masking (Sanity check your experiment configs)
+srun scripts/visualize_experiments.sh
+
 exit # Return to login node
 ```
 
