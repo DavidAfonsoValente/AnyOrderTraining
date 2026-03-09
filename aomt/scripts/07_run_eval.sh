@@ -9,10 +9,11 @@
 #SBATCH --time=08:00:00
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
-#SBATCH --gpus-per-node=a100-40:1
+#SBATCH --gres=gpu:1
+#SBATCH --constraint="a100|h100"
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=128G
-#SBATCH --partition=normal
+#SBATCH --partition=gpu-long
 
 set -euo pipefail
 mkdir -p logs results
