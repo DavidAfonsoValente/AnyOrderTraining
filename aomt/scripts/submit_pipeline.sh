@@ -20,8 +20,9 @@ echo "Working dir: $(pwd)"
 echo "Email:       ${EMAIL:-none}"
 echo ""
 
-# Target: 2 nodes, 2 x H100-96 GPUs each = 4 GPUs total.
-GPU_SPEC="--nodes=2 --gpus-per-node=h100-96:2 --ntasks-per-node=2"
+# Target: 1 node, 2 x H100-96 GPUs = 2 GPUs total.
+# This satisfies strict QOS limits (usually capped at 2 GPUs for high-end nodes).
+GPU_SPEC="--nodes=1 --gpus-per-node=h100-96:2 --ntasks-per-node=2"
 
 clean_ids() {
     echo "$1" | sed 's/::*/:/g' | sed 's/^://;s/:$//'
