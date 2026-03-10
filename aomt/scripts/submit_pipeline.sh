@@ -1,8 +1,8 @@
 #!/bin/bash
 # =============================================================================
 # submit_pipeline.sh
-# Submits all AOMT training jobs with a refined "Best Available" Race strategy.
-# Focuses on high-probability nodes and fixes CPU/Dependency issues.
+# Submits all AOMT training jobs targeting the best single hardware config.
+# Fixes QOSMaxGRESPerUser issues by avoiding aggressive racing.
 # =============================================================================
 
 set -euo pipefail
@@ -13,42 +13,40 @@ if [[ "$1" == "--email" ]]; then
 fi
 
 SCRIPT_DIR="scripts"
-CPUS=8 # Explicitly set to match script headers
+CPUS=8 
 
-echo "=== AOMT Training Pipeline Submission (Refined Race) ==="
+echo "=== AOMT Training Pipeline Submission (Stable Mode) ==="
 echo "Working dir: $(pwd)"
 echo "Email:       ${EMAIL:-none}"
 echo ""
 
+# Target: 2 nodes, 2 x H100-96 GPUs each = 4 GPUs total per task.
+# Total footprint for 4 parallel tasks = 16 GPUs.
+GPU_SPEC="--nodes=2 --gpus-per-node=h100-96:2 --ntasks-per-node=2"
+
+# Helper to clean and join Job IDs
 clean_ids() {
     echo "$1" | sed 's/::*/:/g' | sed 's/^://;s/:$//'
 }
 
-# Helper to submit a race of jobs for the best available hardware
-submit_race() {
+# Helper to submit a single reliable job
+submit_task() {
     local NAME="$1"
     local SCRIPT="$2"
     local DEP_IN="$3"
     local DEPENDENCY=$(clean_ids "$DEP_IN")
     
-    local OPTS="--parsable --job-name=$NAME --cpus-per-task=$CPUS"
+    local OPTS="--parsable --job-name=$NAME --cpus-per-task=$CPUS $GPU_SPEC"
     if [ -n "$DEPENDENCY" ]; then
-        OPTS="$OPTS --dependency=afterany:$DEPENDENCY"
+        # afterok is preferred for single-target stability
+        OPTS="$OPTS --dependency=afterok:$DEPENDENCY"
     fi
     if [ -n "$EMAIL" ]; then
         OPTS="$OPTS --mail-type=BEGIN,END,FAIL --mail-user=$EMAIL"
     fi
 
-    # Variant 1: Native H100-96 (2 nodes, 4 GPUs total) - Highest priority
-    local J1=$(sbatch $OPTS --nodes=2 --gpus-per-node=h100-96:2 --ntasks-per-node=2 "$SCRIPT" 2>/dev/null || echo "")
-    
-    # Variant 2: H100-47 MIG (2 nodes, 8 GPUs total) - High availability
-    local J2=$(sbatch $OPTS --nodes=2 --gpus-per-node=h100-47:4 --ntasks-per-node=4 "$SCRIPT" 2>/dev/null || echo "")
-
-    # Variant 3: H200-141 (1 node, 4 GPUs) - Best if available
-    local J3=$(sbatch $OPTS --nodes=1 --gpus-per-node=h200-141:4 --ntasks-per-node=4 "$SCRIPT" 2>/dev/null || echo "")
-
-    echo "${J1}:${J2}:${J3}"
+    local JID=$(sbatch $OPTS "$SCRIPT")
+    echo "$JID"
 }
 
 # ---- Step 0: Data preparation (CPU, fast) -----------------------------------
@@ -60,34 +58,34 @@ JOB_DATA=$(sbatch --parsable \
     "$SCRIPT_DIR/01_prepare_data.sh")
 echo "  Job ID: $JOB_DATA"
 
-# ---- Step 1: All independent training runs (Race Mode) ----------------------
+# ---- Step 1: All independent training runs (Parallel) ----------------------
 echo ""
-echo "Submitting: training jobs (parallel races, depend on data)..."
+echo "Submitting: primary training jobs..."
 
-IDS_SFT=$(submit_race "aomt_sft_std" "$SCRIPT_DIR/02_train_sft_standard.sh" "$JOB_DATA")
-echo "  Standard SFT IDs:    $IDS_SFT"
+ID_SFT=$(submit_task "aomt_sft_std" "$SCRIPT_DIR/02_train_sft_standard.sh" "$JOB_DATA")
+echo "  Standard SFT ID:     $ID_SFT"
 
-IDS_PFX1=$(submit_race "aomt_pfx_s1" "$SCRIPT_DIR/03_train_prefix_s1.sh" "$JOB_DATA")
-echo "  Prefix S1 IDs:       $IDS_PFX1"
+ID_PFX1=$(submit_task "aomt_pfx_s1" "$SCRIPT_DIR/03_train_prefix_s1.sh" "$JOB_DATA")
+echo "  Prefix S1 ID:        $ID_PFX1"
 
-IDS_ACT=$(submit_race "aomt_act_only" "$SCRIPT_DIR/05_train_aomt_action.sh" "$JOB_DATA")
-echo "  AOMT-Action IDs:     $IDS_ACT"
+ID_ACT=$(submit_task "aomt_act_only" "$SCRIPT_DIR/05_train_aomt_action.sh" "$JOB_DATA")
+echo "  AOMT-Action ID:      $ID_ACT"
 
-IDS_MIX=$(submit_race "aomt_mixed" "$SCRIPT_DIR/06_train_aomt_mixed.sh" "$JOB_DATA")
-echo "  AOMT-Mixed IDs:      $IDS_MIX"
+ID_MIX=$(submit_task "aomt_mixed" "$SCRIPT_DIR/06_train_aomt_mixed.sh" "$JOB_DATA")
+echo "  AOMT-Mixed ID:       $ID_MIX"
 
-# ---- Step 2: Prefix SFT Stage 2 (depends on any Stage 1 completion) --------
+# ---- Step 2: Prefix SFT Stage 2 (depends on Stage 1) -----------------------
 echo ""
-echo "Submitting: Prefix SFT Stage 2 (race, depends on Stage 1)..."
+echo "Submitting: Prefix SFT Stage 2..."
 
-IDS_PFX2=$(submit_race "aomt_pfx_s2" "$SCRIPT_DIR/04_train_prefix_s2.sh" "$IDS_PFX1")
-echo "  Prefix S2 IDs:       $IDS_PFX2"
+ID_PFX2=$(submit_task "aomt_pfx_s2" "$SCRIPT_DIR/04_train_prefix_s2.sh" "$ID_PFX1")
+echo "  Prefix S2 ID:        $ID_PFX2"
 
 # ---- Step 3: Evaluation (depends on all training) ---------------------------
 echo ""
-echo "Submitting: evaluation (depends on all training races)..."
+echo "Submitting: evaluation..."
 
-ALL_TRAIN=$(clean_ids "${IDS_SFT}:${IDS_PFX2}:${IDS_ACT}:${IDS_MIX}")
+ALL_TRAIN=$(clean_ids "${ID_SFT}:${ID_PFX2}:${ID_ACT}:${ID_MIX}")
 JOB_EVAL=$(sbatch --parsable \
     --dependency=afterany:$ALL_TRAIN \
     --cpus-per-task=$CPUS \
@@ -99,6 +97,6 @@ echo "  Evaluation ID:       $JOB_EVAL"
 
 echo ""
 echo "=== Submission complete ==="
-echo "Note: Downstream jobs (Stage 2 and Eval) will check for checkpoints"
-echo "to ensure the previous stage actually succeeded."
+echo "Monitoring:"
+echo "  squeue -u \$USER"
 echo ""
