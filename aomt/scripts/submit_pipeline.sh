@@ -1,8 +1,8 @@
 #!/bin/bash
 # =============================================================================
 # submit_pipeline.sh
-# Submits all AOMT training jobs with "Best Available" GPU Race strategy.
-# Refined for SoC Cluster hardware limits and robust dependency handling.
+# Submits all AOMT training jobs with a refined "Best Available" Race strategy.
+# Focuses on high-probability nodes and fixes CPU/Dependency issues.
 # =============================================================================
 
 set -euo pipefail
@@ -13,55 +13,48 @@ if [[ "$1" == "--email" ]]; then
 fi
 
 SCRIPT_DIR="scripts"
+CPUS=8 # Explicitly set to match script headers
 
-echo "=== AOMT Training Pipeline Submission (Best-Available Race) ==="
+echo "=== AOMT Training Pipeline Submission (Refined Race) ==="
 echo "Working dir: $(pwd)"
 echo "Email:       ${EMAIL:-none}"
 echo ""
 
-# Helper to clean and join Job IDs with colons, removing empty ones
 clean_ids() {
-    local input="$1"
-    # Replace any sequence of colons with a single colon, and trim colons from ends
-    echo "$input" | sed 's/::*/:/g' | sed 's/^://;s/:$//'
+    echo "$1" | sed 's/::*/:/g' | sed 's/^://;s/:$//'
 }
 
-# Helper to submit a race of jobs for different GPU types
-# Usage: submit_race <job_name> <script_path> <dependency_str>
+# Helper to submit a race of jobs for the best available hardware
 submit_race() {
     local NAME="$1"
     local SCRIPT="$2"
     local DEP_IN="$3"
     local DEPENDENCY=$(clean_ids "$DEP_IN")
     
-    local OPTS="--parsable --job-name=$NAME"
+    local OPTS="--parsable --job-name=$NAME --cpus-per-task=$CPUS"
     if [ -n "$DEPENDENCY" ]; then
-        # Use afterany: if we use afterok, cancelled jobs in the race will break it
         OPTS="$OPTS --dependency=afterany:$DEPENDENCY"
     fi
     if [ -n "$EMAIL" ]; then
         OPTS="$OPTS --mail-type=BEGIN,END,FAIL --mail-user=$EMAIL"
     fi
 
-    # Variant 1: H100-96 (Need 4 GPUs total -> 2 nodes, 2 GPUs each)
+    # Variant 1: Native H100-96 (2 nodes, 4 GPUs total) - Highest priority
     local J1=$(sbatch $OPTS --nodes=2 --gpus-per-node=h100-96:2 --ntasks-per-node=2 "$SCRIPT" 2>/dev/null || echo "")
     
-    # Variant 2: H100-47 (4 GPUs per node possible on MIG nodes, but need 8 total for VRAM -> 2 nodes, 4 GPUs each)
+    # Variant 2: H100-47 MIG (2 nodes, 8 GPUs total) - High availability
     local J2=$(sbatch $OPTS --nodes=2 --gpus-per-node=h100-47:4 --ntasks-per-node=4 "$SCRIPT" 2>/dev/null || echo "")
-    
-    # Variant 3: A100-80 (1 GPU per node -> 4 nodes, 1 GPU each)
-    local J3=$(sbatch $OPTS --nodes=4 --gpus-per-node=a100-80:1 --ntasks-per-node=1 "$SCRIPT" 2>/dev/null || echo "")
-    
-    # Variant 4: H200-141 (4 GPUs per node on xgpk0 -> 1 node, 4 GPUs)
-    local J4=$(sbatch $OPTS --nodes=1 --gpus-per-node=h200-141:4 --ntasks-per-node=4 "$SCRIPT" 2>/dev/null || echo "")
 
-    # Return colon-separated list
-    echo "${J1}:${J2}:${J3}:${J4}"
+    # Variant 3: H200-141 (1 node, 4 GPUs) - Best if available
+    local J3=$(sbatch $OPTS --nodes=1 --gpus-per-node=h200-141:4 --ntasks-per-node=4 "$SCRIPT" 2>/dev/null || echo "")
+
+    echo "${J1}:${J2}:${J3}"
 }
 
 # ---- Step 0: Data preparation (CPU, fast) -----------------------------------
 echo "Submitting: data preparation..."
 JOB_DATA=$(sbatch --parsable \
+    --cpus-per-task=$CPUS \
     ${EMAIL:+--mail-type=END,FAIL} \
     ${EMAIL:+--mail-user=$EMAIL} \
     "$SCRIPT_DIR/01_prepare_data.sh")
@@ -92,18 +85,20 @@ echo "  Prefix S2 IDs:       $IDS_PFX2"
 
 # ---- Step 3: Evaluation (depends on all training) ---------------------------
 echo ""
-echo "Submitting: evaluation (depends on all successful training)..."
+echo "Submitting: evaluation (depends on all training races)..."
 
 ALL_TRAIN=$(clean_ids "${IDS_SFT}:${IDS_PFX2}:${IDS_ACT}:${IDS_MIX}")
 JOB_EVAL=$(sbatch --parsable \
     --dependency=afterany:$ALL_TRAIN \
+    --cpus-per-task=$CPUS \
     --gpus-per-node=h100-96:1 \
     ${EMAIL:+--mail-type=BEGIN,END,FAIL} \
     ${EMAIL:+--mail-user=$EMAIL} \
     "$SCRIPT_DIR/07_run_eval.sh")
-echo "  Evaluation:          $JOB_EVAL"
+echo "  Evaluation ID:       $JOB_EVAL"
 
 echo ""
 echo "=== Submission complete ==="
-echo "Note: First variant to start cancels its siblings."
+echo "Note: Downstream jobs (Stage 2 and Eval) will check for checkpoints"
+echo "to ensure the previous stage actually succeeded."
 echo ""

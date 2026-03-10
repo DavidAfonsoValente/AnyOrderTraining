@@ -24,6 +24,16 @@ export PYTHONPATH="$REPO_ROOT/dFactory/VeOmni:$REPO_ROOT/dFactory:$PARENT_DIR:${
 echo "[$(date)] Starting evaluation | Job: $SLURM_JOB_ID"
 echo "Node: $(hostname)"
 
+# --- Pre-eval Check: Ensure training actually succeeded ----------------------
+REQUIRED_DIRS=("checkpoints/sft_standard" "checkpoints/prefix_sft_s2" "checkpoints/aomt_action_only" "checkpoints/aomt_mixed")
+for d in "${REQUIRED_DIRS[@]}"; do
+    if [ ! -d "$d" ] || [ -z "$(ls -A "$d" 2>/dev/null)" ]; then
+        echo "ERROR: Required checkpoint directory $d is missing or empty."
+        echo "One or more training tasks in the race likely failed."
+        exit 1
+    fi
+done
+
 # --- Convert all checkpoints to sep format for inference ---------------------
 convert_ckpt() {
     local NAME="$1"
