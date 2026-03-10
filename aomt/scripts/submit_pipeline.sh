@@ -2,7 +2,7 @@
 # =============================================================================
 # submit_pipeline.sh
 # Submits all AOMT training jobs with "Best Available" GPU Race strategy.
-# Run from the aomt/ directory.
+# Refined for SoC Cluster hardware limits and robust dependency handling.
 # =============================================================================
 
 set -euo pipefail
@@ -19,12 +19,20 @@ echo "Working dir: $(pwd)"
 echo "Email:       ${EMAIL:-none}"
 echo ""
 
+# Helper to clean and join Job IDs with colons, removing empty ones
+clean_ids() {
+    local input="$1"
+    # Replace any sequence of colons with a single colon, and trim colons from ends
+    echo "$input" | sed 's/::*/:/g' | sed 's/^://;s/:$//'
+}
+
 # Helper to submit a race of jobs for different GPU types
 # Usage: submit_race <job_name> <script_path> <dependency_str>
 submit_race() {
     local NAME="$1"
     local SCRIPT="$2"
-    local DEPENDENCY="$3"
+    local DEP_IN="$3"
+    local DEPENDENCY=$(clean_ids "$DEP_IN")
     
     local OPTS="--parsable --job-name=$NAME"
     if [ -n "$DEPENDENCY" ]; then
@@ -35,17 +43,20 @@ submit_race() {
         OPTS="$OPTS --mail-type=BEGIN,END,FAIL --mail-user=$EMAIL"
     fi
 
-    # Variant 1: H100-96 (2 GPUs, most common high-end)
-    local J1=$(sbatch $OPTS --gpus-per-node=h100-96:2 --ntasks-per-node=2 "$SCRIPT")
-    # Variant 2: H100-47 (4 GPUs, MIG partition)
-    local J2=$(sbatch $OPTS --gpus-per-node=h100-47:4 --ntasks-per-node=4 "$SCRIPT")
-    # Variant 3: A100-80 (4 GPUs, high VRAM fallback)
-    local J3=$(sbatch $OPTS --gpus-per-node=a100-80:4 --ntasks-per-node=4 "$SCRIPT")
-    # Variant 4: H200-141 (4 GPUs, best option if available)
-    local J4=$(sbatch $OPTS --gpus-per-node=h200-141:4 --ntasks-per-node=4 "$SCRIPT")
+    # Variant 1: H100-96 (Need 4 GPUs total -> 2 nodes, 2 GPUs each)
+    local J1=$(sbatch $OPTS --nodes=2 --gpus-per-node=h100-96:2 --ntasks-per-node=2 "$SCRIPT" 2>/dev/null || echo "")
+    
+    # Variant 2: H100-47 (4 GPUs per node possible on MIG nodes, but need 8 total for VRAM -> 2 nodes, 4 GPUs each)
+    local J2=$(sbatch $OPTS --nodes=2 --gpus-per-node=h100-47:4 --ntasks-per-node=4 "$SCRIPT" 2>/dev/null || echo "")
+    
+    # Variant 3: A100-80 (1 GPU per node -> 4 nodes, 1 GPU each)
+    local J3=$(sbatch $OPTS --nodes=4 --gpus-per-node=a100-80:1 --ntasks-per-node=1 "$SCRIPT" 2>/dev/null || echo "")
+    
+    # Variant 4: H200-141 (4 GPUs per node on xgpk0 -> 1 node, 4 GPUs)
+    local J4=$(sbatch $OPTS --nodes=1 --gpus-per-node=h200-141:4 --ntasks-per-node=4 "$SCRIPT" 2>/dev/null || echo "")
 
-    # Return colon-separated list for subsequent dependencies
-    echo "$J1:$J2:$J3:$J4"
+    # Return colon-separated list
+    echo "${J1}:${J2}:${J3}:${J4}"
 }
 
 # ---- Step 0: Data preparation (CPU, fast) -----------------------------------
@@ -83,8 +94,7 @@ echo "  Prefix S2 IDs:       $IDS_PFX2"
 echo ""
 echo "Submitting: evaluation (depends on all successful training)..."
 
-# Eval only needs 1 GPU, no race needed usually, but we pick the best type
-ALL_TRAIN="${IDS_SFT}:${IDS_PFX2}:${IDS_ACT}:${IDS_MIX}"
+ALL_TRAIN=$(clean_ids "${IDS_SFT}:${IDS_PFX2}:${IDS_ACT}:${IDS_MIX}")
 JOB_EVAL=$(sbatch --parsable \
     --dependency=afterany:$ALL_TRAIN \
     --gpus-per-node=h100-96:1 \
@@ -95,9 +105,5 @@ echo "  Evaluation:          $JOB_EVAL"
 
 echo ""
 echo "=== Submission complete ==="
-echo "Note: Jobs are racing. The first variant of each task to start will"
-echo "automatically cancel its siblings to maximize cluster efficiency."
-echo ""
-echo "Monitor with:"
-echo "  squeue -u \$USER"
+echo "Note: First variant to start cancels its siblings."
 echo ""
