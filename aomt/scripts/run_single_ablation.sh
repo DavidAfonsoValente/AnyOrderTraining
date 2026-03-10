@@ -1,16 +1,15 @@
 #!/bin/bash
 # scripts/run_single_ablation.sh
 # Runs training followed by eval for a specific mask probability.
-# Optimized for the fast 'gpu' partition to bypass long-queue delays.
+# Fixed to use explicit GRES naming for SoC cluster compatibility.
 #SBATCH --job-name=aomt_ablation
 #SBATCH --output=logs/ablation_%j.log
 #SBATCH --nodes=1
-#SBATCH --gres=gpu:2
-#SBATCH -C "h100|a100"
+#SBATCH --gres=gpu:h100-96:2
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=128G
-#SBATCH --time=03:00:00
-#SBATCH --partition=gpu
+#SBATCH --time=04:00:00
+#SBATCH --partition=gpu-long
 
 set -euo pipefail
 PROB=$1
@@ -22,7 +21,6 @@ mkdir -p "$OUT_DIR" logs/ablation
 source scripts/_train_common.sh
 
 # 1. Generate temp config
-# We use the native tokenizer path for ablation to ensure no path issues
 sed "s/mask_prob: 0.25/mask_prob: $PROB/" configs/aomt_mixed.yaml > "/tmp/config_${P_NAME}.yaml"
 sed -i "s|output_dir:.*|output_dir: $OUT_DIR|" "/tmp/config_${P_NAME}.yaml"
 sed -i "s|train_path:.*|train_path: ./data/cache/ablation/aomt_alfworld_train.jsonl|" "/tmp/config_${P_NAME}.yaml"
