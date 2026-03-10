@@ -28,7 +28,7 @@ echo "=========================="
 # ---- PYTHONPATH (dFactory + aomt) ------------------------------------------
 REPO_ROOT="$(pwd)"
 PARENT_DIR="$(dirname "$REPO_ROOT")"
-export PYTHONPATH="$REPO_ROOT/dFactory/VeOmni:$PARENT_DIR:${PYTHONPATH:-}"
+export PYTHONPATH="$REPO_ROOT/dFactory/VeOmni:$REPO_ROOT/dFactory:$PARENT_DIR:${PYTHONPATH:-}"
 
 # ---- GPU binding -----------------------------------------------------------
 # One process per GPU. CUDA_VISIBLE_DEVICES is set by Slurm's GRES.
@@ -46,6 +46,14 @@ launch_training() {
 
     echo "[$(date)] Launching: $TASK_FILE with $CONFIG_FILE"
     echo "[$(date)] Node $(hostname): $NPROC_PER_NODE GPU(s)"
+
+    # ---- Race Strategy Cleanup ----
+    # If this is part of a "best available" race, cancel other pending variants
+    if [ -n "${SLURM_JOB_NAME:-}" ] && command -v scancel >/dev/null 2>&1; then
+        echo "[$(date)] Cancelling other pending variants of $SLURM_JOB_NAME..."
+        # We use -n for job name and --state=PENDING to avoid killing ourselves
+        scancel --name="$SLURM_JOB_NAME" --state=PENDING --user="$USER" 2>/dev/null || true
+    fi
 
     # dFactory's train.sh wraps torchrun. For multi-node Slurm, we call
     # torchrun directly to inject the correct rendezvous parameters.

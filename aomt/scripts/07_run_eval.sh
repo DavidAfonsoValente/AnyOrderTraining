@@ -19,7 +19,7 @@ mkdir -p logs results
 
 REPO_ROOT="$(pwd)"
 PARENT_DIR="$(dirname "$REPO_ROOT")"
-export PYTHONPATH="$REPO_ROOT/dFactory/VeOmni:$PARENT_DIR:${PYTHONPATH:-}"
+export PYTHONPATH="$REPO_ROOT/dFactory/VeOmni:$REPO_ROOT/dFactory:$PARENT_DIR:${PYTHONPATH:-}"
 
 echo "[$(date)] Starting evaluation | Job: $SLURM_JOB_ID"
 echo "Node: $(hostname)"
