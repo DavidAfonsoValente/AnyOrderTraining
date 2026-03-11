@@ -11,7 +11,7 @@
 #SBATCH --gpus-per-node=h100-96:1
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=128G
-#SBATCH --partition=gpu-short
+#SBATCH --partition=gpu
 
 set -e
 mkdir -p logs
