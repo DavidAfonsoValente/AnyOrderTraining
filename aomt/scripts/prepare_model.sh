@@ -22,7 +22,7 @@ echo "========================================"
 
 # --- Configuration ---
 # Use the hardcoded path from the cluster setup or an environment variable
-AOMT_DIR="${AOMT_ROOT:-/home/d/dvalente/AnyOrderTraining/aomt}"
+AOMT_DIR="${AOMT_ROOT:-/home/davidvalente/AnyOrderTraining/aomt}"
 VENV_PYTHON="$AOMT_DIR/dFactory/VeOmni/.venv/bin/python"
 
 MODELS_DIR="$AOMT_DIR/weights"
