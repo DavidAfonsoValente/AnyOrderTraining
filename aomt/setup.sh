@@ -175,10 +175,10 @@ echo "echo 'Setting memory limit to unlimited...'" >> activate_env.sh
 echo "ulimit -v unlimited || ulimit -m unlimited || true" >> activate_env.sh
 echo "echo 'Activating uv environment at ${VEOMNI_PATH}/.venv...'" >> activate_env.sh
 echo "source ${VEOMNI_PATH}/.venv/bin/activate" >> activate_env.sh
-echo "export PYTHONPATH=${TOP_LEVEL_DIR}:\${PYTHONPATH}" >> activate_env.sh
+echo "export PYTHONPATH=${TOP_LEVEL_DIR}:\${PYTHONPATH:-}" >> activate_env.sh
 echo "echo 'Environment activated.'" >> activate_env.sh
 chmod +x activate_env.sh
 
 echo -e "\n--- Environment setup complete! ---"
-echo "A new virtual environment has been created at: ${PWD}/${VEOMNI_PATH_REL_AOMT}/.venv"
+echo "A new virtual environment has been created at: ${VEOMNI_PATH}/.venv"
 echo "To activate this environment, run: source activate_env.sh"
