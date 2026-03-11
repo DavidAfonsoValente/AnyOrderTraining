@@ -29,7 +29,7 @@
 set -euo pipefail
 mkdir -p logs checkpoints weights results data/cache
 
-SCRIPT_DIR="scripts"
+SCRIPTS_PATH="scripts"
 
 echo "=== AOMT Master Pipeline Started [$(date)] ==="
 echo "Working directory: $(pwd)"
@@ -55,14 +55,14 @@ clean_ids() {
 
 # ---- STEP -1: Model Preparation (MoE Merging) -------------------------------
 echo "[$(date)] Submitting Step -1: Model Preparation..."
-JOB_PREP_MODEL=$(sbatch --parsable "$SCRIPT_DIR/prepare_model.sh")
+JOB_PREP_MODEL=$(sbatch --parsable "$SCRIPTS_PATH/prepare_model.sh")
 echo "  Job ID: $JOB_PREP_MODEL"
 
 # ---- STEP 0: Data Preparation -----------------------------------------------
 echo "[$(date)] Submitting Step 0: Data Preparation..."
 # Depends on Model Preparation (for tokenizer files)
-JOB_DATA=$(sbatch --parsable --dependency=afterok:$JOB_PREP_MODEL "$SCRIPT_DIR/01_prepare_data.sh")
-JOB_ABL_DATA=$(sbatch --parsable --dependency=afterok:$JOB_DATA "$SCRIPT_DIR/01b_prepare_ablation_data.sh")
+JOB_DATA=$(sbatch --parsable --dependency=afterok:$JOB_PREP_MODEL "$SCRIPTS_PATH/01_prepare_data.sh")
+JOB_ABL_DATA=$(sbatch --parsable --dependency=afterok:$JOB_DATA "$SCRIPTS_PATH/01b_prepare_ablation_data.sh")
 echo "  Data Job ID: $JOB_DATA"
 echo "  Ablation Data Job ID: $JOB_ABL_DATA"
 
@@ -72,7 +72,7 @@ echo "[$(date)] Submitting Phase 1: Hyperparameter Sweep (mask_prob)..."
 PREV_ABL=$JOB_ABL_DATA
 ABL_IDS=""
 for P in 0.15 0.25 0.40 0.50; do
-    JID=$(sbatch --parsable --dependency=afterany:$PREV_ABL "$SCRIPT_DIR/run_single_ablation.sh" "$P")
+    JID=$(sbatch --parsable --dependency=afterany:$PREV_ABL "$SCRIPTS_PATH/run_single_ablation.sh" "$P")
     ABL_IDS="${ABL_IDS}:${JID}"
     PREV_ABL=$JID
     echo "  Queued ablation p=$P (Job: $JID)"
@@ -81,7 +81,7 @@ done
 # ---- STEP 2: Automatic Hyperparameter Selection -----------------------------
 echo "[$(date)] Submitting Step 2: Auto-Selection..."
 CLEAN_ABL=$(clean_ids "$ABL_IDS")
-JOB_UPDATE=$(sbatch --parsable --dependency=afterany:$CLEAN_ABL "$SCRIPT_DIR/apply_ablation_winner.sh")
+JOB_UPDATE=$(sbatch --parsable --dependency=afterany:$CLEAN_ABL "$SCRIPTS_PATH/apply_ablation_winner.sh")
 echo "  Update Job ID: $JOB_UPDATE"
 
 # ---- STEP 3: Phase 2 - Main Benchmarking ------------------------------------
@@ -94,27 +94,28 @@ submit_task() {
 }
 
 # Chain the experiments sequentially to stay within QOS
-ID_SFT=$(submit_task "$SCRIPT_DIR/02_train_sft_standard.sh" "$JOB_UPDATE")
+ID_SFT=$(submit_task "$SCRIPTS_PATH/02_train_sft_standard.sh" "$JOB_UPDATE")
 echo "  Queued Standard SFT (Job: $ID_SFT)"
 
-ID_PFX1=$(submit_task "$SCRIPT_DIR/03_train_prefix_s1.sh" "$ID_SFT")
+ID_PFX1=$(submit_task "$SCRIPTS_PATH/03_train_prefix_s1.sh" "$ID_SFT")
 echo "  Queued Prefix S1 (Job: $ID_PFX1)"
 
-ID_ACT=$(submit_task "$SCRIPT_DIR/05_train_aomt_action.sh" "$ID_PFX1")
+ID_ACT=$(submit_task "$SCRIPTS_PATH/05_train_aomt_action.sh" "$ID_PFX1")
 echo "  Queued AOMT-Action (Job: $ID_ACT)"
 
-ID_MIX=$(submit_task "$SCRIPT_DIR/06_train_aomt_mixed.sh" "$ID_ACT")
+ID_MIX=$(submit_task "$SCRIPTS_PATH/06_train_aomt_mixed.sh" "$ID_ACT")
 echo "  Queued AOMT-Mixed (Job: $ID_MIX)"
 
 # Prefix S2 depends on S1 but can run in parallel with others if resources allow,
 # but we chain it to ID_PFX1 to ensure S1 finished ok.
-ID_PFX2=$(submit_task "$SCRIPT_DIR/04_train_prefix_s2.sh" "$ID_PFX1" "afterok")
+ID_PFX2=$(submit_task "$SCRIPTS_PATH/04_train_prefix_s2.sh" "$ID_PFX1" "afterok")
 echo "  Queued Prefix S2 (Job: $ID_PFX2)"
 
 # ---- STEP 4: Final Evaluation -----------------------------------------------
 echo "[$(date)] Submitting Step 4: Final Evaluation..."
 ALL_TRAIN="${ID_MIX}:${ID_PFX2}"
-JOB_EVAL=$(sbatch --parsable --dependency=afterany:$ALL_TRAIN "$SCRIPT_DIR/07_run_eval.sh")
+JOB_EVAL=$(sbatch --parsable --dependency=afterany:$ALL_TRAIN "$SCRIPTS_PATH/07_run_eval.sh")
+
 echo "  Final Eval Job ID: $JOB_EVAL"
 
 echo ""
