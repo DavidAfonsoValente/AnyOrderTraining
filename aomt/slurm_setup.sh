@@ -1,11 +1,11 @@
 #!/bin/bash
 #SBATCH --job-name=aomt_setup
-#SBATCH --output=setup_%j.out
-#SBATCH --error=setup_%j.err
-#SBATCH --time=01:00:00
-#SBATCH --partition=standard
-#SBATCH --cpus-per-task=4
-#SBATCH --mem=16G
+#SBATCH --output=logs/setup_%j.log
+#SBATCH --error=logs/setup_%j.err
+#SBATCH --time=02:00:00
+#SBATCH --partition=normal
+#SBATCH --cpus-per-task=8
+#SBATCH --mem=32G
 
 # Slurm Setup Script for AOMT Environment
 # This script runs the full installation on a compute node to avoid memory limits on login nodes.

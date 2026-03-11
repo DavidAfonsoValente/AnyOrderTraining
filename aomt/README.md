@@ -10,45 +10,37 @@ AOMT uses a masked diffusion language model (LLaDA 2.0) to reconstruct arbitrari
 
 Perform these steps from the `aomt/` directory.
 
-### 1. Environment Setup (Compute Node via Slurm)
-*One-time setup. Installs Miniconda, creates a py311 environment, and sets up all dependencies.*
+### 1. Environment Setup (Automatic Allocation via Slurm)
+*One-time setup. Installs Miniconda, creates a py311 environment, and sets up all dependencies (including WebShop indexing).*
 
-**⚠️ DO NOT run this on a login node.** It will fail with `CondaMemoryError`.
+**⚠️ DO NOT run setup.sh manually on a login node.** Use `sbatch` to automatically request a compute node with sufficient memory.
 
 ```bash
+# This command automatically handles the allocation for you
 sbatch slurm_setup.sh
-# Monitor with squeue -u $USER
+
+# Monitor progress: tail -f logs/setup_<jobid>.log
 ```
 
-### 2. Preparation (Native GPU Compute Node)
-*Heavy lifting: merging MoE weights and processing trajectories.*
-
-**⚠️ Native GPU Required:** Do NOT use MIG (partitioned) GPUs for weight merging.
+### 2. Launch Full Automated Pipeline (Login Node)
+*This single command handles everything: model preparation, data processing, hyperparameter tuning, training, and final evaluation.*
 
 ```bash
-# Request a Native H100 or A100-80GB node
-salloc --time=1:00:00 --mem=128G --cpus-per-task=8 --gpus-per-node=h100-96:1
+sbatch submit_full_pipeline.slurm
 ```
 
-Once allocated:
-```bash
-source activate_env.sh
-bash scripts/prepare_model.sh  # Merges MoE experts for dFactory
-bash scripts/01_prepare_data.sh # Pre-processes trajectories
-exit
-```
-
-### 3. Launch Full Automated Pipeline (Login Node)
-*Submits the end-to-end self-tuning pipeline to Slurm.*
-
-```bash
-source activate_env.sh
-bash scripts/submit_pipeline.sh --email your_email@comp.nus.edu.sg
-```
+The master script automatically manages:
+1. **Model Preparation:** Merges MoE weights (requests H100/A100-80).
+2. **Data Preparation:** Length analysis and JSONL generation.
+3. **Phase 1 (Ablation):** 4-way hyperparameter sweep.
+4. **Auto-Selection:** Picks the best `mask_prob` and updates configs.
+5. **Phase 2 (Main):** Sequential training of all baseline and AOMT models.
+6. **Phase 3 (Eval):** Full evaluation and summary table generation.
 
 ---
 
 ## 🤖 How the Pipeline Works (Self-Tuning)
+...
 
 The pipeline is fully automated and operates in three distinct phases to ensure optimal results and QOS compliance:
 

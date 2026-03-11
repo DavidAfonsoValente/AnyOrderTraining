@@ -1,9 +1,18 @@
 #!/bin/bash
-# scripts/01b_prepare_ablation_data.sh
-# Filters the AOMT dataset for ALFWorld only to speed up hyperparameter search.
+# =============================================================================
+# 01b_prepare_ablation_data.sh — Filters AOMT dataset for ALFWorld ablation.
+# CPU-only job.
+# =============================================================================
+#SBATCH --job-name=aomt_abl_data
+#SBATCH --output=logs/01b_prepare_ablation_%j.log
+#SBATCH --time=20
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=4
+#SBATCH --mem=16G
+#SBATCH --partition=normal
 
 set -euo pipefail
-mkdir -p data/cache/ablation
+mkdir -p logs data/cache/ablation
 
 echo "[$(date)] Creating ALFWorld-only ablation dataset..."
 

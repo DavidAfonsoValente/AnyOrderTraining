@@ -1,7 +1,20 @@
 #!/bin/bash
-# Prepares the LLaDA 2.0 Mini model for dFactory training by converting
-# it to the 'merged-expert' format.
+# =============================================================================
+# prepare_model.sh — Model Download and MoE Expert Merging
+#
+# Hardware: Required high VRAM (A100-80 or H100) for merging.
+# =============================================================================
+#SBATCH --job-name=aomt_prep_model
+#SBATCH --output=logs/prepare_model_%j.log
+#SBATCH --time=02:00:00
+#SBATCH --nodes=1
+#SBATCH --gpus-per-node=h100-96:1
+#SBATCH --cpus-per-task=8
+#SBATCH --mem=128G
+#SBATCH --partition=gpu-short
+
 set -e
+mkdir -p logs
 
 echo "========================================"
 echo "      AOMT Model Preparation"
