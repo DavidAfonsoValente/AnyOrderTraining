@@ -15,7 +15,7 @@
 # Usage: sbatch submit_full_pipeline.slurm
 # =============================================================================
 #SBATCH --job-name=aomt_master
-#SBATCH --output=/home/davidvalente/AnyOrderTraining/aomt/logs/master_%j.log
+#SBATCH --output=/home/d/dvalente/AnyOrderTraining/aomt/logs/master_%j.log
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
 #SBATCH --mem=4G
@@ -30,7 +30,7 @@ set -euo pipefail
 mkdir -p logs checkpoints weights results data/cache
 
 # Use absolute path for logs directory to avoid ambiguity
-LOGS_DIR="/home/davidvalente/AnyOrderTraining/aomt/logs"
+LOGS_DIR="/home/d/dvalente/AnyOrderTraining/aomt/logs"
 mkdir -p "$LOGS_DIR"
 
 SCRIPTS_PATH="scripts"
