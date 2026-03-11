@@ -21,8 +21,8 @@ echo "      AOMT Model Preparation"
 echo "========================================"
 
 # --- Configuration ---
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
-AOMT_DIR=$(dirname "$SCRIPT_DIR")
+# Use the hardcoded path from the cluster setup or an environment variable
+AOMT_DIR="${AOMT_ROOT:-/home/d/dvalente/AnyOrderTraining/aomt}"
 VENV_PYTHON="$AOMT_DIR/dFactory/VeOmni/.venv/bin/python"
 
 MODELS_DIR="$AOMT_DIR/weights"

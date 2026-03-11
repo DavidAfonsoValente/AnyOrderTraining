@@ -33,6 +33,7 @@ mkdir -p logs checkpoints weights results data/cache
 LOGS_DIR="/home/d/dvalente/AnyOrderTraining/aomt/logs"
 mkdir -p "$LOGS_DIR"
 
+export AOMT_ROOT="/home/d/dvalente/AnyOrderTraining/aomt"
 SCRIPTS_PATH="scripts"
 
 echo "=== AOMT Master Pipeline Started [$(date)] ==="
