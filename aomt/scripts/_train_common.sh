@@ -10,19 +10,19 @@
 
 # ---- Distributed environment setup -----------------------------------------
 # Slurm populates these variables automatically:
-export MASTER_ADDR=$(scontrol show hostname "$SLURM_NODELIST" | head -n 1)
+export MASTER_ADDR=$(scontrol show hostname "${SLURM_NODELIST:-localhost}" | head -n 1)
 export MASTER_PORT=29500
-export WORLD_SIZE=$((SLURM_NNODES * SLURM_NTASKS_PER_NODE))
-export NODE_RANK=$SLURM_NODEID
+export WORLD_SIZE=$(( ${SLURM_NNODES:-1} * ${SLURM_NTASKS_PER_NODE:-1} ))
+export NODE_RANK=${SLURM_NODEID:-0}
 
 echo "=== Distributed Setup ==="
 echo "  MASTER_ADDR:     $MASTER_ADDR"
 echo "  MASTER_PORT:     $MASTER_PORT"
-echo "  SLURM_NNODES:    $SLURM_NNODES"
-echo "  SLURM_NTASKS_PER_NODE: $SLURM_NTASKS_PER_NODE"
+echo "  SLURM_NNODES:    ${SLURM_NNODES:-1}"
+echo "  SLURM_NTASKS_PER_NODE: ${SLURM_NTASKS_PER_NODE:-1}"
 echo "  WORLD_SIZE:      $WORLD_SIZE"
 echo "  NODE_RANK:       $NODE_RANK"
-echo "  SLURM_JOB_ID:    $SLURM_JOB_ID"
+echo "  SLURM_JOB_ID:    ${SLURM_JOB_ID:-0}"
 echo "=========================="
 
 # ---- PYTHONPATH (dFactory + aomt) ------------------------------------------
@@ -34,9 +34,9 @@ export PYTHONPATH="$REPO_ROOT/dFactory/VeOmni:$REPO_ROOT/dFactory:$PARENT_DIR:${
 # One process per GPU. CUDA_VISIBLE_DEVICES is set by Slurm's GRES.
 # If running multiple GPUs per node, remove this and let torchrun manage.
 export CUDA_LAUNCH_BLOCKING=0
-export NCCL_DEBUG=WARN
-export NCCL_IB_DISABLE=0       # Enable InfiniBand if available (SoC has 10GbE)
-export NCCL_SOCKET_IFNAME=eth0 # Adjust to match SoC network interface
+export NCCL_DEBUG=INFO
+export NCCL_IB_DISABLE=1       # Disable InfiniBand since we have 10GbE
+export NCCL_SOCKET_IFNAME=^lo,docker # Auto-detect interfaces, avoiding loopback and docker
 
 # ---- Launch function --------------------------------------------------------
 launch_training() {
