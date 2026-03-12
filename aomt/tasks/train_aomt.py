@@ -103,14 +103,22 @@ def main():
     dataloader = torch.utils.data.DataLoader(dataset, batch_size=config["train"]["per_device_batch_size"], 
                                              sampler=sampler, collate_fn=lambda b: collate_fn(b, tokenizer.pad_token_id or 0))
 
+    # Memory optimization for single-GPU or fragmented environments
+    os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
+    torch.cuda.empty_cache()
+
     model = build_foundation_model(weights_path=config["model"]["model_path"],
                                    config_path=config["model"].get("config_path", config["model"]["model_path"]),
                                    torch_dtype="bfloat16" if config["train"]["mixed_precision"] == "bf16" else "float32",
                                    attn_implementation="sdpa", init_device=device_type)
 
+    # Ensure parameters require grad BEFORE parallelization
+    for param in model.parameters():
+        param.requires_grad = True
+
     model = build_parallelize_model(model, weights_path=config["model"]["model_path"],
                                     enable_gradient_checkpointing=config["train"].get("gradient_checkpointing", True),
-                                    enable_mixed_precision=False, # Keep in bf16 for fused MoE kernels
+                                    enable_mixed_precision=config["train"].get("enable_mixed_precision", True),
                                     basic_modules=["LLaDA2MoeDecoderLayer"],
                                     init_device=device_type)
 
