@@ -86,7 +86,7 @@ def main():
         config = yaml.safe_load(f)
 
     init_parallel_state(dp_size=dist.get_world_size() if dist.is_initialized() else 1,
-                        dp_mode=config["train"].get("fsdp_type", "fsdp1"))
+                        dp_mode=config["train"].get("fsdp_type", "fsdp2"))
     ps = get_parallel_state()
     device_type = get_device_type()
     device_name = f"{device_type}:{ps.local_rank}"
@@ -115,15 +115,21 @@ def main():
 
     model = build_parallelize_model(model, weights_path=config["model"]["model_path"],
                                     enable_gradient_checkpointing=config["train"].get("gradient_checkpointing", True),
-                                    enable_mixed_precision=config["train"].get("enable_mixed_precision", True),
+                                    enable_mixed_precision=False, # FORCE FALSE to stay in bf16
                                     basic_modules=["LLaDA2MoeDecoderLayer"],
                                     init_device=device_type)
 
+    # Diagnostic: Check precision of a few parameters
+    if ps.global_rank == 0:
+        for name, param in list(model.named_parameters())[:5]:
+            print(f"[RE-CHECK] Param {name} dtype: {param.dtype}, requires_grad: {param.requires_grad}")
+
     optimizer = build_optimizer(model, lr=float(config["train"]["learning_rate"]), weight_decay=config["train"]["weight_decay"], fused=True)
     
-    # Mixed precision setup
+    # Mixed precision setup: bf16 does NOT need a scaler
     use_bf16 = (config["train"]["mixed_precision"] == "bf16")
-    scaler = torch.amp.GradScaler("cuda", enabled=(not use_bf16 and config["train"]["mixed_precision"] != "fp32"))
+    # For bf16, disable the scaler entirely to avoid 'does not require grad' issues
+    scaler = torch.amp.GradScaler("cuda", enabled=False)
 
     num_steps = len(dataloader) * config["train"]["num_epochs"]
     scheduler = build_lr_scheduler(optimizer, train_steps=num_steps, lr=float(config["train"]["learning_rate"]),

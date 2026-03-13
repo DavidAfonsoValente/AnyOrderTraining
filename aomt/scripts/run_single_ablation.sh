@@ -5,6 +5,7 @@
 #SBATCH --job-name=aomt_ablation
 #SBATCH --output=logs/ablation_%j.log
 #SBATCH --nodes=1
+#SBATCH --ntasks-per-node=2
 #SBATCH --gres=gpu:h100-96:2
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=128G

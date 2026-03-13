@@ -23,6 +23,7 @@ train:
   mixed_precision:               bf16
   save_steps:                    500
   gradient_checkpointing:        true   # required for A100-40 nodes
+  fsdp_type:                     fsdp2  # enable ZeRO-3 sharding
 
 masking:
   mode: standard   # parsed by train_standard_sft.py

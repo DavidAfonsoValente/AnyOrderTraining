@@ -23,6 +23,7 @@ train:
   mixed_precision:               bf16
   save_steps:                    500
   gradient_checkpointing:        true
+  fsdp_type:                     fsdp2
 
 masking:
   mode: standard
