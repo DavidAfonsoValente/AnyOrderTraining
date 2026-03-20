@@ -19,12 +19,12 @@ from veomni.distributed.parallel_state import init_parallel_state, get_parallel_
 from veomni.distributed.torch_parallelize import build_parallelize_model
 from veomni.optim import build_lr_scheduler, build_optimizer
 from veomni.utils import helper
-from veomni.utils.device import get_device_type, get_nccl_backend, get_torch_device
+from veomni.utils.device import get_device_type, get_dist_comm_backend, get_torch_device
 from veomni.utils.dist_utils import all_reduce
-from veomni.models.registry import ModelRegistry
 
-# Register custom architecture
-ModelRegistry.register_modeling_path("models.llada2_moe")
+os.environ.setdefault("MODELING_BACKEND", "hf")
+os.environ["HF_HUB_TRUST_REMOTE_CODE"] = "1"
+os.environ["TRUST_REMOTE_CODE"] = "1"
 
 # aomt imports
 from aomt.data.unit_parser import parse_conversation_to_trajectory, tokenize_trajectory
@@ -34,7 +34,7 @@ def compute_unit_mask_loss(logits: torch.Tensor, labels: torch.Tensor) -> torch.
     """Shared loss function: Cross-entropy over masked positions only."""
     mask = (labels != -100)
     if not mask.any():
-        return logits.new_zeros(())
+        return logits.flatten()[0] * 0.0
     return torch.nn.functional.cross_entropy(
         logits.view(-1, logits.size(-1)),
         labels.view(-1),
@@ -79,7 +79,7 @@ def collate_fn(batch, pad_id):
 
 def main():
     if "RANK" in os.environ and not dist.is_initialized():
-        dist.init_process_group(backend=get_nccl_backend())
+        dist.init_process_group(backend=get_dist_comm_backend())
     
     parser = argparse.ArgumentParser()
     parser.add_argument("config", type=str)
@@ -91,6 +91,8 @@ def main():
     init_parallel_state(dp_size=dist.get_world_size() if dist.is_initialized() else 1,
                         dp_mode=config["train"].get("fsdp_type", "fsdp2"))
     ps = get_parallel_state()
+    # VeOmni: fsdp_enabled only when world_size>1. Meta init requires FSDP; single-GPU must load on CUDA.
+    init_device = "meta" if ps.fsdp_enabled else "cuda"
     device_type = get_device_type()
     device_name = f"{device_type}:{ps.local_rank}"
     get_torch_device().set_device(device_name)
@@ -110,7 +112,8 @@ def main():
     model = build_foundation_model(weights_path=config["model"]["model_path"],
                                    config_path=config["model"].get("config_path", config["model"]["model_path"]),
                                    torch_dtype="bfloat16" if config["train"]["mixed_precision"] == "bf16" else "float32",
-                                   attn_implementation="sdpa", init_device=device_type)
+                                   attn_implementation="sdpa", init_device=init_device,
+                                   moe_implementation="fused")
 
     # Ensure parameters require grad BEFORE parallelization
     for param in model.parameters():
@@ -118,9 +121,9 @@ def main():
 
     model = build_parallelize_model(model, weights_path=config["model"]["model_path"],
                                     enable_gradient_checkpointing=config["train"].get("gradient_checkpointing", True),
-                                    enable_mixed_precision=False, # FORCE FALSE to stay in bf16
+                                    enable_mixed_precision=False,
                                     basic_modules=["LLaDA2MoeDecoderLayer"],
-                                    init_device=device_type)
+                                    init_device=init_device)
 
     # Diagnostic: Check precision of a few parameters
     if ps.global_rank == 0:
@@ -139,10 +142,17 @@ def main():
                                    lr_min=float(config["train"].get("min_lr", 0)),
                                    lr_warmup_ratio=float(config["train"].get("warmup_steps", 0))/num_steps if num_steps > 0 else 0)
 
+    from tqdm import tqdm
+    accum_steps = config["train"].get("gradient_accumulation_steps", 1)
+    if ps.global_rank == 0:
+        print(f"Gradient accumulation steps: {accum_steps}")
+        print(f"Effective batch size: {config['train']['per_device_batch_size']} × {ps.world_size} × {accum_steps} = {config['train']['per_device_batch_size'] * ps.world_size * accum_steps}")
+
     model.train()
     for epoch in range(config["train"]["num_epochs"]):
         sampler.set_epoch(epoch)
-        for batch in dataloader:
+        pbar = tqdm(dataloader, desc=f"Epoch {epoch}/{config['train']['num_epochs']}", disable=(ps.global_rank != 0))
+        for micro_step, batch in enumerate(pbar):
             batch = {k: v.to(device_name, non_blocking=True) for k, v in batch.items()}
             labels = batch.pop("labels")
             # Bidirectional 2D attention mask
@@ -152,25 +162,30 @@ def main():
                 logits = model(**batch, use_cache=False).logits
                 loss = compute_unit_mask_loss(logits, labels)
 
-            scaler.scale(loss).backward()
-            
-            if hasattr(model, "clip_grad_norm_"): 
-                scaler.unscale_(optimizer)
-                model.clip_grad_norm_(config["train"]["gradient_clip"])
-            else: 
-                scaler.unscale_(optimizer)
-                torch.nn.utils.clip_grad_norm_(model.parameters(), config["train"]["gradient_clip"])
+            # Scale loss by accumulation steps so the gradient magnitude
+            # is correct when accumulated over multiple micro-batches
+            scaled_loss = loss / accum_steps
+            scaler.scale(scaled_loss).backward()
 
-            scaler.step(optimizer)
-            scaler.update()
-            scheduler.step()
-            optimizer.zero_grad()
+            # Only step the optimizer every accum_steps micro-batches
+            if (micro_step + 1) % accum_steps == 0:
+                if hasattr(model, "clip_grad_norm_"): 
+                    scaler.unscale_(optimizer)
+                    model.clip_grad_norm_(config["train"]["gradient_clip"])
+                else: 
+                    scaler.unscale_(optimizer)
+                    torch.nn.utils.clip_grad_norm_(model.parameters(), config["train"]["gradient_clip"])
+
+                scaler.step(optimizer)
+                scaler.update()
+                scheduler.step()
+                optimizer.zero_grad()
+
             avg_loss = all_reduce(loss.detach(), group=ps.fsdp_group)
-            if ps.global_rank == 0: print(f"Epoch {epoch} Loss: {avg_loss:.4f}", end="\r")
+            if ps.global_rank == 0: pbar.set_postfix(loss=f"{avg_loss:.4f}")
 
-        if ps.global_rank == 0:
-            save_path = os.path.join(config["train"]["output_dir"], f"epoch_{epoch}")
-            save_model_weights(save_path, model.state_dict())
+        save_path = os.path.join(config["train"]["output_dir"], f"epoch_{epoch}")
+        save_model_weights(save_path, model.state_dict(), global_rank=ps.global_rank)
 
     if dist.is_initialized(): dist.destroy_process_group()
 
