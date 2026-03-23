@@ -17,8 +17,8 @@ train:
   warmup_steps:                  50
   weight_decay:                  0.1
   gradient_clip:                 1.0
-  per_device_batch_size:         4      # shorter sequences
-  gradient_accumulation_steps:   4      # effective batch = 4 × 4 × 4 = 64
+  per_device_batch_size:         8      # shorter sequences, more room
+  gradient_accumulation_steps:   2      # effective batch = 8 × 4 GPUs × 2 = 64
   max_seq_length:                512
   mixed_precision:               bf16
   save_steps:                    500

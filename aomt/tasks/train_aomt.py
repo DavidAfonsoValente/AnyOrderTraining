@@ -106,7 +106,8 @@ def main():
                                              sampler=sampler, collate_fn=lambda b: collate_fn(b, tokenizer.pad_token_id or 0))
 
     # Memory optimization for single-GPU or fragmented environments
-    os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
+    os.environ.setdefault("PYTORCH_CUDA_ALLOC_CONF", "expandable_segments:True")
+    os.environ.setdefault("PYTORCH_ALLOC_CONF", "expandable_segments:True")
     torch.cuda.empty_cache()
 
     model = build_foundation_model(weights_path=config["model"]["model_path"],
@@ -137,13 +138,18 @@ def main():
     # For bf16, disable the scaler entirely to avoid 'does not require grad' issues
     scaler = torch.amp.GradScaler("cuda", enabled=False)
 
-    num_steps = len(dataloader) * config["train"]["num_epochs"]
-    scheduler = build_lr_scheduler(optimizer, train_steps=num_steps, lr=float(config["train"]["learning_rate"]),
-                                   lr_min=float(config["train"].get("min_lr", 0)),
-                                   lr_warmup_ratio=float(config["train"].get("warmup_steps", 0))/num_steps if num_steps > 0 else 0)
-
     from tqdm import tqdm
     accum_steps = config["train"].get("gradient_accumulation_steps", 1)
+
+    # num_steps = total optimizer steps (accounting for gradient accumulation)
+    # Paper: "50 warmup steps" — must compute ratio against optimizer steps
+    micro_batches_per_epoch = len(dataloader)
+    num_steps = (micro_batches_per_epoch * config["train"]["num_epochs"]) // accum_steps
+    warmup_steps = int(config["train"].get("warmup_steps", 0))
+    warmup_ratio = warmup_steps / num_steps if num_steps > 0 else 0
+    scheduler = build_lr_scheduler(optimizer, train_steps=num_steps, lr=float(config["train"]["learning_rate"]),
+                                   lr_min=float(config["train"].get("min_lr", 0)),
+                                   lr_warmup_ratio=warmup_ratio)
     if ps.global_rank == 0:
         print(f"Gradient accumulation steps: {accum_steps}")
         print(f"Effective batch size: {config['train']['per_device_batch_size']} × {ps.world_size} × {accum_steps} = {config['train']['per_device_batch_size'] * ps.world_size * accum_steps}")

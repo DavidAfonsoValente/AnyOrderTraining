@@ -1,0 +1,31 @@
+# configs/aomt_mixed_1gpu.yaml
+# Same as aomt_mixed.yaml but tuned for ONE GPU (no FSDP): batch 2 × 2048 OOMs on ~140GB.
+# Effective batch ≈ previous 2×1×11 = 22  →  1×1×22 = 22
+model:
+  model_path:      ./weights/llada2-mini-merged
+  tokenizer_path:  ./weights/LLaDA2.0-mini
+
+data:
+  train_path:  ./data/cache/aomt_train.jsonl
+  test_path:   ./data/cache/aomt_test.jsonl
+
+train:
+  output_dir:                    ./checkpoints/aomt_mixed
+  num_epochs:                    5
+  learning_rate:                 2.5e-5
+  lr_scheduler:                  cosine
+  min_lr:                        2.5e-6
+  warmup_steps:                  50
+  weight_decay:                  0.1
+  gradient_clip:                 1.0
+  per_device_batch_size:         1
+  gradient_accumulation_steps:   22
+  max_seq_length:                2048
+  mixed_precision:               bf16
+  save_steps:                    500
+  gradient_checkpointing:        true
+  fsdp_type:                     fsdp2
+
+aomt:
+  mode:       mixed
+  mask_prob:  0.25

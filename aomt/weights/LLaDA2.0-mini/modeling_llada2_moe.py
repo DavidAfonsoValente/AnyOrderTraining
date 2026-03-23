@@ -114,6 +114,9 @@ class LLaDA2MoeRotaryEmbedding(nn.Module):
     @torch.no_grad()
     @dynamic_rope_update  # power user: used with advanced RoPE types (e.g. dynamic rope)
     def forward(self, x, position_ids):
+        if self.inv_freq.numel() > 0 and self.inv_freq.abs().max() == 0:
+            inv_freq, _ = self.rope_init_fn(self.config, x.device)
+            self.inv_freq = inv_freq
         inv_freq_expanded = (
             self.inv_freq[None, :, None]
             .float()
@@ -1391,13 +1394,10 @@ class LLaDA2MoeModelLM(LLaDA2MoePreTrainedModel, GenerationMixin):
 
         generated_answer = x[:, : prompt_length + gen_length]
 
-        mask_positions = (generated_answer[0][input_ids.shape[1] :] == eos_id).nonzero(
-            as_tuple=True
-        )[0]
-        if len(mask_positions) > 0:
-            first_mask_position = mask_positions[0].item()
+        gen_tokens = generated_answer[0, prompt_length:]
+        eos_positions = (gen_tokens == eos_id).nonzero(as_tuple=True)[0]
+        if len(eos_positions) > 0:
+            end = prompt_length + eos_positions[0].item() + 1
         else:
-            first_mask_position = gen_length
-        return generated_answer[
-            :, input_ids.shape[1] : input_ids.shape[1] + first_mask_position + 1
-        ]
+            end = prompt_length + gen_length
+        return generated_answer[:, :end]

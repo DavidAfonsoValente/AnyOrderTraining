@@ -8,21 +8,25 @@ No mock results; handles real trajectories, history management, and LLaDA 2.0 ge
 import argparse
 import json
 import os
+import sys
 import torch
 import numpy as np
 import yaml
 from tqdm import tqdm
 from transformers import AutoTokenizer
 
-# Use local dFactory/VeOmni if available
-try:
-    from veomni.models import build_tokenizer, build_foundation_model
-except ImportError:
-    # Minimal fallbacks
-    def build_tokenizer(path): return AutoTokenizer.from_pretrained(path, trust_remote_code=True)
-    def build_foundation_model(**kwargs): 
-        from transformers import AutoModelForCausalLM
-        return AutoModelForCausalLM.from_pretrained(kwargs['weights_path'], trust_remote_code=True)
+# Add aomt and dFactory to path for VeOmni imports
+_script_dir = os.path.dirname(os.path.abspath(__file__))
+_aomt_dir = os.path.dirname(_script_dir)
+sys.path.insert(0, os.path.dirname(_aomt_dir))  # parent of aomt/
+sys.path.insert(0, os.path.join(_aomt_dir, "dFactory"))
+
+# Use VeOmni's model loader — handles fused MoE weights correctly
+from veomni.models import build_foundation_model as _veomni_build_model
+from veomni.models import build_tokenizer as _veomni_build_tokenizer
+
+def build_tokenizer(path):
+    return AutoTokenizer.from_pretrained(path, trust_remote_code=True)
 
 SYSTEM_PROMPT = """Interact with a household to solve a task. Imagine you are an intelligent agent in a household environment and your target is to perform actions to complete the task goal. At the beginning of your interactions, you will be given the detailed description of the current environment and your goal to accomplish. 
 For each of your turn, you will be given the observation of the last turn. You should first think about the current condition and plan for your future actions, and then output your action in this turn. Your output must strictly follow this format:"Thought: your thoughts.\\nAction: your next action".
@@ -55,53 +59,51 @@ def evaluate_scienceworld(model, tokenizer, split="test", n_episodes=50, max_ste
     Ref: https://github.com/allenai/scienceworld
     """
     from scienceworld import ScienceWorldEnv
-    # Initialize the environment
     env = ScienceWorldEnv("", "", envStepLimit=max_steps)
-    task_names = env.getTaskNames()
-    
+    task_names = env.get_task_names()
+
     scores = []
-    print(f"Running ScienceWorld evaluation ({split} split, {n_episodes} episodes)...")
-    
-    for episode in tqdm(range(n_episodes)):
-        # Task selection logic: cycle through tasks
-        task_name = task_names[episode % len(task_names)]
-        
-        # Determine available variations for the split
-        if split in ["test", "unseen"]:
-            variations = env.getVariationsTest()
-        elif split in ["dev", "val"]:
-            variations = env.getVariationsDev()
-        else: # Default to train or seen
-            variations = env.getVariationsTrain()
-            
-        if not variations:
-            print(f"Warning: No variations found for task {task_name} in split {split}. Skipping.")
+    print(f"Running ScienceWorld evaluation ({split} split, {n_episodes} episodes, {len(task_names)} tasks)...")
+
+    ep = 0
+    for task_idx, task_name in enumerate(task_names):
+        if ep >= n_episodes:
+            break
+
+        try:
+            env.load(task_name, 0)
+            if split in ["test", "unseen"]:
+                variations = env.get_variations_test()
+            elif split in ["dev", "val"]:
+                variations = env.get_variations_dev()
+            else:
+                variations = env.get_variations_train()
+        except Exception as e:
+            print(f"  Skipping task '{task_name}': {e}")
             continue
-            
-        # Select variation based on episode count
-        variation_idx = variations[(episode // len(task_names)) % len(variations)]
-        
-        # Load specific task/variation and reset
-        env.load(task_name, variation_idx)
-        observation, info = env.reset()
-        
-        # Initialize history with system prompt and assistant "OK"
-        obs_history = SYSTEM_PROMPT + "\nOK\n" + observation
-        done = False
-        step = 0
-        
-        while not done and step < max_steps:
-            # Predict the next action using LLaDA 2.0
-            action = generate_action(model, tokenizer, obs_history, **kwargs)
-            observation, reward, done, info = env.step(action)
-            
-            # Simple linear history concatenation
-            obs_history += f"\n{action}\n{observation}"
-            step += 1
-            
-        # Score is returned as 0-100; normalize to 0-1
-        scores.append(info.get('score', 0.0) / 100.0)
-    
+
+        if not variations:
+            continue
+
+        for var_idx in variations:
+            if ep >= n_episodes:
+                break
+
+            env.load(task_name, var_idx)
+            observation, info = env.reset()
+            obs_history = SYSTEM_PROMPT + "\nOK\n" + str(observation)
+            done = False
+
+            for step in range(max_steps):
+                if done:
+                    break
+                action = generate_action(model, tokenizer, obs_history, **kwargs)
+                observation, reward, done, info = env.step(action)
+                obs_history += f"\n{action}\n{str(observation)}"
+
+            scores.append(info.get('score', 0.0) / 100.0)
+            ep += 1
+
     env.close()
     return {"avg_score": float(np.mean(scores)) if scores else 0.0, "episodes": len(scores)}
 
@@ -110,56 +112,57 @@ def evaluate_alfworld(model, tokenizer, split="test", n_episodes=50, max_steps=5
     Evaluates ALFWorld and returns success rate.
     Ref: https://github.com/alfworld/alfworld
     """
-    import alfworld.agents.environment
-    
-    # ALFWorld requires a YAML config file for initialization
+    from alfworld.agents.environment import get_environment
+
     config_path = os.environ.get("ALFWORLD_CONFIG", "configs/alfworld_config.yaml")
     if not os.path.exists(config_path):
         raise FileNotFoundError(f"ALFWorld config not found at {config_path}. Check $ALFWORLD_CONFIG.")
-    
+
     with open(config_path, 'r') as f:
         config = yaml.safe_load(f)
-    
-    # Environment initialization (standard ALFWorld setup)
-    print(f"Running ALFWorld evaluation ({split} split, {n_episodes} episodes)...")
-    env = alfworld.agents.environment.get_environment(config)
-    
+
+    split_map = {
+        "test": "eval_out_of_distribution",
+        "seen": "eval_in_distribution",
+        "unseen": "eval_out_of_distribution",
+        "train": "train",
+    }
+    train_eval = split_map.get(split, "eval_out_of_distribution")
+
+    env_type = config.get("env", {}).get("type", "AlfredTWEnv")
+    EnvClass = get_environment(env_type)
+    tw_env = EnvClass(config, train_eval=train_eval)
+    gym_env = tw_env.init_env(batch_size=1)
+
+    print(f"Running ALFWorld evaluation ({split} -> {train_eval}, {n_episodes} episodes, {tw_env.num_games} games)...")
+
     successes = []
-    count = 0
-    
-    # ALFWorld env acts as a generator/iterator of episodes
-    for env_session in env:
-        if count >= n_episodes:
-            break
-            
-        observation, info = env_session.reset()
-        # Handle observation list (standard ALFWorld returns a list for batching)
-        if isinstance(observation, list): observation = observation[0]
-        
-        # Initialize history with system prompt and assistant "OK"
-        obs_history = SYSTEM_PROMPT + "\nOK\n" + observation
+    for ep in tqdm(range(min(n_episodes, tw_env.num_games)), desc="ALFWorld episodes"):
+        obs, infos = gym_env.reset()
+        if isinstance(obs, (list, tuple)):
+            obs = obs[0]
+        obs = str(obs)
+
+        obs_history = SYSTEM_PROMPT + "\nOK\n" + obs
         done = False
-        step = 0
-        
-        while not done and step < max_steps:
-            # Predict action from current history
+        reward = 0.0
+
+        for step in range(max_steps):
+            if done:
+                break
             action = generate_action(model, tokenizer, obs_history, **kwargs)
-            
-            # Step the environment (expects list of actions)
-            observation, reward, done, info = env_session.step([action])
-            
-            # Unpack results
-            if isinstance(observation, list): observation = observation[0]
-            if isinstance(reward, list): reward = reward[0]
-            if isinstance(done, list): done = done[0]
-            
-            obs_history += f"\n{action}\n{observation}"
-            step += 1
-            
-        # Success is defined by binary reward in ALFWorld
+
+            obs_list, reward_list, done_list, infos = gym_env.step([action])
+            obs = obs_list[0] if isinstance(obs_list, (list, tuple)) else obs_list
+            reward = reward_list[0] if isinstance(reward_list, (list, tuple)) else reward_list
+            done = done_list[0] if isinstance(done_list, (list, tuple)) else done_list
+            obs = str(obs)
+
+            obs_history += f"\n{action}\n{obs}"
+
         successes.append(1.0 if reward > 0 else 0.0)
-        count += 1
-        
+
+    gym_env.close()
     return {"success_rate": float(np.mean(successes)) if successes else 0.0, "episodes": len(successes)}
 
 def evaluate_webshop(model, tokenizer, split="test", n_episodes=50, max_steps=10, **kwargs):
@@ -238,84 +241,123 @@ def evaluate_webshop(model, tokenizer, split="test", n_episodes=50, max_steps=10
 # Generation Logic (LLaDA 2.0 specific)
 # -----------------------------------------------------------------------------
 
-def generate_action(model, tokenizer, obs_history_text: str, gen_length: int = 256, block_length: int = 32, steps: int = 32) -> str:
+def generate_action(model, tokenizer, obs_history_text: str, gen_length: int = 64, block_length: int = 32, steps: int = 256) -> str:
     """
     LLaDA 2.0 generation API.
     Utilizes bidirectional unmasking via the specialized model.generate call.
-    Parses history into turns to match chat template expectations.
+
+    Training format: a single user message containing the full concatenated
+    history (system prompt, OK, observations, actions joined by \\n), with the
+    assistant response being the next action.  We replicate that here.
     """
-    # Split history into turns. Training used strictly alternating format.
-    # The history starts with SYSTEM_PROMPT, then OK, then observations/actions.
-    # We reconstruct the message list.
-    messages = []
-    
-    # Check if history starts with system prompt
-    if obs_history_text.startswith("Interact with a household"):
-        # Extract system prompt and OK
-        parts = obs_history_text.split("\nOK\n", 1)
-        messages.append({"role": "user", "content": parts[0].strip()})
-        messages.append({"role": "assistant", "content": "OK"})
-        remaining = parts[1] if len(parts) > 1 else ""
-    else:
-        remaining = obs_history_text
+    messages = [
+        {"role": "user", "content": obs_history_text},
+    ]
 
-    # Split the rest by newline and try to identify turns.
-    # Since actions are typically generated by assistant and observations by user.
-    # In task_eval, we append history as: history += f"\n{action}\n{observation}"
-    # This means everything after the initial "OK" alternates: Obs, Act, Obs, Act...
-    
-    turns = [t.strip() for t in remaining.split("\n") if t.strip()]
-    for i, turn in enumerate(turns):
-        role = "user" if i % 2 == 0 else "assistant"
-        messages.append({"role": role, "content": turn})
-
-    # Tokenize history using the chat template (Standard in dFactory/VeOmni)
-    input_ids = tokenizer.apply_chat_template(
+    token_output = tokenizer.apply_chat_template(
         messages,
         add_generation_prompt=True,
         tokenize=True,
         return_tensors="pt",
-    ).to(model.device)
+    )
+    if isinstance(token_output, torch.Tensor):
+        input_ids = token_output
+    elif hasattr(token_output, "input_ids"):
+        input_ids = token_output.input_ids
+    else:
+        input_ids = torch.tensor([token_output], dtype=torch.long)
 
-    # Context window management
-    max_context = getattr(model.config, "max_position_embeddings", 2048) - gen_length - 8 
-    if input_ids.shape[1] > max_context: 
+    if input_ids.dim() == 1:
+        input_ids = input_ids.unsqueeze(0)
+
+    target_device = next(model.parameters()).device
+    input_ids = input_ids.to(target_device)
+
+    max_context = getattr(model.config, "max_position_embeddings", 2048) - gen_length - 8
+    if input_ids.shape[1] > max_context:
         input_ids = input_ids[:, -max_context:]
 
+    _debug_counter = getattr(generate_action, '_call_count', 0)
+    generate_action._call_count = _debug_counter + 1
+    _do_log = (_debug_counter < 5) or (_debug_counter % 50 == 0)
+
+    if _do_log:
+        print(f"\n[DEBUG gen #{_debug_counter}] input_ids shape: {input_ids.shape}, "
+              f"n_messages: {len(messages)}, mask_id: {tokenizer.mask_token_id or 156895}")
+
     with torch.no_grad():
-        # The LLaDA2MoeModelLM.generate method uses these specific names:
         output_ids = model.generate(
             inputs=input_ids,
             gen_length=gen_length,
             block_length=block_length,
             steps=steps,
-            temperature=0.0,
+            temperature=0.2,
             eos_early_stop=True,
             mask_id=tokenizer.mask_token_id or 156895
         )
 
-    # Extract the generated response only
     generated = output_ids[0, input_ids.shape[1]:]
-    
-    # Post-hoc EOS truncation if needed
+
+    if _do_log:
+        raw_tokens = generated[:60].tolist()
+        mask_count = (generated == (tokenizer.mask_token_id or 156895)).sum().item()
+        eos_count = (generated == tokenizer.eos_token_id).sum().item() if tokenizer.eos_token_id else 0
+        print(f"[DEBUG gen #{_debug_counter}] generated length: {generated.shape[0]}, "
+              f"mask_tokens_remaining: {mask_count}, eos_tokens: {eos_count}")
+        print(f"[DEBUG gen #{_debug_counter}] first 60 token ids: {raw_tokens}")
+
     eos_id = tokenizer.eos_token_id
     if eos_id is not None:
         eos_positions = (generated == eos_id).nonzero(as_tuple=True)[0]
         if len(eos_positions) > 0:
             generated = generated[:eos_positions[0]]
 
-    # Decode and return stripped string
     full_response = tokenizer.decode(generated, skip_special_tokens=True).strip()
+
+    if _do_log:
+        print(f"[DEBUG gen #{_debug_counter}] full_response (first 300 chars): {repr(full_response[:300])}")
+
+    # ── Clean MDLM artifacts: duplicated role tokens ──
+    import re
+    # "ActionActionAction:" → "Action:", "ThoughtThought:" → "Thought:" etc.
+    cleaned = re.sub(r'(Action){2,}', 'Action', full_response)
+    cleaned = re.sub(r'(Thought){2,}', 'Thought', cleaned)
+    cleaned = re.sub(r'(Observation){2,}', 'Observation', cleaned)
+
+    # ── Parse action ──
+    action = ""
+    if "Action:" in cleaned:
+        # Take the FIRST Action: match, truncate at newline
+        action_part = cleaned.split("Action:")[1].strip()
+        action = action_part.split("\n")[0].strip()
+    elif "action:" in cleaned:
+        action_part = cleaned.split("action:")[1].strip()
+        action = action_part.split("\n")[0].strip()
     
-    # Standard ReAct parsing: Extract the action after "Action:"
-    if "Action:" in full_response:
-        action = full_response.split("Action:")[-1].strip()
-    elif "action:" in full_response:
-        action = full_response.split("action:")[-1].strip()
-    else:
-        # Fallback to the last line if no explicit "Action:" tag is found
-        lines = [l.strip() for l in full_response.split("\n") if l.strip()]
-        action = lines[-1] if lines else full_response
+    # If no action found or action is empty, try to find a valid ALFWorld verb pattern
+    if not action or len(action) < 3:
+        verb_pattern = re.search(
+            r'\b(go to|take|put|open|close|toggle|clean|heat|cool|examine|look|use|inventory)\b.+',
+            cleaned, re.IGNORECASE
+        )
+        if verb_pattern:
+            action = verb_pattern.group(0).split("\n")[0].strip()
+        else:
+            # Last resort: take last non-empty line
+            lines = [l.strip() for l in cleaned.split("\n") if l.strip()]
+            action = lines[-1] if lines else cleaned
+
+    # ── Final cleanup ──
+    action = action.rstrip('.').strip()
+    # Remove stray role prefixes that slipped through
+    action = re.sub(r'^(Thought|Action|Observation)\s*:?\s*', '', action).strip()
+    # Truncate unreasonably long actions (valid ALFWorld actions are <10 words)
+    words = action.split()
+    if len(words) > 10:
+        action = ' '.join(words[:10])
+
+    if _do_log:
+        print(f"[DEBUG gen #{_debug_counter}] parsed action: {repr(action[:200])}")
 
     return action
 
@@ -326,32 +368,33 @@ def generate_action(model, tokenizer, obs_history_text: str, gen_length: int = 2
 def main():
     parser = argparse.ArgumentParser(description="AOMT Task Evaluation Suite")
     parser.add_argument("--model_path", type=str, required=True, help="Path to the model checkpoint")
+    parser.add_argument("--config_path", type=str, default="./weights/llada2-mini-merged",
+                        help="Path to base model (for config/architecture). Default: ./weights/llada2-mini-merged")
     parser.add_argument("--tokenizer", type=str, required=True, help="Path to the tokenizer")
     parser.add_argument("--benchmark", type=str, required=True, choices=["alfworld", "scienceworld", "webshop"], 
                         help="Benchmark to evaluate")
     parser.add_argument("--split", type=str, default="test", choices=["train", "test", "seen", "unseen", "dev", "val"], 
                         help="Data split to evaluate on")
     parser.add_argument("--n_episodes", type=int, default=50, help="Number of episodes to evaluate")
-    parser.add_argument("--gen_length", type=int, default=256, help="Max length of generated action")
+    parser.add_argument("--gen_length", type=int, default=64, help="Max length of generated action")
     parser.add_argument("--block_length", type=int, default=32, help="Block length for LLaDA generation")
-    parser.add_argument("--steps", type=int, default=32, help="Denoising steps per block")
+    parser.add_argument("--steps", type=int, default=256, help="Denoising steps per block")
     parser.add_argument("--output_file", type=str, required=True, help="JSON file to save results")
+    parser.add_argument("--device", type=str, default=None, help="Device to load model on, e.g. 'cuda:0'. Default: auto")
     args = parser.parse_args()
 
-    # Hardware detection
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    print(f"Loading model on {device}...")
-    
-    # Load model and tokenizer via VeOmni builders or HF fallbacks
+    init_device = "cuda" if torch.cuda.is_available() else "cpu"
+    print(f"Loading model from {args.model_path} (config from {args.config_path})...")
+
     tokenizer = build_tokenizer(args.tokenizer)
-    model = build_foundation_model(
+    model = _veomni_build_model(
         weights_path=args.model_path,
-        config_path=args.model_path,
+        config_path=args.config_path,
         torch_dtype="bfloat16",
         attn_implementation="sdpa",
-        init_device=device
+        init_device=init_device,
+        moe_implementation="fused"
     )
-    model.to(device)
     model.eval()
 
     # Bundle generation parameters

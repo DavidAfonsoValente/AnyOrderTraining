@@ -80,6 +80,29 @@ The primary experiments (Standard SFT, Prefix S1/S2, AOMT-Action, AOMT-Mixed) ex
 
 ---
 
+## ⚡ GPU: Triton fused MoE (VeOmni)
+
+Training uses `moe_implementation="fused"`. The **fast path** is VeOmni’s Triton **group GEMM** (`group_gemm_fused_moe_forward`). Your environment must satisfy:
+
+| Requirement | Notes |
+| :--- | :--- |
+| **CUDA PyTorch** | `torch.cuda.is_available()` must be `True` on a GPU node (not CPU-only wheels). |
+| **`triton`** | `pip install 'triton>=3.0'` — also listed in `requirements.txt` / VeOmni `pyproject` `[gpu]` extra. |
+| **`USE_GROUP_GEMM=1`** | Default in VeOmni; do **not** set `USE_GROUP_GEMM=0`. |
+| **No `torch_npu`** | If Ascend NPU torch is installed, VeOmni disables the CUDA fused-MoE check. |
+
+**Check your conda env (`aomt`) after `pip install -r requirements.txt`:**
+
+```bash
+cd /path/to/aomt
+export PYTHONPATH="dFactory/VeOmni:dFactory:${PYTHONPATH}"
+python scripts/verify_triton_moe_env.py
+```
+
+Exit code **0** ⇒ Triton path is bound; **2** ⇒ PyTorch eager fallback (still runs, slower).
+
+---
+
 ## 📂 Repository Structure
 
 *   `data/`: Trajectory parsing, subset filtering, and JSONL generation.

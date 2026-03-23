@@ -4,6 +4,14 @@ from typing import List, Literal, Optional
 import torch
 from transformers import PreTrainedTokenizer
 
+def _to_id_list(result):
+    """Convert tokenizer output to a plain list of ints."""
+    if isinstance(result, list):
+        return result
+    if hasattr(result, "input_ids"):
+        return result.input_ids if isinstance(result.input_ids, list) else list(result.input_ids)
+    return list(result)
+
 # Section 3.3: Internal Trajectory Format
 @dataclass
 class TrajectoryUnit:
@@ -93,18 +101,14 @@ def tokenize_trajectory(
     # Use apply_chat_template to get the full tokenized sequence
     # add_generation_prompt=False because we are tokenizing a completed history
     try:
-        all_ids = tokenizer.apply_chat_template(messages, tokenize=True, add_generation_prompt=False)
+        all_ids = _to_id_list(tokenizer.apply_chat_template(messages, tokenize=True, add_generation_prompt=False))
     except Exception:
-        # Fallback for older tokenizers or missing templates
         return None
 
     if len(all_ids) > max_length:
-        # If too long, we need to truncate by dropping whole units from the end
-        # This is complex because chat templates aren't easily divisible.
-        # We iteratively drop units until it fits.
         while len(messages) > 1:
             messages.pop()
-            all_ids = tokenizer.apply_chat_template(messages, tokenize=True, add_generation_prompt=False)
+            all_ids = _to_id_list(tokenizer.apply_chat_template(messages, tokenize=True, add_generation_prompt=False))
             if len(all_ids) <= max_length:
                 break
         else:
@@ -119,14 +123,14 @@ def tokenize_trajectory(
     # The LLaDA template adds a SYSTEM prompt at the beginning.
     # We first find the base length with 0 user messages if possible.
     try:
-        base_ids = tokenizer.apply_chat_template([], tokenize=True, add_generation_prompt=False)
+        base_ids = _to_id_list(tokenizer.apply_chat_template([], tokenize=True, add_generation_prompt=False))
     except:
         base_ids = []
     
     current_pos = len(base_ids)
     
     for i in range(1, len(messages) + 1):
-        prefix_ids = tokenizer.apply_chat_template(messages[:i], tokenize=True, add_generation_prompt=False)
+        prefix_ids = _to_id_list(tokenizer.apply_chat_template(messages[:i], tokenize=True, add_generation_prompt=False))
         
         # The span starts at the end of the previous prefix and ends at the end of this one.
         # Note: This is an approximation as some templates might add tokens in the middle,

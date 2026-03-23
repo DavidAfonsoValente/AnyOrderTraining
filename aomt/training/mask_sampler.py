@@ -60,7 +60,9 @@ def apply_unit_mask(
 ) -> Tuple[torch.LongTensor, torch.LongTensor]:
     """
     Applies masking to a tokenized trajectory based on the selected mode.
-    Ensures at least one unit is masked for stochastic modes.
+    Uses LLaDA2/MDLM random masking ratio within each selected unit:
+    samples t ~ U(0,1) per sample, then independently masks each token
+    in the selected units with probability t.
     """
     if rng is None:
         rng = np.random.default_rng()
@@ -85,10 +87,19 @@ def apply_unit_mask(
         if eligible:
             units_to_mask = [rng.choice(eligible)]
 
-    # Apply the mask to the selected units
+    # Sample random masking ratio t ~ U(0,1) for MDLM forward process
+    t = rng.random()
+
+    # Apply per-token random masking within the selected units
     for unit in units_to_mask:
         if unit.token_start < unit.token_end:
-            input_ids[unit.token_start:unit.token_end] = mask_token_id
-            loss_mask[unit.token_start:unit.token_end] = True
+            span_len = unit.token_end - unit.token_start
+            # Each token independently masked with probability t
+            token_mask = torch.from_numpy(rng.random(span_len) < t)
+            # Ensure at least 1 token is masked per unit
+            if not token_mask.any():
+                token_mask[rng.integers(span_len)] = True
+            input_ids[unit.token_start:unit.token_end][token_mask] = mask_token_id
+            loss_mask[unit.token_start:unit.token_end][token_mask] = True
 
     return input_ids, loss_mask
