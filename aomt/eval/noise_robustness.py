@@ -15,7 +15,6 @@ from transformers import AutoTokenizer
 
 from aomt.eval.task_eval import (
     build_tokenizer,
-    build_foundation_model,
     generate_action,
     SYSTEM_PROMPT,
 )
