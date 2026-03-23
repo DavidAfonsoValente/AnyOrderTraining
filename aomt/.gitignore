@@ -27,3 +27,10 @@ dFactory/
 
 # WebShop
 eval/WebShop/
+
+# Large log files
+logs/
+*.log
+
+# Stray pip output
+=*
