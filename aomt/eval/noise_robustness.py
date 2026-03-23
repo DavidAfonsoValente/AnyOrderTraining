@@ -43,7 +43,7 @@ def corrupt_observation(obs_text: str, rho: float, tokenizer, rng) -> str:
         return obs_text
     
     # Replace corrupted positions with random vocab IDs
-    vocab_size = tokenizer.vocab_size
+    vocab_size = len(tokenizer)
     random_ids = rng.integers(0, vocab_size, size=n_corrupt)
     
     corrupted = list(tokens)
