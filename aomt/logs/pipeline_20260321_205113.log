@@ -1,0 +1,100 @@
+nohup: ignoring input
+==================================================================
+ AOMT Full Training Pipeline
+ GPUs: 2,4,6,7 (4 processes)
+ Logs: ./logs/20260321_205113
+ Started: Sat Mar 21 08:51:13 PM +08 2026
+==================================================================
+  ⏭️  Skipping Standard SFT (already completed — checkpoints/sft_standard/epoch_0,1,2)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  [02_aomt_action_only] Starting @ Sat Mar 21 08:51:13 PM +08 2026
+  Script: tasks/train_aomt.py | Config: configs/aomt_action_only.yaml | Port: 29502
+  Log: ./logs/20260321_205113/02_aomt_action_only.log
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+W0321 20:51:20.156000 1166595 site-packages/torch/distributed/run.py:852] 
+W0321 20:51:20.156000 1166595 site-packages/torch/distributed/run.py:852] *****************************************
+W0321 20:51:20.156000 1166595 site-packages/torch/distributed/run.py:852] Setting OMP_NUM_THREADS environment variable for each process to be 1 in default, to avoid your system being overloaded, please further tune the variable for optimal performance in your application as needed. 
+W0321 20:51:20.156000 1166595 site-packages/torch/distributed/run.py:852] *****************************************
+[INFO|/scratch/e1507650/AnyOrderTraining/aomt/dFactory/VeOmni/veomni/ops/__init__.py:41] 03/21/2026 20:51:51 >> ⚠️ Skip applying ops patch. Using huggingface transformers backend.
+[INFO|/scratch/e1507650/AnyOrderTraining/aomt/dFactory/VeOmni/veomni/__init__.py:25] 03/21/2026 20:51:51 >> 
+========== Environment Variables ==========
+MODELING_BACKEND=hf (source=env)
+USE_GROUP_GEMM=1 (source=default)
+VEOMNI_USE_LIGER_KERNEL=1 (source=default)
+===========================================
+[INFO|/scratch/e1507650/AnyOrderTraining/aomt/dFactory/VeOmni/veomni/__init__.py:26] 03/21/2026 20:51:51 >> 
+=========== OPS ============
+_fused_moe_forward = None
+_flash_attention_forward = None
+_cross_entropy = None
+==============================
+Traceback (most recent call last):
+  File "/scratch/e1507650/AnyOrderTraining/aomt/tasks/train_aomt.py", line 30, in <module>
+Traceback (most recent call last):
+  File "/scratch/e1507650/AnyOrderTraining/aomt/tasks/train_aomt.py", line 30, in <module>
+Traceback (most recent call last):
+  File "/scratch/e1507650/AnyOrderTraining/aomt/tasks/train_aomt.py", line 30, in <module>
+Traceback (most recent call last):
+  File "/scratch/e1507650/AnyOrderTraining/aomt/tasks/train_aomt.py", line 30, in <module>
+            from aomt.data.unit_parser import parse_conversation_to_trajectory, tokenize_trajectoryfrom aomt.data.unit_parser import parse_conversation_to_trajectory, tokenize_trajectoryfrom aomt.data.unit_parser import parse_conversation_to_trajectory, tokenize_trajectory
+
+
+ModuleNotFoundErrorModuleNotFoundErrorModuleNotFoundError: : No module named 'aomt': No module named 'aomt'
+No module named 'aomt'
+
+    from aomt.data.unit_parser import parse_conversation_to_trajectory, tokenize_trajectory
+ModuleNotFoundError: No module named 'aomt'
+E0321 20:51:55.767000 1166595 site-packages/torch/distributed/elastic/multiprocessing/api.py:984] failed (exitcode: 1) local_rank: 0 (pid: 1166774) of binary: /scratch/e1507650/conda/envs/aomt/bin/python3.11
+Traceback (most recent call last):
+  File "/scratch/e1507650/conda/envs/aomt/bin/torchrun", line 6, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/scratch/e1507650/conda/envs/aomt/lib/python3.11/site-packages/torch/distributed/elastic/multiprocessing/errors/__init__.py", line 362, in wrapper
+    return f(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^
+  File "/scratch/e1507650/conda/envs/aomt/lib/python3.11/site-packages/torch/distributed/run.py", line 991, in main
+    run(args)
+  File "/scratch/e1507650/conda/envs/aomt/lib/python3.11/site-packages/torch/distributed/run.py", line 982, in run
+    elastic_launch(
+  File "/scratch/e1507650/conda/envs/aomt/lib/python3.11/site-packages/torch/distributed/launcher/api.py", line 170, in __call__
+    return launch_agent(self._config, self._entrypoint, list(args))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/e1507650/conda/envs/aomt/lib/python3.11/site-packages/torch/distributed/launcher/api.py", line 317, in launch_agent
+    raise ChildFailedError(
+torch.distributed.elastic.multiprocessing.errors.ChildFailedError: 
+============================================================
+tasks/train_aomt.py FAILED
+------------------------------------------------------------
+Failures:
+[1]:
+  time      : 2026-03-21_20:51:55
+  host      : hopper-18.cm.cluster
+  rank      : 1 (local_rank: 1)
+  exitcode  : 1 (pid: 1166775)
+  error_file: <N/A>
+  traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html
+[2]:
+  time      : 2026-03-21_20:51:55
+  host      : hopper-18.cm.cluster
+  rank      : 2 (local_rank: 2)
+  exitcode  : 1 (pid: 1166776)
+  error_file: <N/A>
+  traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html
+[3]:
+  time      : 2026-03-21_20:51:55
+  host      : hopper-18.cm.cluster
+  rank      : 3 (local_rank: 3)
+  exitcode  : 1 (pid: 1166778)
+  error_file: <N/A>
+  traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html
+------------------------------------------------------------
+Root Cause (first observed failure):
+[0]:
+  time      : 2026-03-21_20:51:55
+  host      : hopper-18.cm.cluster
+  rank      : 0 (local_rank: 0)
+  exitcode  : 1 (pid: 1166774)
+  error_file: <N/A>
+  traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html
+============================================================

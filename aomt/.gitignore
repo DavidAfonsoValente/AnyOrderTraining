@@ -27,3 +27,11 @@ dFactory/
 
 # WebShop
 eval/WebShop/
+
+# Large log files
+logs/
+*.log
+
+# Stray pip output
+# NOTE: A previous rule `=*` was removed because it was too broad and could hide legitimate files.
+# If a specific stray pip output file appears, add its exact name here instead of a wildcard.

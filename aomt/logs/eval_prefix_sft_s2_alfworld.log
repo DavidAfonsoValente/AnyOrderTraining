@@ -1,0 +1,353 @@
+Loading model with device_map={'': 'cuda:0'}...
+You are using a model of type `llada2_moe` to instantiate a model of type `llada2_moe_veomni`. This may be expected if you are loading a checkpoint that shares a subset of the architecture (e.g., loading a `sam2_video` checkpoint into `Sam2Model`), but is otherwise not supported and can yield errors. Please verify that the checkpoint is compatible with the model you are instantiating.
+`torch_dtype` is deprecated! Use `dtype` instead!
+[INFO|/scratch/e1507650/AnyOrderTraining/aomt/dFactory/VeOmni/veomni/ops/__init__.py:50] 03/20/2026 11:40:02 >> ✅ VeOmni ops patch applied.
+[INFO|/scratch/e1507650/AnyOrderTraining/aomt/dFactory/VeOmni/veomni/__init__.py:25] 03/20/2026 11:40:02 >> 
+========== Environment Variables ==========
+MODELING_BACKEND=veomni (source=default)
+USE_GROUP_GEMM=1 (source=default)
+VEOMNI_USE_LIGER_KERNEL=1 (source=default)
+===========================================
+[INFO|/scratch/e1507650/AnyOrderTraining/aomt/dFactory/VeOmni/veomni/__init__.py:26] 03/20/2026 11:40:02 >> 
+=========== OPS ============
+_fused_moe_forward = None
+_flash_attention_forward = transformers_flash_attention_forward
+_cross_entropy = eager_cross_entropy
+==============================
+Loading weights:   0%|          | 0/14813 [00:00<?, ?it/s]Loading weights:   3%|▎         | 448/14813 [00:00<00:03, 4399.88it/s]Loading weights:   6%|▌         | 888/14813 [00:01<00:25, 540.84it/s] Loading weights:   7%|▋         | 1089/14813 [00:01<00:28, 473.28it/s]Loading weights:   8%|▊         | 1215/14813 [00:02<00:30, 446.95it/s]Loading weights:   9%|▉         | 1306/14813 [00:02<00:31, 426.16it/s]Loading weights:   9%|▉         | 1377/14813 [00:02<00:32, 410.16it/s]Loading weights:  10%|▉         | 1435/14813 [00:02<00:34, 391.02it/s]Loading weights:  10%|█         | 1485/14813 [00:03<00:35, 375.86it/s]Loading weights:  10%|█         | 1529/14813 [00:03<00:35, 374.03it/s]Loading weights:  11%|█         | 1571/14813 [00:03<00:36, 361.92it/s]Loading weights:  11%|█         | 1610/14813 [00:03<00:40, 329.29it/s]Loading weights:  11%|█         | 1645/14813 [00:03<00:42, 309.31it/s]Loading weights:  11%|█▏        | 1677/14813 [00:03<00:42, 308.10it/s]Loading weights:  12%|█▏        | 1713/14813 [00:03<00:41, 319.10it/s]Loading weights:  12%|█▏        | 1751/14813 [00:04<00:39, 331.92it/s]Loading weights:  12%|█▏        | 1794/14813 [00:04<00:36, 354.20it/s]Loading weights:  12%|█▏        | 1831/14813 [00:04<00:36, 354.31it/s]Loading weights:  13%|█▎        | 1871/14813 [00:04<00:35, 365.49it/s]Loading weights:  13%|█▎        | 1910/14813 [00:04<00:35, 367.63it/s]Loading weights:  13%|█▎        | 1948/14813 [00:04<00:34, 369.92it/s]Loading weights:  13%|█▎        | 1986/14813 [00:04<00:34, 368.78it/s]Loading weights:  14%|█▎        | 2024/14813 [00:04<00:36, 354.54it/s]Loading weights:  14%|█▍        | 2060/14813 [00:04<00:36, 344.97it/s]Loading weights:  14%|█▍        | 2095/14813 [00:04<00:37, 343.61it/s]Loading weights:  14%|█▍        | 2134/14813 [00:05<00:36, 351.33it/s]Loading weights:  15%|█▍        | 2170/14813 [00:05<00:36, 347.76it/s]Loading weights:  15%|█▍        | 2209/14813 [00:05<00:35, 358.04it/s]Loading weights:  15%|█▌        | 2245/14813 [00:05<00:35, 354.91it/s]Loading weights:  15%|█▌        | 2281/14813 [00:05<00:35, 355.08it/s]Loading weights:  16%|█▌        | 2318/14813 [00:05<00:34, 357.18it/s]Loading weights:  16%|█▌        | 2354/14813 [00:05<00:38, 327.31it/s]Loading weights:  16%|█▌        | 2388/14813 [00:05<00:39, 317.31it/s]Loading weights:  16%|█▋        | 2421/14813 [00:05<00:39, 311.37it/s]Loading weights:  17%|█▋        | 2454/14813 [00:06<00:39, 314.87it/s]Loading weights:  17%|█▋        | 2492/14813 [00:06<00:36, 333.06it/s]Loading weights:  17%|█▋        | 2529/14813 [00:06<00:35, 343.64it/s]Loading weights:  17%|█▋        | 2564/14813 [00:06<00:35, 340.87it/s]Loading weights:  18%|█▊        | 2601/14813 [00:06<00:34, 349.11it/s]Loading weights:  18%|█▊        | 2639/14813 [00:06<00:34, 356.09it/s]Loading weights:  18%|█▊        | 2677/14813 [00:06<00:33, 362.92it/s]Loading weights:  18%|█▊        | 2716/14813 [00:06<00:32, 369.56it/s]Loading weights:  19%|█▊        | 2754/14813 [00:06<00:32, 366.29it/s]Loading weights:  19%|█▉        | 2791/14813 [00:06<00:33, 355.86it/s]Loading weights:  19%|█▉        | 2827/14813 [00:07<00:34, 348.96it/s]Loading weights:  19%|█▉        | 2863/14813 [00:07<00:34, 343.74it/s]Loading weights:  20%|█▉        | 2905/14813 [00:07<00:32, 363.72it/s]Loading weights:  20%|█▉        | 2942/14813 [00:07<00:32, 360.74it/s]Loading weights:  20%|██        | 2979/14813 [00:07<00:32, 363.30it/s]Loading weights:  20%|██        | 3018/14813 [00:07<00:31, 370.94it/s]Loading weights:  21%|██        | 3056/14813 [00:07<00:31, 370.20it/s]Loading weights:  21%|██        | 3094/14813 [00:07<00:31, 370.02it/s]Loading weights:  21%|██        | 3132/14813 [00:07<00:31, 366.38it/s]Loading weights:  21%|██▏       | 3169/14813 [00:08<00:32, 356.82it/s]Loading weights:  22%|██▏       | 3205/14813 [00:08<00:34, 337.05it/s]Loading weights:  22%|██▏       | 3242/14813 [00:08<00:33, 345.60it/s]Loading weights:  22%|██▏       | 3280/14813 [00:08<00:32, 353.76it/s]Loading weights:  22%|██▏       | 3322/14813 [00:08<00:31, 370.64it/s]Loading weights:  23%|██▎       | 3362/14813 [00:08<00:30, 379.10it/s]Loading weights:  23%|██▎       | 3401/14813 [00:08<00:30, 379.49it/s]Loading weights:  23%|██▎       | 3440/14813 [00:08<00:30, 378.85it/s]Loading weights:  23%|██▎       | 3478/14813 [00:08<00:31, 361.89it/s]Loading weights:  24%|██▎       | 3515/14813 [00:08<00:31, 354.60it/s]Loading weights:  24%|██▍       | 3551/14813 [00:09<00:33, 337.59it/s]Loading weights:  24%|██▍       | 3585/14813 [00:09<00:33, 336.25it/s]Loading weights:  24%|██▍       | 3621/14813 [00:09<00:32, 341.65it/s]Loading weights:  25%|██▍       | 3657/14813 [00:09<00:32, 344.42it/s]Loading weights:  25%|██▍       | 3693/14813 [00:09<00:32, 344.42it/s]Loading weights:  25%|██▌       | 3729/14813 [00:09<00:31, 347.29it/s]Loading weights:  25%|██▌       | 3764/14813 [00:09<00:33, 333.72it/s]Loading weights:  26%|██▌       | 3799/14813 [00:09<00:32, 335.93it/s]Loading weights:  26%|██▌       | 3836/14813 [00:09<00:31, 344.91it/s]Loading weights:  26%|██▌       | 3871/14813 [00:10<00:31, 344.77it/s]Loading weights:  26%|██▋       | 3906/14813 [00:10<00:32, 335.92it/s]Loading weights:  27%|██▋       | 3940/14813 [00:10<00:32, 332.14it/s]Loading weights:  27%|██▋       | 3974/14813 [00:10<00:38, 282.85it/s]Loading weights:  27%|██▋       | 4004/14813 [00:10<00:38, 283.26it/s]Loading weights:  27%|██▋       | 4044/14813 [00:10<00:34, 312.58it/s]Loading weights:  28%|██▊       | 4084/14813 [00:10<00:31, 335.65it/s]Loading weights:  28%|██▊       | 4120/14813 [00:10<00:31, 342.29it/s]Loading weights:  28%|██▊       | 4155/14813 [00:10<00:31, 337.16it/s]Loading weights:  28%|██▊       | 4190/14813 [00:11<00:32, 329.81it/s]Loading weights:  29%|██▊       | 4224/14813 [00:11<00:33, 315.86it/s]Loading weights:  29%|██▉       | 4260/14813 [00:11<00:32, 320.91it/s]Loading weights:  29%|██▉       | 4308/14813 [00:11<00:28, 365.32it/s]Loading weights:  29%|██▉       | 4346/14813 [00:11<00:30, 348.03it/s]Loading weights:  30%|██▉       | 4385/14813 [00:11<00:30, 344.34it/s]Loading weights:  30%|██▉       | 4427/14813 [00:11<00:28, 362.10it/s]Loading weights:  30%|███       | 4464/14813 [00:11<00:30, 344.54it/s]Loading weights:  30%|███       | 4501/14813 [00:11<00:29, 350.42it/s]Loading weights:  31%|███       | 4539/14813 [00:12<00:28, 356.51it/s]Loading weights:  31%|███       | 4579/14813 [00:12<00:27, 366.09it/s]Loading weights:  31%|███       | 4616/14813 [00:12<00:28, 361.66it/s]Loading weights:  31%|███▏      | 4653/14813 [00:12<00:27, 363.56it/s]Loading weights:  32%|███▏      | 4690/14813 [00:12<00:29, 346.29it/s]Loading weights:  32%|███▏      | 4725/14813 [00:12<00:29, 338.20it/s]Loading weights:  32%|███▏      | 4759/14813 [00:12<00:30, 328.64it/s]Loading weights:  32%|███▏      | 4792/14813 [00:12<00:30, 324.01it/s]Loading weights:  33%|███▎      | 4830/14813 [00:12<00:29, 337.67it/s]Loading weights:  33%|███▎      | 4867/14813 [00:12<00:28, 344.90it/s]Loading weights:  33%|███▎      | 4905/14813 [00:13<00:27, 354.21it/s]Loading weights:  33%|███▎      | 4944/14813 [00:13<00:27, 363.62it/s]Loading weights:  34%|███▎      | 4981/14813 [00:13<00:27, 363.82it/s]Loading weights:  34%|███▍      | 5018/14813 [00:13<00:27, 360.15it/s]Loading weights:  34%|███▍      | 5058/14813 [00:13<00:26, 370.48it/s]Loading weights:  34%|███▍      | 5097/14813 [00:13<00:25, 374.27it/s]Loading weights:  35%|███▍      | 5136/14813 [00:13<00:25, 378.47it/s]Loading weights:  35%|███▍      | 5174/14813 [00:13<00:25, 375.27it/s]Loading weights:  35%|███▌      | 5213/14813 [00:13<00:25, 377.79it/s]Loading weights:  35%|███▌      | 5253/14813 [00:13<00:24, 383.98it/s]Loading weights:  36%|███▌      | 5292/14813 [00:14<00:25, 377.55it/s]Loading weights:  36%|███▌      | 5330/14813 [00:14<00:25, 369.38it/s]Loading weights:  36%|███▌      | 5367/14813 [00:14<00:26, 362.43it/s]Loading weights:  36%|███▋      | 5404/14813 [00:14<00:26, 351.67it/s]Loading weights:  37%|███▋      | 5440/14813 [00:14<00:26, 354.03it/s]Loading weights:  37%|███▋      | 5476/14813 [00:14<00:31, 299.52it/s]Loading weights:  37%|███▋      | 5508/14813 [00:14<00:32, 285.13it/s]Loading weights:  37%|███▋      | 5538/14813 [00:14<00:34, 269.43it/s]Loading weights:  38%|███▊      | 5571/14813 [00:15<00:32, 283.67it/s]Loading weights:  38%|███▊      | 5612/14813 [00:15<00:29, 315.73it/s]Loading weights:  38%|███▊      | 5647/14813 [00:15<00:28, 322.90it/s]Loading weights:  38%|███▊      | 5684/14813 [00:15<00:27, 335.19it/s]Loading weights:  39%|███▊      | 5719/14813 [00:15<00:27, 334.44it/s]Loading weights:  39%|███▉      | 5754/14813 [00:15<00:26, 337.71it/s]Loading weights:  39%|███▉      | 5794/14813 [00:15<00:25, 355.20it/s]Loading weights:  39%|███▉      | 5831/14813 [00:15<00:25, 358.05it/s]Loading weights:  40%|███▉      | 5871/14813 [00:15<00:24, 369.38it/s]Loading weights:  40%|███▉      | 5909/14813 [00:15<00:24, 366.53it/s]Loading weights:  40%|████      | 5947/14813 [00:16<00:24, 369.42it/s]Loading weights:  40%|████      | 5986/14813 [00:16<00:23, 374.96it/s]Loading weights:  41%|████      | 6025/14813 [00:16<00:23, 379.18it/s]Loading weights:  41%|████      | 6063/14813 [00:16<00:23, 371.12it/s]Loading weights:  41%|████      | 6103/14813 [00:16<00:23, 377.27it/s]Loading weights:  41%|████▏     | 6141/14813 [00:16<00:23, 368.13it/s]Loading weights:  42%|████▏     | 6178/14813 [00:16<00:23, 363.77it/s]Loading weights:  42%|████▏     | 6216/14813 [00:16<00:23, 367.54it/s]Loading weights:  42%|████▏     | 6253/14813 [00:17<00:31, 268.96it/s]Loading weights:  42%|████▏     | 6284/14813 [00:17<00:31, 274.45it/s]Loading weights:  43%|████▎     | 6315/14813 [00:17<00:31, 272.32it/s]Loading weights:  43%|████▎     | 6345/14813 [00:17<00:30, 274.52it/s]Loading weights:  43%|████▎     | 6379/14813 [00:17<00:28, 291.45it/s]Loading weights:  43%|████▎     | 6415/14813 [00:17<00:27, 308.09it/s]Loading weights:  44%|████▎     | 6452/14813 [00:17<00:25, 324.39it/s]Loading weights:  44%|████▍     | 6489/14813 [00:17<00:24, 336.54it/s]Loading weights:  44%|████▍     | 6526/14813 [00:17<00:23, 345.34it/s]Loading weights:  44%|████▍     | 6561/14813 [00:17<00:24, 340.03it/s]Loading weights:  45%|████▍     | 6597/14813 [00:18<00:23, 344.17it/s]Loading weights:  45%|████▍     | 6636/14813 [00:18<00:22, 355.69it/s]Loading weights:  45%|████▌     | 6676/14813 [00:18<00:22, 367.32it/s]Loading weights:  45%|████▌     | 6715/14813 [00:18<00:21, 372.65it/s]Loading weights:  46%|████▌     | 6753/14813 [00:18<00:22, 351.62it/s]Loading weights:  46%|████▌     | 6796/14813 [00:18<00:21, 373.17it/s]Loading weights:  46%|████▌     | 6834/14813 [00:18<00:21, 374.63it/s]Loading weights:  46%|████▋     | 6872/14813 [00:18<00:21, 369.46it/s]Loading weights:  47%|████▋     | 6910/14813 [00:18<00:21, 361.48it/s]Loading weights:  47%|████▋     | 6948/14813 [00:19<00:21, 366.21it/s]Loading weights:  47%|████▋     | 6985/14813 [00:19<00:21, 362.36it/s]Loading weights:  47%|████▋     | 7023/14813 [00:19<00:21, 357.09it/s]Loading weights:  48%|████▊     | 7059/14813 [00:19<00:22, 343.03it/s]Loading weights:  48%|████▊     | 7094/14813 [00:19<00:24, 314.93it/s]Loading weights:  48%|████▊     | 7126/14813 [00:19<00:24, 313.99it/s]Loading weights:  48%|████▊     | 7167/14813 [00:19<00:22, 338.98it/s]Loading weights:  49%|████▊     | 7209/14813 [00:19<00:21, 359.75it/s]Loading weights:  49%|████▉     | 7250/14813 [00:19<00:20, 372.03it/s]Loading weights:  49%|████▉     | 7291/14813 [00:19<00:19, 382.84it/s]Loading weights:  49%|████▉     | 7332/14813 [00:20<00:19, 388.09it/s]Loading weights:  50%|████▉     | 7374/14813 [00:20<00:18, 395.19it/s]Loading weights:  50%|█████     | 7414/14813 [00:20<00:18, 395.45it/s]Loading weights:  50%|█████     | 7454/14813 [00:20<00:18, 392.32it/s]Loading weights:  51%|█████     | 7495/14813 [00:20<00:18, 396.08it/s]Loading weights:  51%|█████     | 7535/14813 [00:20<00:18, 396.54it/s]Loading weights:  51%|█████     | 7575/14813 [00:20<00:18, 391.36it/s]Loading weights:  51%|█████▏    | 7615/14813 [00:20<00:18, 391.48it/s]Loading weights:  52%|█████▏    | 7657/14813 [00:20<00:17, 399.34it/s]Loading weights:  52%|█████▏    | 7698/14813 [00:21<00:17, 400.51it/s]Loading weights:  52%|█████▏    | 7739/14813 [00:21<00:17, 394.21it/s]Loading weights:  53%|█████▎    | 7780/14813 [00:21<00:17, 397.04it/s]Loading weights:  53%|█████▎    | 7820/14813 [00:21<00:19, 362.10it/s]Loading weights:  53%|█████▎    | 7857/14813 [00:21<00:21, 323.63it/s]Loading weights:  53%|█████▎    | 7891/14813 [00:21<00:22, 303.66it/s]Loading weights:  54%|█████▎    | 7929/14813 [00:21<00:21, 321.46it/s]Loading weights:  54%|█████▍    | 7970/14813 [00:21<00:19, 344.49it/s]Loading weights:  54%|█████▍    | 8012/14813 [00:21<00:18, 365.04it/s]Loading weights:  54%|█████▍    | 8053/14813 [00:22<00:17, 377.07it/s]Loading weights:  55%|█████▍    | 8092/14813 [00:22<00:17, 380.12it/s]Loading weights:  55%|█████▍    | 8132/14813 [00:22<00:17, 385.01it/s]Loading weights:  55%|█████▌    | 8172/14813 [00:22<00:17, 387.09it/s]Loading weights:  55%|█████▌    | 8211/14813 [00:22<00:17, 387.42it/s]Loading weights:  56%|█████▌    | 8250/14813 [00:22<00:17, 385.87it/s]Loading weights:  56%|█████▌    | 8290/14813 [00:22<00:16, 388.75it/s]Loading weights:  56%|█████▌    | 8329/14813 [00:22<00:16, 388.81it/s]Loading weights:  56%|█████▋    | 8369/14813 [00:22<00:16, 390.95it/s]Loading weights:  57%|█████▋    | 8409/14813 [00:22<00:16, 381.08it/s]Loading weights:  57%|█████▋    | 8448/14813 [00:23<00:16, 382.20it/s]Loading weights:  57%|█████▋    | 8487/14813 [00:23<00:16, 381.37it/s]Loading weights:  58%|█████▊    | 8526/14813 [00:23<00:16, 382.77it/s]Loading weights:  58%|█████▊    | 8565/14813 [00:23<00:16, 375.89it/s]Loading weights:  58%|█████▊    | 8603/14813 [00:23<00:17, 356.77it/s]Loading weights:  58%|█████▊    | 8639/14813 [00:23<00:18, 339.71it/s]Loading weights:  59%|█████▊    | 8674/14813 [00:23<00:18, 330.31it/s]Loading weights:  59%|█████▉    | 8714/14813 [00:23<00:17, 348.45it/s]Loading weights:  59%|█████▉    | 8754/14813 [00:23<00:16, 362.81it/s]Loading weights:  59%|█████▉    | 8794/14813 [00:24<00:16, 371.07it/s]Loading weights:  60%|█████▉    | 8834/14813 [00:24<00:15, 378.35it/s]Loading weights:  60%|█████▉    | 8873/14813 [00:24<00:15, 371.81it/s]Loading weights:  60%|██████    | 8911/14813 [00:24<00:16, 366.28it/s]Loading weights:  60%|██████    | 8951/14813 [00:24<00:15, 373.41it/s]Loading weights:  61%|██████    | 8989/14813 [00:24<00:15, 371.80it/s]Loading weights:  61%|██████    | 9027/14813 [00:24<00:15, 374.14it/s]Loading weights:  61%|██████    | 9066/14813 [00:24<00:15, 377.09it/s]Loading weights:  61%|██████▏   | 9104/14813 [00:24<00:15, 372.31it/s]Loading weights:  62%|██████▏   | 9146/14813 [00:24<00:14, 385.82it/s]Loading weights:  62%|██████▏   | 9185/14813 [00:25<00:15, 370.58it/s]Loading weights:  62%|██████▏   | 9223/14813 [00:25<00:15, 361.67it/s]Loading weights:  63%|██████▎   | 9260/14813 [00:25<00:15, 355.82it/s]Loading weights:  63%|██████▎   | 9296/14813 [00:25<00:15, 354.27it/s]Loading weights:  63%|██████▎   | 9333/14813 [00:25<00:15, 357.91it/s]Loading weights:  63%|██████▎   | 9372/14813 [00:25<00:14, 365.51it/s]Loading weights:  64%|██████▎   | 9409/14813 [00:25<00:16, 336.82it/s]Loading weights:  64%|██████▍   | 9444/14813 [00:25<00:16, 323.20it/s]Loading weights:  64%|██████▍   | 9480/14813 [00:25<00:16, 332.61it/s]Loading weights:  64%|██████▍   | 9518/14813 [00:26<00:15, 345.35it/s]Loading weights:  65%|██████▍   | 9560/14813 [00:26<00:14, 364.87it/s]Loading weights:  65%|██████▍   | 9599/14813 [00:26<00:14, 371.57it/s]Loading weights:  65%|██████▌   | 9638/14813 [00:26<00:13, 376.34it/s]Loading weights:  65%|██████▌   | 9676/14813 [00:26<00:13, 375.37it/s]Loading weights:  66%|██████▌   | 9714/14813 [00:26<00:13, 369.95it/s]Loading weights:  66%|██████▌   | 9753/14813 [00:26<00:13, 374.15it/s]Loading weights:  66%|██████▌   | 9791/14813 [00:26<00:13, 364.81it/s]Loading weights:  66%|██████▋   | 9828/14813 [00:26<00:14, 349.83it/s]Loading weights:  67%|██████▋   | 9865/14813 [00:26<00:13, 354.35it/s]Loading weights:  67%|██████▋   | 9905/14813 [00:27<00:13, 364.08it/s]Loading weights:  67%|██████▋   | 9942/14813 [00:27<00:13, 349.81it/s]Loading weights:  67%|██████▋   | 9982/14813 [00:27<00:13, 361.83it/s]Loading weights:  68%|██████▊   | 10019/14813 [00:27<00:13, 360.45it/s]Loading weights:  68%|██████▊   | 10056/14813 [00:27<00:13, 352.81it/s]Loading weights:  68%|██████▊   | 10094/14813 [00:27<00:13, 358.53it/s]Loading weights:  68%|██████▊   | 10130/14813 [00:27<00:13, 351.63it/s]Loading weights:  69%|██████▊   | 10166/14813 [00:27<00:13, 347.55it/s]Loading weights:  69%|██████▉   | 10201/14813 [00:27<00:14, 325.55it/s]Loading weights:  69%|██████▉   | 10239/14813 [00:28<00:13, 338.42it/s]Loading weights:  69%|██████▉   | 10280/14813 [00:28<00:12, 355.66it/s]Loading weights:  70%|██████▉   | 10323/14813 [00:28<00:11, 376.66it/s]Loading weights:  70%|██████▉   | 10363/14813 [00:28<00:11, 382.83it/s]Loading weights:  70%|███████   | 10402/14813 [00:28<00:11, 374.86it/s]Loading weights:  70%|███████   | 10441/14813 [00:28<00:11, 378.77it/s]Loading weights:  71%|███████   | 10481/14813 [00:28<00:11, 383.29it/s]Loading weights:  71%|███████   | 10520/14813 [00:28<00:12, 347.11it/s]Loading weights:  71%|███████▏  | 10556/14813 [00:28<00:12, 327.54it/s]Loading weights:  71%|███████▏  | 10590/14813 [00:29<00:13, 305.54it/s]Loading weights:  72%|███████▏  | 10626/14813 [00:29<00:13, 318.56it/s]Loading weights:  72%|███████▏  | 10660/14813 [00:29<00:12, 323.52it/s]Loading weights:  72%|███████▏  | 10695/14813 [00:29<00:12, 330.83it/s]Loading weights:  72%|███████▏  | 10729/14813 [00:29<00:13, 312.57it/s]Loading weights:  73%|███████▎  | 10771/14813 [00:29<00:11, 341.76it/s]Loading weights:  73%|███████▎  | 10806/14813 [00:29<00:11, 336.27it/s]Loading weights:  73%|███████▎  | 10842/14813 [00:29<00:11, 340.62it/s]Loading weights:  73%|███████▎  | 10879/14813 [00:29<00:11, 349.03it/s]Loading weights:  74%|███████▎  | 10917/14813 [00:30<00:10, 357.83it/s]Loading weights:  74%|███████▍  | 10953/14813 [00:30<00:11, 333.99it/s]Loading weights:  74%|███████▍  | 10987/14813 [00:30<00:11, 319.23it/s]Loading weights:  74%|███████▍  | 11022/14813 [00:30<00:11, 321.24it/s]Loading weights:  75%|███████▍  | 11061/14813 [00:30<00:11, 337.85it/s]Loading weights:  75%|███████▍  | 11101/14813 [00:30<00:10, 354.94it/s]Loading weights:  75%|███████▌  | 11139/14813 [00:30<00:10, 362.00it/s]Loading weights:  75%|███████▌  | 11176/14813 [00:30<00:10, 361.35it/s]Loading weights:  76%|███████▌  | 11214/14813 [00:30<00:09, 366.00it/s]Loading weights:  76%|███████▌  | 11254/14813 [00:30<00:09, 374.54it/s]Loading weights:  76%|███████▌  | 11294/14813 [00:31<00:09, 380.60it/s]Loading weights:  77%|███████▋  | 11333/14813 [00:31<00:09, 355.30it/s]Loading weights:  77%|███████▋  | 11369/14813 [00:31<00:09, 349.21it/s]Loading weights:  77%|███████▋  | 11406/14813 [00:31<00:09, 351.80it/s]Loading weights:  77%|███████▋  | 11447/14813 [00:31<00:09, 367.72it/s]Loading weights:  78%|███████▊  | 11486/14813 [00:31<00:08, 374.13it/s]Loading weights:  78%|███████▊  | 11524/14813 [00:31<00:08, 368.34it/s]Loading weights:  78%|███████▊  | 11564/14813 [00:31<00:08, 376.01it/s]Loading weights:  78%|███████▊  | 11602/14813 [00:31<00:08, 365.70it/s]Loading weights:  79%|███████▊  | 11639/14813 [00:32<00:09, 343.37it/s]Loading weights:  79%|███████▉  | 11674/14813 [00:32<00:09, 330.89it/s]Loading weights:  79%|███████▉  | 11708/14813 [00:32<00:09, 317.18it/s]Loading weights:  79%|███████▉  | 11740/14813 [00:32<00:10, 305.59it/s]Loading weights:  79%|███████▉  | 11771/14813 [00:32<00:10, 296.77it/s]Loading weights:  80%|███████▉  | 11806/14813 [00:32<00:09, 310.34it/s]Loading weights:  80%|███████▉  | 11842/14813 [00:32<00:09, 321.90it/s]Loading weights:  80%|████████  | 11882/14813 [00:32<00:08, 343.43it/s]Loading weights:  80%|████████  | 11918/14813 [00:32<00:08, 346.65it/s]Loading weights:  81%|████████  | 11956/14813 [00:33<00:08, 354.90it/s]Loading weights:  81%|████████  | 11995/14813 [00:33<00:07, 364.48it/s]Loading weights:  81%|████████  | 12032/14813 [00:33<00:08, 341.77it/s]Loading weights:  81%|████████▏ | 12067/14813 [00:33<00:08, 342.06it/s]Loading weights:  82%|████████▏ | 12102/14813 [00:33<00:08, 329.22it/s]Loading weights:  82%|████████▏ | 12136/14813 [00:33<00:08, 323.66it/s]Loading weights:  82%|████████▏ | 12171/14813 [00:33<00:08, 329.57it/s]Loading weights:  82%|████████▏ | 12205/14813 [00:33<00:08, 317.46it/s]Loading weights:  83%|████████▎ | 12240/14813 [00:33<00:07, 325.96it/s]Loading weights:  83%|████████▎ | 12279/14813 [00:33<00:07, 340.95it/s]Loading weights:  83%|████████▎ | 12314/14813 [00:34<00:07, 319.95it/s]Loading weights:  83%|████████▎ | 12347/14813 [00:34<00:07, 319.36it/s]Loading weights:  84%|████████▎ | 12384/14813 [00:34<00:07, 332.07it/s]Loading weights:  84%|████████▍ | 12423/14813 [00:34<00:06, 345.12it/s]Loading weights:  84%|████████▍ | 12462/14813 [00:34<00:06, 357.80it/s]Loading weights:  84%|████████▍ | 12498/14813 [00:34<00:06, 344.99it/s]Loading weights:  85%|████████▍ | 12533/14813 [00:34<00:07, 321.89it/s]Loading weights:  85%|████████▍ | 12566/14813 [00:34<00:07, 318.19it/s]Loading weights:  85%|████████▌ | 12607/14813 [00:34<00:06, 342.04it/s]Loading weights:  85%|████████▌ | 12646/14813 [00:35<00:06, 354.16it/s]Loading weights:  86%|████████▌ | 12687/14813 [00:35<00:05, 367.49it/s]Loading weights:  86%|████████▌ | 12724/14813 [00:35<00:05, 364.45it/s]Loading weights:  86%|████████▌ | 12761/14813 [00:35<00:05, 362.99it/s]Loading weights:  86%|████████▋ | 12798/14813 [00:35<00:05, 353.36it/s]Loading weights:  87%|████████▋ | 12834/14813 [00:35<00:05, 338.04it/s]Loading weights:  87%|████████▋ | 12868/14813 [00:35<00:05, 331.43it/s]Loading weights:  87%|████████▋ | 12902/14813 [00:35<00:05, 333.03it/s]Loading weights:  87%|████████▋ | 12936/14813 [00:35<00:05, 329.00it/s]Loading weights:  88%|████████▊ | 12974/14813 [00:36<00:05, 341.50it/s]Loading weights:  88%|████████▊ | 13011/14813 [00:36<00:05, 349.14it/s]Loading weights:  88%|████████▊ | 13051/14813 [00:36<00:04, 362.48it/s]Loading weights:  88%|████████▊ | 13088/14813 [00:36<00:04, 351.27it/s]Loading weights:  89%|████████▊ | 13126/14813 [00:36<00:04, 358.91it/s]Loading weights:  89%|████████▉ | 13165/14813 [00:36<00:04, 365.94it/s]Loading weights:  89%|████████▉ | 13205/14813 [00:36<00:04, 374.26it/s]Loading weights:  89%|████████▉ | 13247/14813 [00:36<00:04, 386.19it/s]Loading weights:  90%|████████▉ | 13286/14813 [00:36<00:04, 354.27it/s]Loading weights:  90%|████████▉ | 13322/14813 [00:37<00:04, 326.07it/s]Loading weights:  90%|█████████ | 13356/14813 [00:37<00:04, 319.49it/s]Loading weights:  90%|█████████ | 13395/14813 [00:37<00:04, 338.36it/s]Loading weights:  91%|█████████ | 13434/14813 [00:37<00:03, 351.32it/s]Loading weights:  91%|█████████ | 13477/14813 [00:37<00:03, 363.79it/s]Loading weights:  91%|█████████ | 13514/14813 [00:37<00:03, 365.28it/s]Loading weights:  91%|█████████▏| 13553/14813 [00:37<00:03, 370.31it/s]Loading weights:  92%|█████████▏| 13593/14813 [00:37<00:03, 377.90it/s]Loading weights:  92%|█████████▏| 13633/14813 [00:37<00:03, 383.71it/s]Loading weights:  92%|█████████▏| 13675/14813 [00:37<00:02, 393.83it/s]Loading weights:  93%|█████████▎| 13716/14813 [00:38<00:02, 397.19it/s]Loading weights:  93%|█████████▎| 13757/14813 [00:38<00:02, 400.74it/s]Loading weights:  93%|█████████▎| 13798/14813 [00:38<00:02, 398.59it/s]Loading weights:  93%|█████████▎| 13838/14813 [00:38<00:02, 394.20it/s]Loading weights:  94%|█████████▎| 13878/14813 [00:38<00:02, 395.90it/s]Loading weights:  94%|█████████▍| 13919/14813 [00:38<00:02, 398.80it/s]Loading weights:  94%|█████████▍| 13961/14813 [00:38<00:02, 401.86it/s]Loading weights:  95%|█████████▍| 14002/14813 [00:38<00:02, 397.84it/s]Loading weights:  95%|█████████▍| 14042/14813 [00:38<00:02, 288.09it/s]Loading weights:  95%|█████████▌| 14076/14813 [00:39<00:02, 252.95it/s]Loading weights:  95%|█████████▌| 14107/14813 [00:39<00:02, 264.62it/s]Loading weights:  95%|█████████▌| 14137/14813 [00:39<00:02, 265.94it/s]Loading weights:  96%|█████████▌| 14175/14813 [00:39<00:02, 294.14it/s]Loading weights:  96%|█████████▌| 14211/14813 [00:39<00:01, 309.35it/s]Loading weights:  96%|█████████▌| 14244/14813 [00:39<00:01, 304.05it/s]Loading weights:  96%|█████████▋| 14276/14813 [00:39<00:01, 304.06it/s]Loading weights:  97%|█████████▋| 14321/14813 [00:39<00:01, 342.43it/s]Loading weights:  97%|█████████▋| 14359/14813 [00:40<00:01, 352.22it/s]Loading weights:  97%|█████████▋| 14395/14813 [00:40<00:01, 343.29it/s]Loading weights:  97%|█████████▋| 14430/14813 [00:40<00:01, 326.21it/s]Loading weights:  98%|█████████▊| 14472/14813 [00:40<00:00, 351.90it/s]Loading weights:  98%|█████████▊| 14514/14813 [00:40<00:00, 370.47it/s]Loading weights:  98%|█████████▊| 14556/14813 [00:40<00:00, 382.05it/s]Loading weights:  99%|█████████▊| 14597/14813 [00:40<00:00, 389.33it/s]Loading weights:  99%|█████████▉| 14637/14813 [00:40<00:00, 382.40it/s]Loading weights:  99%|█████████▉| 14679/14813 [00:40<00:00, 391.66it/s]Loading weights:  99%|█████████▉| 14722/14813 [00:40<00:00, 402.14it/s]Loading weights: 100%|█████████▉| 14764/14813 [00:41<00:00, 405.25it/s]Loading weights: 100%|█████████▉| 14805/14813 [00:41<00:00, 401.75it/s]Loading weights: 100%|██████████| 14813/14813 [00:42<00:00, 351.82it/s]
+Initializing AlfredTWEnv...
+  0%|          | 0/341 [00:00<?, ?it/s] 10%|▉         | 34/341 [00:00<00:01, 301.21it/s] 19%|█▉        | 66/341 [00:00<00:00, 306.40it/s] 28%|██▊       | 97/341 [00:00<00:00, 257.38it/s] 46%|████▌     | 157/341 [00:00<00:00, 372.03it/s] 58%|█████▊    | 197/341 [00:00<00:00, 173.40it/s] 67%|██████▋   | 229/341 [00:01<00:00, 197.73it/s] 78%|███████▊  | 267/341 [00:01<00:00, 232.82it/s] 88%|████████▊ | 299/341 [00:01<00:00, 206.57it/s] 96%|█████████▌| 327/341 [00:01<00:00, 221.03it/s]100%|██████████| 341/341 [00:01<00:00, 231.90it/s]
+Overall we have 134 games in split=eval_out_of_distribution
+Evaluating with 134 games
+Running ALFWorld evaluation (test -> eval_out_of_distribution, 50 episodes, 134 games)...
+ALFWorld episodes:   0%|          | 0/50 [00:00<?, ?it/s]
+[DEBUG gen #0] input_ids shape: torch.Size([1, 522]), n_messages: 1, mask_id: 156895
+[DEBUG gen #0] generated length: 29, mask_tokens_remaining: 0, eos_tokens: 1
+[DEBUG gen #0] first 60 token ids: [67001, 25, 331, 1050, 297, 23233, 297, 297, 297, 297, 156900, 268, 13, 13, 198, 7287, 728, 297, 42249, 220, 16, 156900, 7287, 7287, 16, 220, 16, 156900, 156892]
+[DEBUG gen #0] full_response (first 300 chars): 'Thought: I need to locate to to to to the..\nAction go to drawer 1ActionAction1 1'
+[DEBUG gen #0] parsed action: 'Action go to drawer 1ActionAction1 1'
+
+[DEBUG gen #1] input_ids shape: torch.Size([1, 538]), n_messages: 1, mask_id: 156895
+[DEBUG gen #1] generated length: 39, mask_tokens_remaining: 0, eos_tokens: 1
+[DEBUG gen #1] first 60 token ids: [67001, 25, 119011, 42249, 16, 156900, 25, 220, 220, 220, 220, 297, 13, 1329, 2474, 268, 268, 156900, 13, 13, 13, 13, 13, 220, 13, 13, 13, 13, 13, 198, 7287, 25, 728, 297, 42249, 220, 17, 156900, 156892]
+[DEBUG gen #1] full_response (first 300 chars): 'Thought: Drawer drawer1:     to. should check the the..... .....\nAction: go to drawer 2'
+[DEBUG gen #1] parsed action: 'go to drawer 2'
+
+[DEBUG gen #2] input_ids shape: torch.Size([1, 559]), n_messages: 1, mask_id: 156895
+[DEBUG gen #2] generated length: 37, mask_tokens_remaining: 0, eos_tokens: 1
+[DEBUG gen #2] first 60 token ids: [67001, 25, 119011, 42249, 341, 341, 8127, 13, 13, 156900, 7287, 2305, 2305, 42249, 220, 17, 156900, 13, 198, 198, 198, 198, 198, 7287, 42249, 220, 17, 42249, 220, 156900, 13, 220, 220, 220, 220, 156900, 156892]
+[DEBUG gen #2] full_response (first 300 chars): 'Thought: Drawer drawer is is closed..Action open open drawer 2.\n\n\n\n\nAction drawer 2 drawer .'
+[DEBUG gen #2] parsed action: 'Action drawer 2 drawer .'
+
+[DEBUG gen #3] input_ids shape: torch.Size([1, 570]), n_messages: 1, mask_id: 156895
+[DEBUG gen #3] generated length: 45, mask_tokens_remaining: 0, eos_tokens: 1
+[DEBUG gen #3] first 60 token ids: [67001, 25, 4948, 42249, 17, 156900, 42249, 220, 220, 220, 220, 156900, 13, 13, 268, 268, 268, 13, 13, 13, 13, 13, 13, 268, 220, 17, 156900, 13, 13, 198, 7287, 25, 728, 297, 42249, 220, 17, 156900, 17, 17, 17, 42249, 220, 156900, 156892]
+[DEBUG gen #3] full_response (first 300 chars): 'Thought: Now drawer2 drawer    .. the the the...... the 2..\nAction: go to drawer 2222 drawer'
+[DEBUG gen #3] parsed action: 'go to drawer 2222 drawer'
+
+[DEBUG gen #4] input_ids shape: torch.Size([1, 584]), n_messages: 1, mask_id: 156895
+[DEBUG gen #4] generated length: 30, mask_tokens_remaining: 0, eos_tokens: 1
+[DEBUG gen #4] first 60 token ids: [67001, 25, 156900, 42249, 4956, 4956, 13, 13, 156900, 331, 331, 268, 268, 268, 13, 13, 7287, 25, 728, 297, 42249, 220, 16, 156900, 25, 156900, 220, 220, 220, 156892]
+[DEBUG gen #4] full_response (first 300 chars): 'Thought: drawer nothing nothing.. I I the the the..Action: go to drawer 1:'
+[DEBUG gen #4] parsed action: 'go to drawer 1:'
+ALFWorld episodes:   2%|▏         | 1/50 [01:02<51:10, 62.65s/it]
+[DEBUG gen #50] input_ids shape: torch.Size([1, 476]), n_messages: 1, mask_id: 156895
+[DEBUG gen #50] generated length: 38, mask_tokens_remaining: 0, eos_tokens: 1
+[DEBUG gen #50] first 60 token ids: [67001, 25, 468, 15757, 268, 15757, 15757, 15757, 268, 11450, 11450, 11450, 11450, 11450, 297, 297, 268, 268, 11450, 268, 268, 268, 268, 268, 268, 13, 13, 25, 25, 25, 728, 297, 42249, 220, 16, 156900, 25, 156892]
+[DEBUG gen #50] full_response (first 300 chars): 'Thought: The examine the examine examine examine the desk desk desk desk desk to to the the desk the the the the the the..::: go to drawer 1:'
+[DEBUG gen #50] parsed action: 'Thought: The examine the examine examine examine the desk desk desk desk desk to to the the desk the the the the the the..::: go to drawer 1:'
+ALFWorld episodes:   4%|▍         | 2/50 [01:57<46:22, 57.97s/it]
+[DEBUG gen #100] input_ids shape: torch.Size([1, 464]), n_messages: 1, mask_id: 156895
+[DEBUG gen #100] generated length: 35, mask_tokens_remaining: 0, eos_tokens: 1
+[DEBUG gen #100] first 60 token ids: [67001, 25, 331, 1050, 297, 1491, 259, 26143, 13, 198, 297, 22747, 22747, 22747, 16, 156900, 13, 156900, 22747, 22747, 13, 22747, 22747, 13, 259, 13, 13, 22747, 13, 22747, 22747, 22747, 22747, 156900, 156892]
+[DEBUG gen #100] full_response (first 300 chars): 'Thought: I need to find a cloth.\n to cabinet cabinet cabinet1. cabinet cabinet. cabinet cabinet. a.. cabinet. cabinet cabinet cabinet cabinet'
+[DEBUG gen #100] parsed action: 'to cabinet cabinet cabinet1. cabinet cabinet. cabinet cabinet. a.. cabinet. cabinet cabinet cabinet cabinet'
+ALFWorld episodes:   6%|▌         | 3/50 [02:54<45:02, 57.50s/it]
+[DEBUG gen #150] input_ids shape: torch.Size([1, 523]), n_messages: 1, mask_id: 156895
+[DEBUG gen #150] generated length: 42, mask_tokens_remaining: 0, eos_tokens: 1
+[DEBUG gen #150] first 60 token ids: [67001, 25, 2421, 1050, 297, 23233, 289, 10540, 297, 268, 5884, 5884, 13, 198, 7287, 297, 297, 258, 220, 16, 156900, 297, 7287, 7287, 7287, 7287, 7287, 7287, 297, 297, 297, 10540, 10540, 10540, 10540, 297, 10540, 10540, 10540, 10540, 10540, 156892]
+[DEBUG gen #150] full_response (first 300 chars): 'Thought: To need to locate an egg to the task task.\nAction to toin 1 toActionActionActionActionActionAction to to to egg egg egg egg to egg egg egg egg egg'
+[DEBUG gen #150] parsed action: 'Action to toin 1 toActionActionActionActionActionAction to to to egg egg egg egg to egg egg egg egg egg'
+ALFWorld episodes:   8%|▊         | 4/50 [04:18<52:15, 68.16s/it]
+[DEBUG gen #200] input_ids shape: torch.Size([1, 521]), n_messages: 1, mask_id: 156895
+[DEBUG gen #200] generated length: 43, mask_tokens_remaining: 0, eos_tokens: 1
+[DEBUG gen #200] first 60 token ids: [67001, 25, 156900, 1050, 297, 23233, 259, 33301, 297, 297, 297, 5884, 5884, 13, 13, 7287, 25, 728, 297, 258, 220, 16, 156900, 156900, 33301, 33301, 33301, 33301, 33301, 33301, 33301, 33301, 33301, 33301, 33301, 33301, 33301, 33301, 33301, 156900, 33301, 198, 156892]
+[DEBUG gen #200] full_response (first 300 chars): 'Thought: need to locate a tomato to to to task task..Action: go toin 1 tomato tomato tomato tomato tomato tomato tomato tomato tomato tomato tomato tomato tomato tomato tomato tomato'
+[DEBUG gen #200] parsed action: 'go toin 1 tomato tomato tomato tomato tomato tomato tomato tomato tomato tomato tomato tomato tomato tomato tomato tomato'
+ALFWorld episodes:  10%|█         | 5/50 [06:13<1:03:50, 85.11s/it]
+[DEBUG gen #250] input_ids shape: torch.Size([1, 520]), n_messages: 1, mask_id: 156895
+[DEBUG gen #250] generated length: 32, mask_tokens_remaining: 0, eos_tokens: 1
+[DEBUG gen #250] first 60 token ids: [67001, 25, 468, 1050, 297, 23233, 268, 33301, 297, 4486, 268, 5884, 5884, 5884, 5884, 13, 7287, 25, 728, 297, 32509, 220, 16, 156900, 297, 220, 220, 220, 32509, 297, 297, 156892]
+[DEBUG gen #250] full_response (first 300 chars): 'Thought: The need to locate the tomato to complete the task task task task.Action: go to fridge 1 to    fridge to to'
+[DEBUG gen #250] parsed action: 'go to fridge 1 to    fridge to to'
+ALFWorld episodes:  12%|█▏        | 6/50 [07:18<57:24, 78.27s/it]  
+[DEBUG gen #300] input_ids shape: torch.Size([1, 522]), n_messages: 1, mask_id: 156895
+[DEBUG gen #300] generated length: 29, mask_tokens_remaining: 0, eos_tokens: 1
+[DEBUG gen #300] first 60 token ids: [67001, 25, 331, 1050, 297, 23233, 289, 22745, 297, 297, 268, 5884, 13, 13, 198, 7287, 728, 297, 32509, 220, 16, 156900, 198, 7287, 220, 220, 32509, 16, 156892]
+[DEBUG gen #300] full_response (first 300 chars): 'Thought: I need to locate an apple to to the task..\nAction go to fridge 1\nAction   fridge1'
+[DEBUG gen #300] parsed action: 'Action   fridge1'
+ALFWorld episodes:  14%|█▍        | 7/50 [08:17<51:24, 71.72s/it]
+[DEBUG gen #350] input_ids shape: torch.Size([1, 523]), n_messages: 1, mask_id: 156895
+[DEBUG gen #350] generated length: 50, mask_tokens_remaining: 0, eos_tokens: 1
+[DEBUG gen #350] first 60 token ids: [67001, 25, 331, 1050, 297, 23233, 268, 297, 297, 156900, 268, 13, 13, 198, 7287, 25, 297, 56398, 220, 16, 156900, 25, 7287, 7287, 56398, 7287, 7287, 7287, 25, 16, 25, 297, 156900, 16, 220, 156900, 297, 297, 297, 297, 7287, 7287, 7287, 7287, 7287, 7287, 25, 728, 297, 156892]
+[DEBUG gen #350] full_response (first 300 chars): 'Thought: I need to locate the to to the..\nAction: toetable 1:ActionActionetableActionActionAction:1: to1  to to to toActionActionActionActionActionAction: go to'
+[DEBUG gen #350] parsed action: 'go to'
+ALFWorld episodes:  16%|█▌        | 8/50 [09:22<48:42, 69.59s/it]
+[DEBUG gen #400] input_ids shape: torch.Size([1, 520]), n_messages: 1, mask_id: 156895
+[DEBUG gen #400] generated length: 28, mask_tokens_remaining: 0, eos_tokens: 1
+[DEBUG gen #400] first 60 token ids: [67001, 25, 5884, 1050, 297, 23233, 268, 259, 297, 297, 5884, 5884, 156900, 5884, 5884, 13, 7287, 25, 728, 297, 32509, 220, 16, 156900, 297, 297, 7287, 156892]
+[DEBUG gen #400] full_response (first 300 chars): 'Thought: task need to locate the a to to task task task task.Action: go to fridge 1 to toAction'
+[DEBUG gen #400] parsed action: 'go to fridge 1 to toAction'
+ALFWorld episodes:  18%|█▊        | 9/50 [10:23<45:52, 67.14s/it]
+[DEBUG gen #450] input_ids shape: torch.Size([1, 477]), n_messages: 1, mask_id: 156895
+[DEBUG gen #450] generated length: 42, mask_tokens_remaining: 0, eos_tokens: 1
+[DEBUG gen #450] first 60 token ids: [67001, 25, 156900, 25, 268, 20066, 15757, 391, 391, 11450, 28651, 11998, 28651, 297, 297, 297, 268, 156900, 156900, 268, 268, 268, 268, 268, 156900, 13, 198, 7287, 25, 728, 297, 42249, 220, 16, 156900, 156900, 297, 297, 16, 156900, 156900, 156892]
+[DEBUG gen #450] full_response (first 300 chars): 'Thought:: the alarm examine with with desk lamp clock lamp to to to the the the the the the.\nAction: go to drawer 1 to to1'
+[DEBUG gen #450] parsed action: 'go to drawer 1 to to1'
+ALFWorld episodes:  20%|██        | 10/50 [11:20<42:38, 63.96s/it]
+[DEBUG gen #500] input_ids shape: torch.Size([1, 523]), n_messages: 1, mask_id: 156895
+[DEBUG gen #500] generated length: 45, mask_tokens_remaining: 0, eos_tokens: 1
+[DEBUG gen #500] first 60 token ids: [67001, 25, 331, 1050, 297, 23233, 268, 268, 297, 297, 268, 5884, 13, 156900, 7287, 297, 297, 258, 220, 16, 156900, 198, 297, 7287, 220, 7287, 297, 297, 297, 297, 297, 297, 297, 297, 297, 297, 297, 297, 297, 13, 13, 156900, 13, 13, 156892]
+[DEBUG gen #500] full_response (first 300 chars): 'Thought: I need to locate the the to to the task.Action to toin 1\n toAction Action to to to to to to to to to to to to to....'
+[DEBUG gen #500] parsed action: 'toAction Action to to to to to to to to to to to to to....'
+ALFWorld episodes:  22%|██▏       | 11/50 [12:20<40:46, 62.74s/it]
+[DEBUG gen #550] input_ids shape: torch.Size([1, 522]), n_messages: 1, mask_id: 156895
+[DEBUG gen #550] generated length: 51, mask_tokens_remaining: 0, eos_tokens: 1
+[DEBUG gen #550] first 60 token ids: [67001, 25, 468, 5884, 297, 297, 259, 6036, 6036, 297, 296, 6036, 5884, 13, 156900, 7287, 728, 297, 264, 220, 16, 156900, 198, 297, 297, 7287, 7287, 220, 297, 297, 297, 297, 16, 156900, 297, 297, 297, 297, 297, 297, 156900, 13, 13, 13, 13, 198, 728, 728, 728, 297, 156892]
+[DEBUG gen #550] full_response (first 300 chars): 'Thought: The task to to a cool cool to in cool task.Action go toer 1\n to toActionAction  to to to to1 to to to to to to....\n go go go to'
+[DEBUG gen #550] parsed action: 'go go go to'
+ALFWorld episodes:  24%|██▍       | 12/50 [13:48<44:35, 70.42s/it]
+[DEBUG gen #600] input_ids shape: torch.Size([1, 520]), n_messages: 1, mask_id: 156895
+[DEBUG gen #600] generated length: 32, mask_tokens_remaining: 0, eos_tokens: 1
+[DEBUG gen #600] first 60 token ids: [67001, 25, 331, 1050, 297, 23233, 259, 4139, 297, 297, 297, 268, 5884, 5884, 5884, 13, 7287, 25, 728, 297, 258, 220, 16, 156900, 25, 220, 220, 220, 220, 25, 25, 156892]
+[DEBUG gen #600] full_response (first 300 chars): 'Thought: I need to locate a clean to to to the task task task.Action: go toin 1:    ::'
+[DEBUG gen #600] parsed action: 'go toin 1:    ::'
+ALFWorld episodes:  26%|██▌       | 13/50 [15:40<51:10, 82.99s/it]
+[DEBUG gen #650] input_ids shape: torch.Size([1, 520]), n_messages: 1, mask_id: 156895
+[DEBUG gen #650] generated length: 45, mask_tokens_remaining: 0, eos_tokens: 1
+[DEBUG gen #650] first 60 token ids: [67001, 25, 331, 1050, 297, 23233, 259, 4139, 297, 297, 2242, 268, 268, 13, 13, 13, 7287, 25, 728, 297, 258, 220, 16, 156900, 25, 220, 220, 220, 25, 7287, 25, 25, 156900, 25, 258, 258, 258, 220, 297, 297, 297, 258, 16, 156900, 156892]
+[DEBUG gen #650] full_response (first 300 chars): 'Thought: I need to locate a clean to to place the the...Action: go toin 1:   :Action:::ininin  to to toin1'
+[DEBUG gen #650] parsed action: '::ininin  to to toin1'
+ALFWorld episodes:  28%|██▊       | 14/50 [17:38<56:02, 93.41s/it]
+[DEBUG gen #700] input_ids shape: torch.Size([1, 476]), n_messages: 1, mask_id: 156895
+[DEBUG gen #700] generated length: 39, mask_tokens_remaining: 0, eos_tokens: 1
+[DEBUG gen #700] first 60 token ids: [67001, 25, 468, 15757, 268, 15757, 15757, 268, 268, 11450, 268, 11450, 11450, 297, 297, 297, 13, 268, 268, 268, 268, 268, 268, 268, 268, 156900, 13, 25, 25, 25, 728, 297, 42249, 220, 16, 156900, 25, 25, 156892]
+[DEBUG gen #700] full_response (first 300 chars): 'Thought: The examine the examine examine the the desk the desk desk to to to. the the the the the the the the.::: go to drawer 1::'
+[DEBUG gen #700] parsed action: 'Thought: The examine the examine examine the the desk the desk desk to to to. the the the the the the the the.::: go to drawer 1::'
+ALFWorld episodes:  30%|███       | 15/50 [18:37<48:28, 83.11s/it]
+[DEBUG gen #750] input_ids shape: torch.Size([1, 520]), n_messages: 1, mask_id: 156895
+[DEBUG gen #750] generated length: 28, mask_tokens_remaining: 0, eos_tokens: 1
+[DEBUG gen #750] first 60 token ids: [67001, 25, 331, 1050, 297, 23233, 259, 259, 297, 297, 268, 156900, 13, 13, 13, 13, 7287, 25, 728, 297, 22747, 220, 16, 156900, 156900, 22747, 220, 156892]
+[DEBUG gen #750] full_response (first 300 chars): 'Thought: I need to locate a a to to the....Action: go to cabinet 1 cabinet'
+[DEBUG gen #750] parsed action: 'go to cabinet 1 cabinet'
+ALFWorld episodes:  32%|███▏      | 16/50 [19:35<42:48, 75.54s/it]
+[DEBUG gen #800] input_ids shape: torch.Size([1, 463]), n_messages: 1, mask_id: 156895
+[DEBUG gen #800] generated length: 30, mask_tokens_remaining: 0, eos_tokens: 1
+[DEBUG gen #800] first 60 token ids: [67001, 25, 331, 1050, 297, 23233, 1307, 16581, 4485, 198, 7287, 268, 268, 7872, 7872, 16, 156900, 13, 268, 268, 268, 268, 268, 297, 13, 198, 268, 16, 156900, 156892]
+[DEBUG gen #800] full_response (first 300 chars): 'Thought: I need to locate two barsbar\nAction the thecancan1. the the the the the to.\n the1'
+[DEBUG gen #800] parsed action: 'the1'
+ALFWorld episodes:  34%|███▍      | 17/50 [21:12<45:10, 82.14s/it]
+[DEBUG gen #850] input_ids shape: torch.Size([1, 520]), n_messages: 1, mask_id: 156895
+[DEBUG gen #850] generated length: 45, mask_tokens_remaining: 0, eos_tokens: 1
+[DEBUG gen #850] first 60 token ids: [67001, 25, 156900, 1050, 297, 23233, 259, 22745, 297, 297, 268, 5884, 5884, 5884, 5884, 13, 7287, 25, 728, 297, 258, 220, 16, 156900, 25, 297, 22745, 156900, 25, 16, 25, 297, 297, 297, 297, 297, 297, 297, 297, 297, 297, 156900, 156900, 156900, 156892]
+[DEBUG gen #850] full_response (first 300 chars): 'Thought: need to locate a apple to to the task task task task.Action: go toin 1: to apple:1: to to to to to to to to to to'
+[DEBUG gen #850] parsed action: 'go toin 1: to apple:1: to to to to to to to to to to'
+ALFWorld episodes:  36%|███▌      | 18/50 [22:16<40:46, 76.47s/it]
+[DEBUG gen #900] input_ids shape: torch.Size([1, 523]), n_messages: 1, mask_id: 156895
+[DEBUG gen #900] generated length: 42, mask_tokens_remaining: 0, eos_tokens: 1
+[DEBUG gen #900] first 60 token ids: [67001, 25, 2421, 1050, 297, 23233, 289, 10540, 297, 268, 5884, 5884, 13, 198, 7287, 297, 297, 258, 220, 16, 156900, 297, 7287, 7287, 7287, 7287, 7287, 7287, 297, 297, 297, 10540, 10540, 10540, 10540, 156900, 10540, 10540, 10540, 10540, 10540, 156892]
+[DEBUG gen #900] full_response (first 300 chars): 'Thought: To need to locate an egg to the task task.\nAction to toin 1 toActionActionActionActionActionAction to to to egg egg egg egg egg egg egg egg egg'
+[DEBUG gen #900] parsed action: 'Action to toin 1 toActionActionActionActionActionAction to to to egg egg egg egg egg egg egg egg egg'
+ALFWorld episodes:  38%|███▊      | 19/50 [23:39<40:37, 78.61s/it]
+[DEBUG gen #950] input_ids shape: torch.Size([1, 463]), n_messages: 1, mask_id: 156895
+[DEBUG gen #950] generated length: 30, mask_tokens_remaining: 0, eos_tokens: 1
+[DEBUG gen #950] first 60 token ids: [67001, 25, 331, 1050, 297, 23233, 1307, 16581, 4485, 198, 7287, 268, 268, 7872, 7872, 16, 156900, 13, 268, 268, 268, 268, 268, 297, 13, 198, 268, 16, 156900, 156892]
+[DEBUG gen #950] full_response (first 300 chars): 'Thought: I need to locate two barsbar\nAction the thecancan1. the the the the the to.\n the1'
+[DEBUG gen #950] parsed action: 'the1'
+ALFWorld episodes:  40%|████      | 20/50 [25:11<41:19, 82.64s/it]
+[DEBUG gen #1000] input_ids shape: torch.Size([1, 476]), n_messages: 1, mask_id: 156895
+[DEBUG gen #1000] generated length: 38, mask_tokens_remaining: 0, eos_tokens: 1
+[DEBUG gen #1000] first 60 token ids: [67001, 25, 468, 15757, 15757, 15757, 15757, 15757, 11450, 11450, 11450, 268, 11450, 297, 297, 297, 268, 297, 156900, 268, 268, 268, 268, 268, 268, 13, 13, 25, 7287, 25, 728, 297, 42249, 220, 16, 156900, 25, 156892]
+[DEBUG gen #1000] full_response (first 300 chars): 'Thought: The examine examine examine examine examine desk desk desk the desk to to to the to the the the the the the..:Action: go to drawer 1:'
+[DEBUG gen #1000] parsed action: 'go to drawer 1:'
+ALFWorld episodes:  42%|████▏     | 21/50 [26:07<36:03, 74.60s/it]
+[DEBUG gen #1050] input_ids shape: torch.Size([1, 520]), n_messages: 1, mask_id: 156895
+[DEBUG gen #1050] generated length: 33, mask_tokens_remaining: 0, eos_tokens: 1
+[DEBUG gen #1050] first 60 token ids: [67001, 25, 156900, 1050, 297, 23233, 259, 4139, 297, 297, 2242, 268, 268, 13, 13, 13, 7287, 25, 728, 297, 264, 220, 16, 156900, 16, 220, 220, 220, 220, 220, 25, 25, 156892]
+[DEBUG gen #1050] full_response (first 300 chars): 'Thought: need to locate a clean to to place the the...Action: go toer 11     ::'
+[DEBUG gen #1050] parsed action: 'go toer 11     ::'
+ALFWorld episodes:  44%|████▍     | 22/50 [27:12<33:25, 71.64s/it]
+[DEBUG gen #1100] input_ids shape: torch.Size([1, 522]), n_messages: 1, mask_id: 156895
+[DEBUG gen #1100] generated length: 29, mask_tokens_remaining: 0, eos_tokens: 1
+[DEBUG gen #1100] first 60 token ids: [67001, 25, 331, 1050, 297, 23233, 297, 297, 297, 297, 156900, 268, 13, 13, 198, 7287, 728, 297, 42249, 220, 16, 156900, 7287, 7287, 16, 220, 16, 156900, 156892]
+[DEBUG gen #1100] full_response (first 300 chars): 'Thought: I need to locate to to to to the..\nAction go to drawer 1ActionAction1 1'
+[DEBUG gen #1100] parsed action: 'Action go to drawer 1ActionAction1 1'
+ALFWorld episodes:  46%|████▌     | 23/50 [28:09<30:20, 67.43s/it]
+[DEBUG gen #1150] input_ids shape: torch.Size([1, 476]), n_messages: 1, mask_id: 156895
+[DEBUG gen #1150] generated length: 41, mask_tokens_remaining: 0, eos_tokens: 1
+[DEBUG gen #1150] first 60 token ids: [67001, 25, 468, 156900, 268, 297, 1345, 482, 482, 482, 1198, 268, 11450, 156900, 11450, 11450, 11450, 331, 11450, 297, 268, 268, 268, 268, 268, 13, 13, 198, 156900, 25, 728, 297, 11450, 220, 16, 156900, 25, 11450, 297, 297, 156892]
+[DEBUG gen #1150] full_response (first 300 chars): 'Thought: The the to look at at at under the desk desk desk desk I desk to the the the the the..\n: go to desk 1: desk to to'
+[DEBUG gen #1150] parsed action: ': go to desk 1: desk to to'
+ALFWorld episodes:  48%|████▊     | 24/50 [29:18<29:19, 67.68s/it]
+[DEBUG gen #1200] input_ids shape: torch.Size([1, 522]), n_messages: 1, mask_id: 156895
+[DEBUG gen #1200] generated length: 40, mask_tokens_remaining: 0, eos_tokens: 1
+[DEBUG gen #1200] first 60 token ids: [67001, 25, 268, 1050, 297, 297, 156900, 259, 366, 268, 268, 5884, 13, 13, 198, 7287, 25, 297, 90584, 220, 16, 156900, 25, 90584, 90584, 90584, 90584, 90584, 25, 90584, 90584, 90584, 25, 16, 25, 156900, 90584, 297, 156900, 156892]
+[DEBUG gen #1200] full_response (first 300 chars): 'Thought: the need to to a on the the task..\nAction: to dresser 1: dresser dresser dresser dresser dresser: dresser dresser dresser:1: dresser to'
+[DEBUG gen #1200] parsed action: 'to dresser 1: dresser dresser dresser dresser dresser: dresser dresser dresser:1: dresser to'
+ALFWorld episodes:  50%|█████     | 25/50 [30:22<27:44, 66.59s/it]
+[DEBUG gen #1250] input_ids shape: torch.Size([1, 524]), n_messages: 1, mask_id: 156895
+[DEBUG gen #1250] generated length: 44, mask_tokens_remaining: 0, eos_tokens: 1
+[DEBUG gen #1250] first 60 token ids: [67001, 25, 468, 1050, 297, 23233, 259, 331, 301, 301, 403, 13, 13, 7287, 7287, 297, 156900, 220, 16, 156900, 198, 198, 7287, 7287, 13, 198, 25, 268, 297, 268, 16, 156900, 268, 297, 297, 297, 297, 297, 13, 13, 13, 13, 13, 156892]
+[DEBUG gen #1250] full_response (first 300 chars): 'Thought: The need to locate a I and and it..ActionAction to 1\n\nActionAction.\n: the to the1 the to to to to to.....'
+[DEBUG gen #1250] parsed action: ': the to the1 the to to to to to.....'
+ALFWorld episodes:  52%|█████▏    | 26/50 [31:21<25:46, 64.45s/it]
+[DEBUG gen #1300] input_ids shape: torch.Size([1, 520]), n_messages: 1, mask_id: 156895
+[DEBUG gen #1300] generated length: 44, mask_tokens_remaining: 0, eos_tokens: 1
+[DEBUG gen #1300] first 60 token ids: [67001, 25, 331, 1050, 297, 23233, 259, 6036, 297, 297, 268, 5884, 300, 5884, 5884, 13, 7287, 25, 728, 297, 32509, 220, 16, 156900, 156900, 297, 220, 297, 32509, 297, 297, 297, 297, 32509, 32509, 32509, 32509, 297, 32509, 32509, 32509, 32509, 156900, 156892]
+[DEBUG gen #1300] full_response (first 300 chars): 'Thought: I need to locate a cool to to the task of task task.Action: go to fridge 1 to  to fridge to to to to fridge fridge fridge fridge to fridge fridge fridge fridge'
+[DEBUG gen #1300] parsed action: 'go to fridge 1 to  to fridge to to to to fridge fridge fridge fridge to fridge fridge fridge fridge'
+ALFWorld episodes:  54%|█████▍    | 27/50 [32:29<25:08, 65.58s/it]
+[DEBUG gen #1350] input_ids shape: torch.Size([1, 465]), n_messages: 1, mask_id: 156895
+[DEBUG gen #1350] generated length: 66, mask_tokens_remaining: 0, eos_tokens: 1
+[DEBUG gen #1350] first 60 token ids: [67001, 25, 468, 1050, 297, 1491, 1307, 23258, 23258, 23258, 268, 24580, 23258, 23258, 156900, 23258, 23258, 24580, 23258, 23258, 23258, 23258, 23258, 23258, 23258, 23258, 23258, 23258, 23258, 23258, 23258, 23258, 23258, 23258, 23258, 23258, 23258, 13, 23258, 7287, 7287, 23258, 23258, 23258, 220, 16, 156900, 23258, 23258, 23258, 23258, 23258, 23258, 23258, 23258, 23258, 23258, 23258, 23258, 23258]
+[DEBUG gen #1350] full_response (first 300 chars): 'Thought: The need to find twopaperpaperpaper the toiletpaperpaperpaperpaper toiletpaperpaperpaperpaperpaperpaperpaperpaperpaperpaperpaperpaperpaperpaperpaperpaperpaperpaperpaper.paperActionActionpaperpaperpaper 1paperpaperpaperpaperpaperpaperpaperpaperpaperpaperpaperpaperpaperpaperpaperpaperpaperpap'
+[DEBUG gen #1350] parsed action: 'Thought: The need to find twopaperpaperpaper the toiletpaperpaperpaperpaper toiletpaperpaperpaperpaperpaperpaperpaperpaperpaperpaperpaperpaperpaperpaperpaperpaperpaperpaperpaper.paperActionActionpaper'
+ALFWorld episodes:  56%|█████▌    | 28/50 [33:23<22:42, 61.92s/it]
+[DEBUG gen #1400] input_ids shape: torch.Size([1, 465]), n_messages: 1, mask_id: 156895
+[DEBUG gen #1400] generated length: 36, mask_tokens_remaining: 0, eos_tokens: 1
+[DEBUG gen #1400] first 60 token ids: [67001, 25, 331, 1050, 297, 23233, 25298, 4485, 4485, 297, 2242, 22747, 22747, 16, 156900, 13, 297, 297, 259, 2242, 268, 268, 268, 2242, 268, 7287, 268, 268, 268, 297, 297, 297, 297, 297, 156900, 156892]
+[DEBUG gen #1400] full_response (first 300 chars): 'Thought: I need to locate soapbarbar to place cabinet cabinet1. to to a place the the the place theAction the the the to to to to to'
+[DEBUG gen #1400] parsed action: 'Thought: I need to locate soapbarbar to place cabinet cabinet1. to to a place the the the place theAction the the the to to to to to'
+ALFWorld episodes:  58%|█████▊    | 29/50 [34:25<21:41, 61.99s/it]
+[DEBUG gen #1450] input_ids shape: torch.Size([1, 520]), n_messages: 1, mask_id: 156895
+[DEBUG gen #1450] generated length: 32, mask_tokens_remaining: 0, eos_tokens: 1
+[DEBUG gen #1450] first 60 token ids: [67001, 25, 468, 1050, 297, 23233, 268, 33301, 297, 4486, 268, 5884, 5884, 5884, 5884, 13, 7287, 25, 728, 297, 32509, 220, 16, 156900, 297, 220, 220, 220, 32509, 297, 297, 156892]
+[DEBUG gen #1450] full_response (first 300 chars): 'Thought: The need to locate the tomato to complete the task task task task.Action: go to fridge 1 to    fridge to to'
+[DEBUG gen #1450] parsed action: 'go to fridge 1 to    fridge to to'
+ALFWorld episodes:  60%|██████    | 30/50 [35:30<20:59, 62.95s/it]
+[DEBUG gen #1500] input_ids shape: torch.Size([1, 520]), n_messages: 1, mask_id: 156895
+[DEBUG gen #1500] generated length: 43, mask_tokens_remaining: 0, eos_tokens: 1
+[DEBUG gen #1500] first 60 token ids: [67001, 25, 331, 1050, 297, 23233, 259, 6036, 297, 2242, 2242, 5884, 268, 5884, 5884, 13, 7287, 25, 728, 297, 32509, 220, 16, 156900, 156900, 728, 220, 32509, 32509, 32509, 25, 25, 25, 32509, 32509, 32509, 32509, 297, 156900, 32509, 32509, 32509, 156892]
+[DEBUG gen #1500] full_response (first 300 chars): 'Thought: I need to locate a cool to place place task the task task.Action: go to fridge 1 go  fridge fridge fridge::: fridge fridge fridge fridge to fridge fridge fridge'
+[DEBUG gen #1500] parsed action: 'go to fridge 1 go  fridge fridge fridge::: fridge fridge fridge fridge to fridge fridge fridge'
+ALFWorld episodes:  62%|██████▏   | 31/50 [36:33<19:54, 62.87s/it]
+[DEBUG gen #1550] input_ids shape: torch.Size([1, 476]), n_messages: 1, mask_id: 156895
+[DEBUG gen #1550] generated length: 39, mask_tokens_remaining: 0, eos_tokens: 1
+[DEBUG gen #1550] first 60 token ids: [67001, 25, 468, 156900, 268, 341, 25, 482, 482, 482, 156900, 268, 11450, 11450, 11450, 11450, 331, 331, 156900, 297, 268, 268, 268, 268, 268, 13, 13, 198, 7287, 25, 728, 297, 26369, 220, 16, 156900, 25, 156900, 156892]
+[DEBUG gen #1550] full_response (first 300 chars): 'Thought: The the is: at at at the desk desk desk desk I I to the the the the the..\nAction: go to shelf 1:'
+[DEBUG gen #1550] parsed action: 'go to shelf 1:'
+ALFWorld episodes:  64%|██████▍   | 32/50 [37:26<18:00, 60.03s/it]
+[DEBUG gen #1600] input_ids shape: torch.Size([1, 476]), n_messages: 1, mask_id: 156895
+[DEBUG gen #1600] generated length: 39, mask_tokens_remaining: 0, eos_tokens: 1
+[DEBUG gen #1600] first 60 token ids: [67001, 25, 468, 156900, 268, 341, 25, 482, 482, 482, 156900, 268, 11450, 11450, 11450, 11450, 331, 331, 156900, 297, 268, 268, 268, 268, 268, 13, 13, 198, 7287, 25, 728, 297, 26369, 220, 16, 156900, 25, 156900, 156892]
+[DEBUG gen #1600] full_response (first 300 chars): 'Thought: The the is: at at at the desk desk desk desk I I to the the the the the..\nAction: go to shelf 1:'
+[DEBUG gen #1600] parsed action: 'go to shelf 1:'
+ALFWorld episodes:  66%|██████▌   | 33/50 [38:20<16:28, 58.17s/it]
+[DEBUG gen #1650] input_ids shape: torch.Size([1, 522]), n_messages: 1, mask_id: 156895
+[DEBUG gen #1650] generated length: 39, mask_tokens_remaining: 0, eos_tokens: 1
+[DEBUG gen #1650] first 60 token ids: [67001, 25, 331, 1050, 297, 23233, 268, 331, 297, 2242, 268, 5884, 156900, 13, 7287, 7287, 25, 297, 56398, 220, 16, 156900, 25, 7287, 220, 220, 220, 220, 220, 25, 297, 156900, 220, 220, 220, 220, 220, 220, 156892]
+[DEBUG gen #1650] full_response (first 300 chars): 'Thought: I need to locate the I to place the task.ActionAction: toetable 1:Action     : to'
+[DEBUG gen #1650] parsed action: 'toetable 1:Action     : to'
+ALFWorld episodes:  68%|██████▊   | 34/50 [39:23<15:52, 59.51s/it]
+[DEBUG gen #1700] input_ids shape: torch.Size([1, 522]), n_messages: 1, mask_id: 156895
+[DEBUG gen #1700] generated length: 29, mask_tokens_remaining: 0, eos_tokens: 1
+[DEBUG gen #1700] first 60 token ids: [67001, 25, 331, 1050, 297, 23233, 259, 16855, 297, 4139, 268, 5884, 5884, 13, 198, 7287, 728, 297, 22747, 220, 16, 156900, 22747, 22747, 156900, 220, 220, 220, 156892]
+[DEBUG gen #1700] full_response (first 300 chars): 'Thought: I need to locate a bowl to clean the task task.\nAction go to cabinet 1 cabinet cabinet'
+[DEBUG gen #1700] parsed action: 'Action go to cabinet 1 cabinet cabinet'
+ALFWorld episodes:  70%|███████   | 35/50 [40:23<14:55, 59.70s/it]
+[DEBUG gen #1750] input_ids shape: torch.Size([1, 474]), n_messages: 1, mask_id: 156895
+[DEBUG gen #1750] generated length: 39, mask_tokens_remaining: 0, eos_tokens: 1
+[DEBUG gen #1750] first 60 token ids: [67001, 25, 468, 2537, 259, 156900, 259, 259, 259, 259, 259, 11450, 11450, 13, 156900, 297, 297, 259, 259, 13, 13, 13, 297, 268, 268, 7287, 7287, 13, 13, 25, 7287, 25, 728, 297, 42249, 220, 16, 156900, 156892]
+[DEBUG gen #1750] full_response (first 300 chars): 'Thought: The put a a a a a a desk desk. to to a a... to the theActionAction..:Action: go to drawer 1'
+[DEBUG gen #1750] parsed action: 'go to drawer 1'
+ALFWorld episodes:  72%|███████▏  | 36/50 [41:20<13:44, 58.90s/it]
+[DEBUG gen #1800] input_ids shape: torch.Size([1, 463]), n_messages: 1, mask_id: 156895
+[DEBUG gen #1800] generated length: 30, mask_tokens_remaining: 0, eos_tokens: 1
+[DEBUG gen #1800] first 60 token ids: [67001, 25, 331, 1050, 297, 23233, 1307, 16581, 4485, 198, 7287, 268, 268, 7872, 7872, 16, 156900, 13, 268, 268, 268, 268, 268, 297, 13, 198, 268, 16, 156900, 156892]
+[DEBUG gen #1800] full_response (first 300 chars): 'Thought: I need to locate two barsbar\nAction the thecancan1. the the the the the to.\n the1'
+[DEBUG gen #1800] parsed action: 'the1'
+ALFWorld episodes:  74%|███████▍  | 37/50 [43:01<15:31, 71.62s/it]
+[DEBUG gen #1850] input_ids shape: torch.Size([1, 521]), n_messages: 1, mask_id: 156895
+[DEBUG gen #1850] generated length: 31, mask_tokens_remaining: 0, eos_tokens: 1
+[DEBUG gen #1850] first 60 token ids: [67001, 25, 331, 1050, 297, 23233, 259, 11615, 366, 366, 268, 5884, 13, 13, 13, 7287, 7287, 728, 297, 22747, 220, 16, 156900, 22747, 7287, 220, 156900, 7287, 220, 220, 156892]
+[DEBUG gen #1850] full_response (first 300 chars): 'Thought: I need to locate a salt on on the task...ActionAction go to cabinet 1 cabinetAction Action'
+[DEBUG gen #1850] parsed action: 'Thought: I need to locate a salt on on the task...ActionAction go to cabinet 1 cabinetAction Action'
+ALFWorld episodes:  76%|███████▌  | 38/50 [43:58<13:26, 67.19s/it]
+[DEBUG gen #1900] input_ids shape: torch.Size([1, 522]), n_messages: 1, mask_id: 156895
+[DEBUG gen #1900] generated length: 32, mask_tokens_remaining: 0, eos_tokens: 1
+[DEBUG gen #1900] first 60 token ids: [67001, 25, 331, 1050, 297, 23233, 259, 259, 301, 301, 403, 5884, 13, 13, 198, 7287, 728, 297, 264, 220, 16, 156900, 198, 7287, 7287, 220, 220, 7287, 16, 156900, 13, 156892]
+[DEBUG gen #1900] full_response (first 300 chars): 'Thought: I need to locate a a and and it task..\nAction go toer 1\nActionAction  Action1.'
+[DEBUG gen #1900] parsed action: 'ActionAction  Action1.'
+ALFWorld episodes:  78%|███████▊  | 39/50 [44:48<11:22, 62.05s/it]
+[DEBUG gen #1950] input_ids shape: torch.Size([1, 520]), n_messages: 1, mask_id: 156895
+[DEBUG gen #1950] generated length: 28, mask_tokens_remaining: 0, eos_tokens: 1
+[DEBUG gen #1950] first 60 token ids: [67001, 25, 331, 1050, 297, 23233, 259, 259, 297, 297, 268, 156900, 13, 13, 13, 13, 7287, 25, 728, 297, 22747, 220, 16, 156900, 156900, 22747, 220, 156892]
+[DEBUG gen #1950] full_response (first 300 chars): 'Thought: I need to locate a a to to the....Action: go to cabinet 1 cabinet'
+[DEBUG gen #1950] parsed action: 'go to cabinet 1 cabinet'
+ALFWorld episodes:  80%|████████  | 40/50 [45:44<10:02, 60.23s/it]
+[DEBUG gen #2000] input_ids shape: torch.Size([1, 520]), n_messages: 1, mask_id: 156895
+[DEBUG gen #2000] generated length: 32, mask_tokens_remaining: 0, eos_tokens: 1
+[DEBUG gen #2000] first 60 token ids: [67001, 25, 331, 1050, 297, 23233, 259, 6036, 297, 2537, 2537, 5884, 5884, 5884, 5884, 13, 7287, 25, 728, 297, 22747, 220, 16, 156900, 22747, 22747, 22747, 220, 25, 25, 25, 156892]
+[DEBUG gen #2000] full_response (first 300 chars): 'Thought: I need to locate a cool to put put task task task task.Action: go to cabinet 1 cabinet cabinet cabinet :::'
+[DEBUG gen #2000] parsed action: 'go to cabinet 1 cabinet cabinet cabinet :::'
+ALFWorld episodes:  82%|████████▏ | 41/50 [46:44<09:00, 60.02s/it]
+[DEBUG gen #2050] input_ids shape: torch.Size([1, 521]), n_messages: 1, mask_id: 156895
+[DEBUG gen #2050] generated length: 42, mask_tokens_remaining: 0, eos_tokens: 1
+[DEBUG gen #2050] first 60 token ids: [67001, 25, 331, 1050, 297, 23233, 259, 11615, 11615, 296, 268, 5884, 5884, 5884, 13, 7287, 7287, 728, 297, 156900, 220, 16, 156900, 198, 11615, 11615, 11615, 198, 198, 7287, 156900, 11615, 11615, 11615, 11615, 11615, 11615, 16, 11615, 11615, 268, 156892]
+[DEBUG gen #2050] full_response (first 300 chars): 'Thought: I need to locate a salt salt in the task task task.ActionAction go to 1\n salt salt salt\n\nAction salt salt salt salt salt salt1 salt salt the'
+[DEBUG gen #2050] parsed action: 'Action salt salt salt salt salt salt1 salt salt the'
+ALFWorld episodes:  84%|████████▍ | 42/50 [47:44<08:00, 60.02s/it]
+[DEBUG gen #2100] input_ids shape: torch.Size([1, 520]), n_messages: 1, mask_id: 156895
+[DEBUG gen #2100] generated length: 33, mask_tokens_remaining: 0, eos_tokens: 1
+[DEBUG gen #2100] first 60 token ids: [67001, 25, 331, 1050, 297, 23233, 259, 259, 297, 297, 268, 5884, 259, 13, 156900, 13, 7287, 25, 728, 297, 22747, 220, 16, 156900, 22747, 22747, 25, 22747, 22747, 22747, 22747, 22747, 156892]
+[DEBUG gen #2100] full_response (first 300 chars): 'Thought: I need to locate a a to to the task a..Action: go to cabinet 1 cabinet cabinet: cabinet cabinet cabinet cabinet cabinet'
+[DEBUG gen #2100] parsed action: 'go to cabinet 1 cabinet cabinet: cabinet cabinet cabinet cabinet cabinet'
+ALFWorld episodes:  86%|████████▌ | 43/50 [48:43<06:58, 59.80s/it]
+[DEBUG gen #2150] input_ids shape: torch.Size([1, 520]), n_messages: 1, mask_id: 156895
+[DEBUG gen #2150] generated length: 33, mask_tokens_remaining: 0, eos_tokens: 1
+[DEBUG gen #2150] first 60 token ids: [67001, 25, 331, 1050, 297, 23233, 259, 259, 297, 297, 268, 5884, 259, 13, 156900, 13, 7287, 25, 728, 297, 22747, 220, 16, 156900, 22747, 22747, 25, 22747, 22747, 22747, 22747, 22747, 156892]
+[DEBUG gen #2150] full_response (first 300 chars): 'Thought: I need to locate a a to to the task a..Action: go to cabinet 1 cabinet cabinet: cabinet cabinet cabinet cabinet cabinet'
+[DEBUG gen #2150] parsed action: 'go to cabinet 1 cabinet cabinet: cabinet cabinet cabinet cabinet cabinet'
+ALFWorld episodes:  88%|████████▊ | 44/50 [49:43<05:59, 59.86s/it]
+[DEBUG gen #2200] input_ids shape: torch.Size([1, 520]), n_messages: 1, mask_id: 156895
+[DEBUG gen #2200] generated length: 28, mask_tokens_remaining: 0, eos_tokens: 1
+[DEBUG gen #2200] first 60 token ids: [67001, 25, 331, 1050, 297, 23233, 259, 259, 297, 297, 268, 156900, 13, 13, 13, 13, 7287, 25, 728, 297, 22747, 220, 16, 156900, 156900, 22747, 220, 156892]
+[DEBUG gen #2200] full_response (first 300 chars): 'Thought: I need to locate a a to to the....Action: go to cabinet 1 cabinet'
+[DEBUG gen #2200] parsed action: 'go to cabinet 1 cabinet'
+ALFWorld episodes:  90%|█████████ | 45/50 [50:39<04:53, 58.74s/it]
+[DEBUG gen #2250] input_ids shape: torch.Size([1, 522]), n_messages: 1, mask_id: 156895
+[DEBUG gen #2250] generated length: 61, mask_tokens_remaining: 0, eos_tokens: 1
+[DEBUG gen #2250] first 60 token ids: [67001, 25, 468, 259, 297, 259, 259, 259, 297, 297, 296, 268, 13, 13, 156900, 7287, 728, 297, 264, 220, 16, 156900, 198, 7287, 7287, 7287, 7287, 7287, 297, 297, 297, 297, 297, 156900, 297, 297, 297, 297, 297, 297, 297, 156900, 13, 13, 13, 728, 728, 728, 728, 23061, 264, 220, 16, 156900, 16, 220, 264, 16, 297, 16]
+[DEBUG gen #2250] full_response (first 300 chars): 'Thought: The a to a a a to to in the..Action go toer 1\nActionActionActionActionAction to to to to to to to to to to to to... go go go goburner 11 er1 to1'
+[DEBUG gen #2250] parsed action: 'ActionActionActionActionAction to to to to to to to to to to to to... go go go goburner 11 er1 to1'
+ALFWorld episodes:  92%|█████████▏| 46/50 [52:03<04:25, 66.39s/it]
+[DEBUG gen #2300] input_ids shape: torch.Size([1, 522]), n_messages: 1, mask_id: 156895
+[DEBUG gen #2300] generated length: 42, mask_tokens_remaining: 0, eos_tokens: 1
+[DEBUG gen #2300] first 60 token ids: [67001, 25, 331, 1050, 297, 23233, 268, 60968, 297, 297, 268, 5884, 156900, 13, 198, 7287, 728, 297, 32509, 220, 16, 156900, 268, 7287, 220, 220, 32509, 32509, 297, 297, 297, 297, 156900, 297, 297, 297, 297, 156900, 32509, 297, 297, 156892]
+[DEBUG gen #2300] full_response (first 300 chars): 'Thought: I need to locate the lettuce to to the task.\nAction go to fridge 1 theAction   fridge fridge to to to to to to to to fridge to to'
+[DEBUG gen #2300] parsed action: 'Action go to fridge 1 theAction   fridge fridge to to to to to to to to fridge to to'
+ALFWorld episodes:  94%|█████████▍| 47/50 [53:07<03:17, 65.67s/it]
+[DEBUG gen #2350] input_ids shape: torch.Size([1, 522]), n_messages: 1, mask_id: 156895
+[DEBUG gen #2350] generated length: 29, mask_tokens_remaining: 0, eos_tokens: 1
+[DEBUG gen #2350] first 60 token ids: [67001, 25, 331, 1050, 297, 23233, 259, 50722, 297, 13, 301, 13, 13, 13, 198, 7287, 728, 297, 22747, 220, 16, 156900, 7287, 7287, 7287, 16, 220, 156900, 156892]
+[DEBUG gen #2350] full_response (first 300 chars): 'Thought: I need to locate a mug to. and...\nAction go to cabinet 1ActionActionAction1'
+[DEBUG gen #2350] parsed action: 'Action go to cabinet 1ActionActionAction1'
+ALFWorld episodes:  96%|█████████▌| 48/50 [54:03<02:05, 62.67s/it]
+[DEBUG gen #2400] input_ids shape: torch.Size([1, 523]), n_messages: 1, mask_id: 156895
+[DEBUG gen #2400] generated length: 42, mask_tokens_remaining: 0, eos_tokens: 1
+[DEBUG gen #2400] first 60 token ids: [67001, 25, 2421, 1050, 297, 23233, 289, 10540, 297, 268, 5884, 5884, 13, 198, 7287, 297, 297, 258, 220, 16, 156900, 297, 7287, 7287, 7287, 7287, 7287, 7287, 297, 297, 297, 10540, 10540, 10540, 10540, 156900, 10540, 10540, 10540, 10540, 10540, 156892]
+[DEBUG gen #2400] full_response (first 300 chars): 'Thought: To need to locate an egg to the task task.\nAction to toin 1 toActionActionActionActionActionAction to to to egg egg egg egg egg egg egg egg egg'
+[DEBUG gen #2400] parsed action: 'Action to toin 1 toActionActionActionActionActionAction to to to egg egg egg egg egg egg egg egg egg'
+ALFWorld episodes:  98%|█████████▊| 49/50 [55:26<01:08, 68.75s/it]
+[DEBUG gen #2450] input_ids shape: torch.Size([1, 476]), n_messages: 1, mask_id: 156895
+[DEBUG gen #2450] generated length: 39, mask_tokens_remaining: 0, eos_tokens: 1
+[DEBUG gen #2450] first 60 token ids: [67001, 25, 468, 15757, 268, 15757, 15757, 268, 268, 11450, 268, 11450, 11450, 297, 297, 297, 13, 268, 268, 268, 268, 268, 268, 268, 268, 156900, 13, 25, 25, 25, 728, 297, 42249, 220, 16, 156900, 25, 25, 156892]
+[DEBUG gen #2450] full_response (first 300 chars): 'Thought: The examine the examine examine the the desk the desk desk to to to. the the the the the the the the.::: go to drawer 1::'
+[DEBUG gen #2450] parsed action: 'Thought: The examine the examine examine the the desk the desk desk to to to. the the the the the the the the.::: go to drawer 1::'
+ALFWorld episodes: 100%|██████████| 50/50 [56:24<00:00, 65.68s/it]ALFWorld episodes: 100%|██████████| 50/50 [56:24<00:00, 67.70s/it]
+
+Evaluation Complete for alfworld (test)
+{
+    "success_rate": 0.0,
+    "episodes": 50
+}

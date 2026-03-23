@@ -1,0 +1,91 @@
+[INFO|/scratch/e1507650/AnyOrderTraining/aomt/dFactory/VeOmni/veomni/ops/__init__.py:41] 03/22/2026 11:04:36 >> ⚠️ Skip applying ops patch. Using huggingface transformers backend.
+[INFO|/scratch/e1507650/AnyOrderTraining/aomt/dFactory/VeOmni/veomni/__init__.py:25] 03/22/2026 11:04:36 >> 
+========== Environment Variables ==========
+MODELING_BACKEND=hf (source=env)
+USE_GROUP_GEMM=1 (source=default)
+VEOMNI_USE_LIGER_KERNEL=1 (source=default)
+===========================================
+[INFO|/scratch/e1507650/AnyOrderTraining/aomt/dFactory/VeOmni/veomni/__init__.py:26] 03/22/2026 11:04:36 >> 
+=========== OPS ============
+_fused_moe_forward = None
+_flash_attention_forward = None
+_cross_entropy = None
+==============================
+Loading model from ./checkpoints/prefix_sft_s2/epoch_2 (config from ./weights/llada2-mini-merged)...
+[INFO|/scratch/e1507650/AnyOrderTraining/aomt/dFactory/VeOmni/veomni/models/loader.py:65] 03/22/2026 11:04:39 >> [CONFIG] Force loading model config from Huggingface.
+[INFO|/scratch/e1507650/AnyOrderTraining/aomt/dFactory/VeOmni/veomni/models/auto.py:100] 03/22/2026 11:04:39 >> MoE implementation: fused
+[WARNING|/scratch/e1507650/AnyOrderTraining/aomt/dFactory/VeOmni/veomni/models/auto.py:152] 03/22/2026 11:04:43 >> building foundation model with attn_implementation: sdpa.. you are missing sequence parallelism support. Please use veomni_flash_attention_2_with_sp or veomni_flash_attention_3_with_sp for SP.
+[INFO|/scratch/e1507650/AnyOrderTraining/aomt/dFactory/VeOmni/veomni/models/loader.py:179] 03/22/2026 11:04:43 >> Loading model from Huggingface modeling.
+init_device: cuda
+empty_init: False
+weights_path: ./checkpoints/prefix_sft_s2/epoch_2
+`torch_dtype` is deprecated! Use `dtype` instead!
+Loading checkpoint shards:   0%|          | 0/7 [00:00<?, ?it/s][WARNING|/scratch/e1507650/AnyOrderTraining/aomt/dFactory/VeOmni/veomni/distributed/parallel_state.py:631] 03/22/2026 11:04:44 >> Parallel state has not been initialized. returning default Single-process state.
+Loading checkpoint shards:  14%|█▍        | 1/7 [00:01<00:06,  1.06s/it]Loading checkpoint shards:  29%|██▊       | 2/7 [00:02<00:05,  1.15s/it]Loading checkpoint shards:  43%|████▎     | 3/7 [00:03<00:04,  1.14s/it]Loading checkpoint shards:  57%|█████▋    | 4/7 [00:04<00:03,  1.25s/it]Loading checkpoint shards:  71%|███████▏  | 5/7 [00:05<00:02,  1.16s/it]Loading checkpoint shards:  86%|████████▌ | 6/7 [00:07<00:01,  1.22s/it]Loading checkpoint shards: 100%|██████████| 7/7 [00:07<00:00,  1.06s/it]Loading checkpoint shards: 100%|██████████| 7/7 [00:07<00:00,  1.13s/it]
+[INFO|/scratch/e1507650/AnyOrderTraining/aomt/dFactory/VeOmni/veomni/models/auto.py:193] 03/22/2026 11:04:52 >> Built foundation model class: transformers_modules.llada2_hyphen_mini_hyphen_merged.modeling_llada2_moe.LLaDA2MoeModelLM
+Initializing AlfredTWEnv...
+  0%|          | 0/341 [00:00<?, ?it/s] 16%|█▌        | 54/341 [00:00<00:00, 531.24it/s] 32%|███▏      | 108/341 [00:00<00:00, 432.19it/s] 51%|█████     | 173/341 [00:00<00:00, 515.78it/s] 67%|██████▋   | 227/341 [00:00<00:00, 456.55it/s] 84%|████████▍ | 287/341 [00:00<00:00, 494.80it/s]100%|██████████| 341/341 [00:00<00:00, 501.25it/s]
+Overall we have 134 games in split=eval_out_of_distribution
+Evaluating with 134 games
+Running ALFWorld evaluation (test -> eval_out_of_distribution, 5 episodes, 134 games)...
+ALFWorld episodes:   0%|          | 0/5 [00:00<?, ?it/s]ALFWorld episodes:  20%|██        | 1/5 [00:16<01:07, 16.99s/it]ALFWorld episodes:  40%|████      | 2/5 [00:27<00:39, 13.07s/it]ALFWorld episodes:  60%|██████    | 3/5 [00:37<00:23, 11.74s/it]ALFWorld episodes:  80%|████████  | 4/5 [00:50<00:12, 12.35s/it]ALFWorld episodes: 100%|██████████| 5/5 [01:05<00:00, 13.38s/it]ALFWorld episodes: 100%|██████████| 5/5 [01:05<00:00, 13.19s/it]
+
+[DEBUG gen #0] input_ids shape: torch.Size([1, 522]), n_messages: 1, mask_id: 156895
+[DEBUG gen #0] generated length: 36, mask_tokens_remaining: 0, eos_tokens: 1
+[DEBUG gen #0] first 60 token ids: [67001, 25, 331, 1050, 297, 23233, 268, 4139, 4139, 4139, 13, 13, 13, 13, 198, 198, 7287, 297, 258, 258, 16, 156900, 7287, 258, 258, 258, 13, 13, 156900, 7287, 7287, 7287, 156900, 156900, 156900, 156892]
+[DEBUG gen #0] full_response (first 300 chars): 'Thought: I need to locate the clean clean clean....\n\nAction toinin1Actionininin..ActionActionAction'
+[DEBUG gen #0] parsed action: 'Action toinin1Actionininin..ActionActionAction'
+
+[DEBUG gen #1] input_ids shape: torch.Size([1, 538]), n_messages: 1, mask_id: 156895
+[DEBUG gen #1] generated length: 37, mask_tokens_remaining: 0, eos_tokens: 1
+[DEBUG gen #1] first 60 token ids: [67001, 25, 198, 268, 268, 198, 25, 25, 268, 25, 297, 13, 13, 13, 13, 13, 13, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 25, 25, 21038, 258, 258, 220, 156892]
+[DEBUG gen #1] full_response (first 300 chars): 'Thought:\n the the\n:: the: to......ActionActionActionActionActionActionActionActionActionActionActionActionAction:: sinkinin'
+[DEBUG gen #1] parsed action: ': sinkinin'
+
+[DEBUG gen #2] input_ids shape: torch.Size([1, 546]), n_messages: 1, mask_id: 156895
+[DEBUG gen #2] generated length: 36, mask_tokens_remaining: 0, eos_tokens: 1
+[DEBUG gen #2] first 60 token ids: [67001, 25, 468, 21038, 341, 341, 258, 258, 331, 331, 13, 331, 156900, 13, 13, 13, 13, 13, 13, 156900, 198, 7287, 7287, 25, 297, 258, 258, 156900, 16, 156900, 156900, 16, 13, 13, 13, 156892]
+[DEBUG gen #2] full_response (first 300 chars): 'Thought: The sink is isinin I I. I......\nActionAction: toinin11...'
+[DEBUG gen #2] parsed action: 'toinin11...'
+
+[DEBUG gen #3] input_ids shape: torch.Size([1, 556]), n_messages: 1, mask_id: 156895
+[DEBUG gen #3] generated length: 27, mask_tokens_remaining: 0, eos_tokens: 1
+[DEBUG gen #3] first 60 token ids: [67001, 25, 468, 341, 1037, 268, 13, 13, 331, 13, 13, 13, 198, 7287, 25, 258, 258, 258, 16, 156900, 156900, 16, 156900, 13, 13, 25, 156892]
+[DEBUG gen #3] full_response (first 300 chars): 'Thought: The is no the.. I...\nAction:ininin11..:'
+[DEBUG gen #3] parsed action: 'ininin11..:'
+
+[DEBUG gen #4] input_ids shape: torch.Size([1, 567]), n_messages: 1, mask_id: 156895
+[DEBUG gen #4] generated length: 30, mask_tokens_remaining: 0, eos_tokens: 1
+[DEBUG gen #4] first 60 token ids: [67001, 25, 331, 1024, 297, 258, 258, 16, 156900, 16, 258, 258, 258, 13, 13, 13, 13, 13, 13, 13, 13, 25, 13, 13, 13, 13, 7287, 13, 13, 156892]
+[DEBUG gen #4] full_response (first 300 chars): 'Thought: I am toinin11ininin........:....Action..'
+[DEBUG gen #4] parsed action: 'Thought: I am toinin11ininin........:....Action..'
+
+[DEBUG gen #50] input_ids shape: torch.Size([1, 476]), n_messages: 1, mask_id: 156895
+[DEBUG gen #50] generated length: 43, mask_tokens_remaining: 0, eos_tokens: 1
+[DEBUG gen #50] first 60 token ids: [67001, 25, 331, 5884, 268, 268, 15757, 15757, 15757, 15757, 15757, 15757, 15757, 268, 268, 123648, 123648, 123648, 268, 268, 268, 268, 13, 13, 13, 13, 198, 198, 7287, 25, 25, 297, 26369, 220, 16, 156900, 16, 16, 16, 16, 16, 156900, 156892]
+[DEBUG gen #50] full_response (first 300 chars): 'Thought: I task the the examine examine examine examine examine examine examine the thelamplamplamp the the the the....\n\nAction:: to shelf 111111'
+[DEBUG gen #50] parsed action: ': to shelf 111111'
+
+[DEBUG gen #100] input_ids shape: torch.Size([1, 464]), n_messages: 1, mask_id: 156895
+[DEBUG gen #100] generated length: 30, mask_tokens_remaining: 0, eos_tokens: 1
+[DEBUG gen #100] first 60 token ids: [67001, 25, 331, 1050, 297, 268, 268, 4139, 13, 297, 297, 297, 297, 297, 13, 7287, 297, 297, 297, 22747, 22747, 22747, 22747, 22747, 22747, 22747, 22747, 22747, 22747, 156892]
+[DEBUG gen #100] full_response (first 300 chars): 'Thought: I need to the the clean. to to to to to.Action to to to cabinet cabinet cabinet cabinet cabinet cabinet cabinet cabinet cabinet cabinet'
+[DEBUG gen #100] parsed action: 'Thought: I need to the the clean. to to to to to.Action to to to cabinet cabinet cabinet cabinet cabinet cabinet cabinet cabinet cabinet cabinet'
+
+[DEBUG gen #150] input_ids shape: torch.Size([1, 523]), n_messages: 1, mask_id: 156895
+[DEBUG gen #150] generated length: 35, mask_tokens_remaining: 0, eos_tokens: 1
+[DEBUG gen #150] first 60 token ids: [67001, 25, 331, 1050, 268, 23233, 268, 10540, 297, 13, 13, 13, 13, 198, 7287, 7287, 297, 258, 258, 16, 156900, 7287, 7287, 7287, 10540, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 16, 156892]
+[DEBUG gen #150] full_response (first 300 chars): 'Thought: I need the locate the egg to....\nActionAction toinin1ActionActionAction eggActionActionActionActionActionActionActionAction1'
+[DEBUG gen #150] parsed action: 'ActionAction toinin1ActionActionAction eggActionActionActionActionActionActionActionAction1'
+
+[DEBUG gen #200] input_ids shape: torch.Size([1, 521]), n_messages: 1, mask_id: 156895
+[DEBUG gen #200] generated length: 72, mask_tokens_remaining: 0, eos_tokens: 1
+[DEBUG gen #200] first 60 token ids: [67001, 25, 331, 1050, 297, 4154, 259, 33301, 297, 297, 268, 268, 13, 13, 13, 7287, 7287, 25, 297, 7872, 7872, 16, 156900, 25, 16, 16, 16, 7287, 7287, 7287, 7287, 16, 16, 16, 16, 16, 16, 16, 16, 16, 7287, 16, 7287, 156900, 7872, 198, 7287, 7287, 25, 728, 7872, 7872, 220, 16, 156900, 16, 16, 7872, 7872, 7872]
+[DEBUG gen #200] full_response (first 300 chars): 'Thought: I need to hot a tomato to to the the...ActionAction: tocancan1:111ActionActionActionAction111111111Action1Actioncan\nActionAction: gocancan 111cancancan11111cancancan11'
+[DEBUG gen #200] parsed action: 'gocancan 111cancancan11111cancancan11'
+
+Evaluation Complete for alfworld (test)
+{
+    "success_rate": 0.0,
+    "episodes": 5
+}

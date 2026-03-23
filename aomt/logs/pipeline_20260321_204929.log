@@ -1,0 +1,19 @@
+==================================================================
+ AOMT Full Training Pipeline
+ GPUs: 2,4,6,7 (4 processes)
+ Logs: ./logs/20260321_204929
+ Started: Sat Mar 21 08:49:29 PM +08 2026
+==================================================================
+  ⏭️  Skipping Standard SFT (already completed — checkpoints/sft_standard/epoch_0,1,2)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  [02_aomt_action_only] Starting @ Sat Mar 21 08:49:29 PM +08 2026
+  Script: tasks/train_aomt.py | Config: configs/aomt_action_only.yaml | Port: 29502
+  Log: ./logs/20260321_204929/02_aomt_action_only.log
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Traceback (most recent call last):
+  File "/home/svu/e1507650/.local/bin/torchrun", line 5, in <module>
+    from torch.distributed.run import main
+  File "/home/svu/e1507650/.local/lib/python3.9/site-packages/torch/__init__.py", line 416, in <module>
+    from torch._C import *  # noqa: F403
+ImportError: libcudnn.so.9: cannot open shared object file: No such file or directory

@@ -1,5 +1,8 @@
 # Core ML/DS Libraries
+# For VeOmni *Triton* fused MoE: use a CUDA build of PyTorch (see PyTorch "Get Started" cu12x),
+# install `triton`, and keep USE_GROUP_GEMM=1 (default in VeOmni). CPU-only torch will not use Triton.
 torch>=2.5.0
+triton>=3.0.0; sys_platform == "linux"
 transformers>=4.56.2
 datasets
 accelerate

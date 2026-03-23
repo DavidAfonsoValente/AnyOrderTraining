@@ -1,4 +1,12 @@
 # aomt/training/collator.py
+"""
+Data collation utilities for AOMT training.
+
+NOTE: The primary training pipeline uses train_aomt.py and train_standard_sft.py,
+which handle data loading/collation internally. The functions below are utility
+functions for data preprocessing (prepare_data.py) and are NOT called during
+training.
+"""
 from dataclasses import dataclass
 from typing import List, Dict, Any
 import torch
@@ -6,7 +14,6 @@ from transformers import PreTrainedTokenizer
 
 from aomt.data.unit_parser import TokenizedTrajectory
 
-# --- Section 6.2: Prefix SFT Stage 1 Collation ---
 
 def build_prefix_sft_examples(
     tokenized_traj: TokenizedTrajectory,
@@ -14,7 +21,13 @@ def build_prefix_sft_examples(
 ) -> List[Dict[str, Any]]:
     """
     Constructs Prefix-SFT Stage 1 examples: (O_t, A_t) -> O_{t+1}.
-    Prompt = O_t, A_t (local context ONLY). Response = O_{t+1}.
+    
+    Paper (Sec. 4, Appendix A):
+        "Stage 1 predicts O_{t+1} from local context {O_t, A_t}."
+        "each datapoint contains only {O_t, A_t} as prompt and O_{t+1} as response."
+    
+    Returns examples in chat format (messages list) for compatibility with
+    train_standard_sft.py's SFTDataset.
     """
     units = tokenized_traj.unit_spans
     ids = tokenized_traj.input_ids
@@ -25,87 +38,22 @@ def build_prefix_sft_examples(
             units[i+1].unit_type == "act" and
             units[i+2].unit_type == "obs"):
 
-            obs_t = tokenized_traj.input_ids[units[i].token_start:units[i].token_end]
-            act_t = tokenized_traj.input_ids[units[i+1].token_start:units[i+1].token_end]
-            obs_t1 = tokenized_traj.input_ids[units[i+2].token_start:units[i+2].token_end]
+            obs_t = ids[units[i].token_start:units[i].token_end]
+            act_t = ids[units[i+1].token_start:units[i+1].token_end]
+            obs_t1 = ids[units[i+2].token_start:units[i+2].token_end]
 
-            # Reconstruct text to use chat template for consistent boundaries
-            obs_t_text = tokenizer.decode(obs_t)
-            act_t_text = tokenizer.decode(act_t)
-            obs_t1_text = tokenizer.decode(obs_t1)
+            # Decode to text for chat template format
+            obs_t_text = tokenizer.decode(obs_t, skip_special_tokens=True)
+            act_t_text = tokenizer.decode(act_t, skip_special_tokens=True)
+            obs_t1_text = tokenizer.decode(obs_t1, skip_special_tokens=True)
 
+            # Local context {O_t, A_t} as prompt, O_{t+1} as response
             messages = [
                 {"role": "user", "content": f"{obs_t_text}\n{act_t_text}"},
                 {"role": "assistant", "content": obs_t1_text}
             ]
-            
-            # This will be processed by SFTDataset in train_standard_sft.py
+
             examples.append({"messages": messages})
-
-    return examples
-
-
-# --- Section 6.3: Prefix SFT Stage 2 Collation ---
-
-def build_prefix_sft_stage2_examples(
-    tokenized_traj: TokenizedTrajectory,
-    tokenizer: PreTrainedTokenizer
-) -> List[Dict[str, Any]]:
-    """
-    Constructs multiple short training examples from a single trajectory
-    for the Prefix-SFT Stage 2 (Policy) objective.
-
-    Each example has the form: O_t -> A_t
-    Input:  [O_t tokens] [SEP] [MASK]...[MASK]
-    Target: [O_t tokens] [SEP] [A_t tokens]
-
-    Args:
-        tokenized_traj (TokenizedTrajectory): The trajectory to process.
-        tokenizer (PreTrainedTokenizer): The tokenizer, needed for special tokens.
-
-    Returns:
-        List[Dict[str, Any]]: A list of dictionary-based training instances.
-    """
-    sep_token_id = tokenizer.eos_token_id
-    mask_token_id = tokenizer.mask_token_id
-    if sep_token_id is None or mask_token_id is None:
-        raise ValueError("Tokenizer must have defined eos_token_id and mask_token_id.")
-
-    units = tokenized_traj.unit_spans
-    ids = tokenized_traj.input_ids
-    examples = []
-
-    # Iterate through the trajectory to find (obs, act) sequences
-    for i in range(len(units) - 1):
-        if units[i].unit_type == "obs" and units[i+1].unit_type == "act":
-            obs_t, act_t = units[i], units[i+1]
-
-            # Context is O_t + SEP
-            ctx_ids = torch.cat([
-                ids[obs_t.token_start:obs_t.token_end],
-                torch.tensor([sep_token_id], dtype=torch.long),
-            ])
-
-            # Target is the A_t span
-            target_span = ids[act_t.token_start:act_t.token_end]
-            
-            # The input replaces the target span with MASK tokens
-            masked_span = torch.full_like(target_span, fill_value=mask_token_id)
-            
-            # Assemble the full sequences
-            full_input_ids = torch.cat([ctx_ids, masked_span])
-            full_target_ids = torch.cat([ctx_ids, target_span])
-            
-            # Loss is only calculated on the A_t span
-            loss_mask = torch.zeros_like(full_input_ids, dtype=torch.bool)
-            loss_mask[len(ctx_ids):] = True
-
-            examples.append({
-                "input_ids": full_input_ids,
-                "target_ids": full_target_ids,
-                "loss_mask": loss_mask,
-                "use_causal_mask": True,
-            })
 
     return examples
 
@@ -115,96 +63,64 @@ def build_standard_sft_examples(
     tokenizer: PreTrainedTokenizer
 ) -> List[Dict[str, Any]]:
     """
-    Constructs multiple short training examples from a single trajectory to
-    efficiently mimic autoregressive SFT with a bidirectional model.
-
-    For each action `a_t` in the trajectory, it creates an example:
-    (s_0, a_0, ..., s_t) -> a_t
-
-    Input:  [s_0, a_0, ..., s_t tokens] [SEP] [MASK]...[MASK]
-    Target: [s_0, a_0, ..., s_t tokens] [SEP] [a_t tokens]
-
-    Args:
-        tokenized_traj (TokenizedTrajectory): The trajectory to process.
-        tokenizer (PreTrainedTokenizer): The tokenizer, needed for special tokens.
-
-    Returns:
-        List[Dict[str, Any]]: A list of dictionary-based training instances.
+    Constructs Standard SFT examples: full causal prefix -> A_t.
+    
+    Paper (Sec. 4):
+        "slices each trajectory into T examples, one per action; each example's
+        causal prefix is the prompt and the action A_t is the fully-masked response."
+    
+    Also used for Prefix SFT Stage 2 (paper: "Stage 2 fine-tunes from the
+    Stage 1 checkpoint using the same data and masking as Standard SFT").
+    
+    Returns examples in chat format (messages list) for compatibility with
+    train_standard_sft.py's SFTDataset.
     """
-    sep_token_id = tokenizer.eos_token_id
-    mask_token_id = tokenizer.mask_token_id
-    if sep_token_id is None or mask_token_id is None:
-        raise ValueError("Tokenizer must have defined eos_token_id and mask_token_id.")
-
     units = tokenized_traj.unit_spans
-    ids = tokenized_traj.input_ids
     examples = []
 
-    # Iterate through the trajectory to find all actions
     for i in range(len(units)):
-        if units[i].unit_type == "act":
-            act_t = units[i]
-            
-            # Context is everything up to the start of the current action
-            # This includes all prior obs and act units.
-            # The final observation before the action is units[i-1].
-            if i == 0:
-                continue # Cannot predict an action with no preceding observation
-            
-            prev_unit_end = units[i-1].token_end
-            
-            ctx_ids = torch.cat([
-                ids[:prev_unit_end],
-                torch.tensor([sep_token_id], dtype=torch.long),
-            ])
+        if units[i].unit_type != "act":
+            continue
+        if i == 0:
+            continue  # No preceding observation
 
-            # Target is the A_t span
-            target_span = ids[act_t.token_start:act_t.token_end]
-            
-            # The input replaces the target span with MASK tokens
-            masked_span = torch.full_like(target_span, fill_value=mask_token_id)
-            
-            # Assemble the full sequences
-            full_input_ids = torch.cat([ctx_ids, masked_span])
-            full_target_ids = torch.cat([ctx_ids, target_span])
-            
-            # Loss is only calculated on the A_t span
-            loss_mask = torch.zeros_like(full_input_ids, dtype=torch.bool)
-            loss_mask[len(ctx_ids):] = True
+        # Build message history: all units up to and including the current action
+        messages = []
+        for j in range(i + 1):
+            role = "user" if units[j].unit_type == "obs" else "assistant"
+            text = tokenizer.decode(
+                tokenized_traj.input_ids[units[j].token_start:units[j].token_end],
+                skip_special_tokens=True
+            )
+            messages.append({"role": role, "content": text})
 
-            examples.append({
-                "input_ids": full_input_ids,
-                "target_ids": full_target_ids,
-                "loss_mask": loss_mask,
-                "use_causal_mask": True,
-            })
-            
+        # The prompt is everything up to the last message (the action)
+        # The response is the action itself
+        # train_standard_sft.py will split prompt/response using apply_chat_template
+        examples.append({"messages": messages})
+
     return examples
 
 
-# --- Standard Data Collator for AOMT and SFT ---
+# --- Standard Data Collator for AOMT ---
 
 @dataclass
 class AOMTDataCollator:
     """
     Pads batches of tokenized data to the maximum length in each batch.
+    Uses bidirectional attention (no causal mask) per the paper.
     
-    This is used for all training modes except for the specialized 
-    PREFIX_SFT_STAGE1, which requires the `build_prefix_sft_examples` logic
-    to be applied first.
+    Paper (Sec. 3.2): "p_theta attends bidirectionally over all context units."
     """
     tokenizer: PreTrainedTokenizer
 
     def __call__(self, features: List[Dict[str, Any]]) -> Dict[str, torch.Tensor]:
-        # Determine padding token ID
         pad_token_id = self.tokenizer.pad_token_id
         if pad_token_id is None:
             pad_token_id = self.tokenizer.eos_token_id
 
-        # Find the max length in the current batch
         max_len = max(len(f["input_ids"]) for f in features)
 
-        # Initialize lists to hold padded tensors
         padded_input_ids = []
         padded_target_ids = []
         padded_loss_masks = []
@@ -214,33 +130,26 @@ class AOMTDataCollator:
             input_ids = feature["input_ids"]
             remainder = max_len - len(input_ids)
 
-            # Pad input_ids, creating the attention mask simultaneously
             padded_input_ids.append(torch.nn.functional.pad(
                 input_ids, (0, remainder), value=pad_token_id
             ))
             attention_masks.append(torch.cat([
                 torch.ones(len(input_ids)), torch.zeros(remainder)
             ]))
-            
-            # Pad target_ids (ground truth)
+
             padded_target_ids.append(torch.nn.functional.pad(
                 feature["target_ids"], (0, remainder), value=pad_token_id
             ))
-            
-            # Pad loss_mask with False (0)
+
             padded_loss_masks.append(torch.nn.functional.pad(
                 feature["loss_mask"], (0, remainder), value=False
             ))
-        
-        # Stack all features into a single batch tensor
+
         batch = {
             "input_ids": torch.stack(padded_input_ids),
+            # Bidirectional attention mask (paper: no causal mask)
             "attention_mask": torch.stack(attention_masks).long(),
             "target_ids": torch.stack(padded_target_ids),
             "loss_mask": torch.stack(padded_loss_masks),
-            # Propagate the causal mask flag. This assumes it's the same for all
-            # features in the batch, which is a safe assumption as it's
-            # determined by the dataset mode.
-            "use_causal_mask": torch.tensor([f["use_causal_mask"] for f in features]),
         }
         return batch
