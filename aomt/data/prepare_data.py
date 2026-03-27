@@ -3,7 +3,12 @@
 import argparse
 import json
 import os
-from datasets import load_dataset
+import sys
+
+# Add project root to sys.path to support 'from aomt...' imports
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
+
+from aomt.data.utils import load_robust_dataset
 
 def parse_trajectory(example: dict) -> list | None:
     """
@@ -80,16 +85,16 @@ def make_aomt_datapoint(units: list) -> dict:
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--output_dir", type=str, default="./data/cache/")
+    parser.add_argument("--tokenizer", type=str, help="Path to tokenizer (optional for this script)")
     args = parser.parse_args()
 
     os.makedirs(args.output_dir, exist_ok=True)
 
-    print("Loading ETO dataset...")
-    # Using the local dataset if available, otherwise from HF
+    print("Loading ETO dataset via robust loader...")
     try:
-        dataset = load_dataset("agent-eto/eto-sft-trajectory")
-    except:
-        print("Failed to load from HF, check if dataset is available locally or check your connection.")
+        dataset = load_robust_dataset()
+    except Exception as e:
+        print(f"Failed to load dataset: {e}")
         return
 
     for split in ["train", "test"]:
@@ -121,3 +126,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

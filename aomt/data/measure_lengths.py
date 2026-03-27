@@ -6,9 +6,15 @@ and max_seq_length=2048 covers full trajectories.
 
 import argparse
 import numpy as np
+import os
+import sys
 from datasets import load_dataset
 from transformers import AutoTokenizer
-from data.utils import load_robust_dataset
+
+# Add project root to sys.path to support 'from aomt...' imports
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
+
+from aomt.data.utils import load_robust_dataset
 
 def parse_units(conversations):
     """Strictly alternating obs/act units. First turn always obs."""
