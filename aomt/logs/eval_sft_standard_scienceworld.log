@@ -1,588 +1,0 @@
-Loading model with device_map={'': 'cuda:0'}...
-You are using a model of type `llada2_moe` to instantiate a model of type `llada2_moe_veomni`. This may be expected if you are loading a checkpoint that shares a subset of the architecture (e.g., loading a `sam2_video` checkpoint into `Sam2Model`), but is otherwise not supported and can yield errors. Please verify that the checkpoint is compatible with the model you are instantiating.
-`torch_dtype` is deprecated! Use `dtype` instead!
-[INFO|/scratch/e1507650/AnyOrderTraining/aomt/dFactory/VeOmni/veomni/ops/__init__.py:50] 03/20/2026 11:40:02 >> ✅ VeOmni ops patch applied.
-[INFO|/scratch/e1507650/AnyOrderTraining/aomt/dFactory/VeOmni/veomni/__init__.py:25] 03/20/2026 11:40:02 >> 
-========== Environment Variables ==========
-MODELING_BACKEND=veomni (source=default)
-USE_GROUP_GEMM=1 (source=default)
-VEOMNI_USE_LIGER_KERNEL=1 (source=default)
-===========================================
-[INFO|/scratch/e1507650/AnyOrderTraining/aomt/dFactory/VeOmni/veomni/__init__.py:26] 03/20/2026 11:40:02 >> 
-=========== OPS ============
-_fused_moe_forward = None
-_flash_attention_forward = transformers_flash_attention_forward
-_cross_entropy = eager_cross_entropy
-==============================
-Loading weights:   0%|          | 0/14813 [00:00<?, ?it/s]Loading weights:   2%|▏         | 230/14813 [00:00<00:06, 2289.91it/s]Loading weights:   3%|▎         | 459/14813 [00:00<00:23, 602.93it/s] Loading weights:   4%|▍         | 577/14813 [00:00<00:28, 506.62it/s]Loading weights:   4%|▍         | 658/14813 [00:01<00:30, 459.89it/s]Loading weights:   5%|▍         | 721/14813 [00:01<00:32, 435.62it/s]Loading weights:   5%|▌         | 775/14813 [00:01<00:33, 418.42it/s]Loading weights:   6%|▌         | 823/14813 [00:01<00:35, 397.30it/s]Loading weights:   6%|▌         | 866/14813 [00:01<00:36, 386.80it/s]Loading weights:   6%|▌         | 907/14813 [00:01<00:37, 375.61it/s]Loading weights:   6%|▋         | 946/14813 [00:02<00:38, 362.59it/s]Loading weights:   7%|▋         | 983/14813 [00:02<00:39, 350.04it/s]Loading weights:   7%|▋         | 1019/14813 [00:02<00:39, 351.51it/s]Loading weights:   7%|▋         | 1056/14813 [00:02<00:38, 354.63it/s]Loading weights:   7%|▋         | 1097/14813 [00:02<00:37, 367.43it/s]Loading weights:   8%|▊         | 1134/14813 [00:02<00:37, 366.56it/s]Loading weights:   8%|▊         | 1171/14813 [00:02<00:37, 362.40it/s]Loading weights:   8%|▊         | 1209/14813 [00:02<00:37, 365.30it/s]Loading weights:   8%|▊         | 1246/14813 [00:02<00:37, 364.88it/s]Loading weights:   9%|▊         | 1283/14813 [00:02<00:37, 364.33it/s]Loading weights:   9%|▉         | 1320/14813 [00:03<00:37, 363.02it/s]Loading weights:   9%|▉         | 1357/14813 [00:03<00:39, 337.19it/s]Loading weights:   9%|▉         | 1392/14813 [00:03<00:41, 323.07it/s]Loading weights:  10%|▉         | 1428/14813 [00:03<00:40, 333.10it/s]Loading weights:  10%|▉         | 1462/14813 [00:03<00:40, 329.15it/s]Loading weights:  10%|█         | 1499/14813 [00:03<00:39, 338.50it/s]Loading weights:  10%|█         | 1536/14813 [00:03<00:38, 345.67it/s]Loading weights:  11%|█         | 1571/14813 [00:03<00:41, 320.60it/s]Loading weights:  11%|█         | 1604/14813 [00:03<00:42, 313.68it/s]Loading weights:  11%|█         | 1636/14813 [00:04<00:42, 306.93it/s]Loading weights:  11%|█▏        | 1667/14813 [00:04<00:43, 304.89it/s]Loading weights:  11%|█▏        | 1700/14813 [00:04<00:42, 311.51it/s]Loading weights:  12%|█▏        | 1736/14813 [00:04<00:41, 312.89it/s]Loading weights:  12%|█▏        | 1777/14813 [00:04<00:38, 339.40it/s]Loading weights:  12%|█▏        | 1817/14813 [00:04<00:36, 355.16it/s]Loading weights:  13%|█▎        | 1855/14813 [00:04<00:36, 359.05it/s]Loading weights:  13%|█▎        | 1892/14813 [00:04<00:35, 361.56it/s]Loading weights:  13%|█▎        | 1932/14813 [00:04<00:34, 372.36it/s]Loading weights:  13%|█▎        | 1971/14813 [00:05<00:34, 377.26it/s]Loading weights:  14%|█▎        | 2010/14813 [00:05<00:33, 380.64it/s]Loading weights:  14%|█▍        | 2049/14813 [00:05<00:33, 381.07it/s]Loading weights:  14%|█▍        | 2088/14813 [00:05<00:34, 371.91it/s]Loading weights:  14%|█▍        | 2126/14813 [00:05<00:35, 357.32it/s]Loading weights:  15%|█▍        | 2163/14813 [00:05<00:35, 358.09it/s]Loading weights:  15%|█▍        | 2209/14813 [00:05<00:32, 386.21it/s]Loading weights:  15%|█▌        | 2248/14813 [00:05<00:32, 386.46it/s]Loading weights:  15%|█▌        | 2288/14813 [00:05<00:32, 389.35it/s]Loading weights:  16%|█▌        | 2328/14813 [00:05<00:32, 387.72it/s]Loading weights:  16%|█▌        | 2367/14813 [00:06<00:32, 382.44it/s]Loading weights:  16%|█▌        | 2406/14813 [00:06<00:32, 380.80it/s]Loading weights:  17%|█▋        | 2445/14813 [00:06<00:32, 381.62it/s]Loading weights:  17%|█▋        | 2485/14813 [00:06<00:31, 385.33it/s]Loading weights:  17%|█▋        | 2525/14813 [00:06<00:31, 387.97it/s]Loading weights:  17%|█▋        | 2565/14813 [00:06<00:31, 388.52it/s]Loading weights:  18%|█▊        | 2605/14813 [00:06<00:31, 389.52it/s]Loading weights:  18%|█▊        | 2644/14813 [00:06<00:31, 386.57it/s]Loading weights:  18%|█▊        | 2683/14813 [00:06<00:32, 373.85it/s]Loading weights:  18%|█▊        | 2721/14813 [00:07<00:32, 371.47it/s]Loading weights:  19%|█▊        | 2762/14813 [00:07<00:31, 381.03it/s]Loading weights:  19%|█▉        | 2801/14813 [00:07<00:32, 370.48it/s]Loading weights:  19%|█▉        | 2839/14813 [00:07<00:32, 372.69it/s]Loading weights:  19%|█▉        | 2877/14813 [00:07<00:32, 372.94it/s]Loading weights:  20%|█▉        | 2915/14813 [00:07<00:32, 365.87it/s]Loading weights:  20%|█▉        | 2952/14813 [00:07<00:33, 353.98it/s]Loading weights:  20%|██        | 2991/14813 [00:07<00:32, 364.23it/s]Loading weights:  20%|██        | 3036/14813 [00:07<00:30, 387.49it/s]Loading weights:  21%|██        | 3075/14813 [00:07<00:30, 383.83it/s]Loading weights:  21%|██        | 3114/14813 [00:08<00:32, 365.30it/s]Loading weights:  21%|██▏       | 3151/14813 [00:08<00:33, 350.54it/s]Loading weights:  22%|██▏       | 3187/14813 [00:08<00:33, 343.73it/s]Loading weights:  22%|██▏       | 3222/14813 [00:08<00:35, 329.62it/s]Loading weights:  22%|██▏       | 3263/14813 [00:08<00:33, 346.59it/s]Loading weights:  22%|██▏       | 3307/14813 [00:08<00:30, 372.59it/s]Loading weights:  23%|██▎       | 3347/14813 [00:08<00:30, 378.59it/s]Loading weights:  23%|██▎       | 3386/14813 [00:08<00:31, 368.10it/s]Loading weights:  23%|██▎       | 3425/14813 [00:08<00:30, 371.72it/s]Loading weights:  23%|██▎       | 3467/14813 [00:09<00:29, 383.65it/s]Loading weights:  24%|██▎       | 3509/14813 [00:09<00:28, 393.57it/s]Loading weights:  24%|██▍       | 3549/14813 [00:09<00:29, 388.25it/s]Loading weights:  24%|██▍       | 3588/14813 [00:09<00:29, 384.32it/s]Loading weights:  24%|██▍       | 3629/14813 [00:09<00:28, 386.42it/s]Loading weights:  25%|██▍       | 3668/14813 [00:09<00:32, 338.39it/s]Loading weights:  25%|██▍       | 3703/14813 [00:09<00:33, 334.49it/s]Loading weights:  25%|██▌       | 3745/14813 [00:09<00:31, 356.56it/s]Loading weights:  26%|██▌       | 3782/14813 [00:09<00:30, 357.01it/s]Loading weights:  26%|██▌       | 3819/14813 [00:10<00:34, 320.37it/s]Loading weights:  26%|██▌       | 3864/14813 [00:10<00:30, 354.18it/s]Loading weights:  26%|██▋       | 3901/14813 [00:10<00:32, 340.38it/s]Loading weights:  27%|██▋       | 3936/14813 [00:10<00:34, 316.75it/s]Loading weights:  27%|██▋       | 3970/14813 [00:10<00:33, 320.45it/s]Loading weights:  27%|██▋       | 4007/14813 [00:10<00:32, 331.92it/s]Loading weights:  27%|██▋       | 4048/14813 [00:10<00:30, 352.33it/s]Loading weights:  28%|██▊       | 4088/14813 [00:10<00:29, 364.10it/s]Loading weights:  28%|██▊       | 4130/14813 [00:10<00:28, 380.11it/s]Loading weights:  28%|██▊       | 4169/14813 [00:11<00:28, 374.81it/s]Loading weights:  28%|██▊       | 4212/14813 [00:11<00:27, 389.27it/s]Loading weights:  29%|██▊       | 4254/14813 [00:11<00:26, 396.60it/s]Loading weights:  29%|██▉       | 4294/14813 [00:11<00:26, 393.95it/s]Loading weights:  29%|██▉       | 4335/14813 [00:11<00:26, 398.10it/s]Loading weights:  30%|██▉       | 4375/14813 [00:11<00:26, 398.33it/s]Loading weights:  30%|██▉       | 4417/14813 [00:11<00:25, 404.28it/s]Loading weights:  30%|███       | 4458/14813 [00:11<00:25, 399.78it/s]Loading weights:  30%|███       | 4499/14813 [00:11<00:25, 397.57it/s]Loading weights:  31%|███       | 4540/14813 [00:11<00:25, 398.84it/s]Loading weights:  31%|███       | 4580/14813 [00:12<00:25, 396.46it/s]Loading weights:  31%|███       | 4620/14813 [00:12<00:25, 395.32it/s]Loading weights:  31%|███▏      | 4661/14813 [00:12<00:25, 398.68it/s]Loading weights:  32%|███▏      | 4701/14813 [00:12<00:26, 388.50it/s]Loading weights:  32%|███▏      | 4740/14813 [00:12<00:26, 384.92it/s]Loading weights:  32%|███▏      | 4779/14813 [00:12<00:26, 373.63it/s]Loading weights:  33%|███▎      | 4823/14813 [00:12<00:25, 389.84it/s]Loading weights:  33%|███▎      | 4863/14813 [00:12<00:25, 387.01it/s]Loading weights:  33%|███▎      | 4902/14813 [00:12<00:25, 385.68it/s]Loading weights:  33%|███▎      | 4942/14813 [00:12<00:25, 388.08it/s]Loading weights:  34%|███▎      | 4981/14813 [00:13<00:25, 387.93it/s]Loading weights:  34%|███▍      | 5020/14813 [00:13<00:25, 377.94it/s]Loading weights:  34%|███▍      | 5058/14813 [00:13<00:26, 370.16it/s]Loading weights:  34%|███▍      | 5096/14813 [00:13<00:26, 364.58it/s]Loading weights:  35%|███▍      | 5137/14813 [00:13<00:25, 377.47it/s]Loading weights:  35%|███▍      | 5177/14813 [00:13<00:25, 378.31it/s]Loading weights:  35%|███▌      | 5215/14813 [00:13<00:26, 365.28it/s]Loading weights:  35%|███▌      | 5252/14813 [00:13<00:26, 357.49it/s]Loading weights:  36%|███▌      | 5295/14813 [00:13<00:25, 375.87it/s]Loading weights:  36%|███▌      | 5336/14813 [00:14<00:24, 383.51it/s]Loading weights:  36%|███▋      | 5376/14813 [00:14<00:24, 379.60it/s]Loading weights:  37%|███▋      | 5416/14813 [00:14<00:24, 380.63it/s]Loading weights:  37%|███▋      | 5455/14813 [00:14<00:24, 377.12it/s]Loading weights:  37%|███▋      | 5493/14813 [00:14<00:25, 365.94it/s]Loading weights:  37%|███▋      | 5531/14813 [00:14<00:25, 367.60it/s]Loading weights:  38%|███▊      | 5572/14813 [00:14<00:24, 377.37it/s]Loading weights:  38%|███▊      | 5612/14813 [00:14<00:24, 380.44it/s]Loading weights:  38%|███▊      | 5653/14813 [00:14<00:23, 386.99it/s]Loading weights:  38%|███▊      | 5693/14813 [00:14<00:23, 389.20it/s]Loading weights:  39%|███▊      | 5734/14813 [00:15<00:23, 392.51it/s]Loading weights:  39%|███▉      | 5774/14813 [00:15<00:23, 385.16it/s]Loading weights:  39%|███▉      | 5816/14813 [00:15<00:22, 392.74it/s]Loading weights:  40%|███▉      | 5859/14813 [00:15<00:22, 401.35it/s]Loading weights:  40%|███▉      | 5900/14813 [00:15<00:22, 403.86it/s]Loading weights:  40%|████      | 5941/14813 [00:15<00:22, 402.70it/s]Loading weights:  40%|████      | 5982/14813 [00:15<00:22, 387.70it/s]Loading weights:  41%|████      | 6021/14813 [00:15<00:23, 367.38it/s]Loading weights:  41%|████      | 6058/14813 [00:15<00:24, 356.38it/s]Loading weights:  41%|████      | 6098/14813 [00:16<00:23, 365.65it/s]Loading weights:  41%|████▏     | 6135/14813 [00:16<00:23, 362.78it/s]Loading weights:  42%|████▏     | 6176/14813 [00:16<00:23, 373.60it/s]Loading weights:  42%|████▏     | 6214/14813 [00:16<00:23, 370.88it/s]Loading weights:  42%|████▏     | 6252/14813 [00:16<00:23, 359.73it/s]Loading weights:  42%|████▏     | 6289/14813 [00:16<00:23, 355.92it/s]Loading weights:  43%|████▎     | 6325/14813 [00:16<00:23, 353.96it/s]Loading weights:  43%|████▎     | 6362/14813 [00:16<00:23, 358.11it/s]Loading weights:  43%|████▎     | 6398/14813 [00:16<00:23, 354.25it/s]Loading weights:  43%|████▎     | 6435/14813 [00:16<00:23, 358.17it/s]Loading weights:  44%|████▎     | 6472/14813 [00:17<00:23, 360.81it/s]Loading weights:  44%|████▍     | 6511/14813 [00:17<00:22, 369.35it/s]Loading weights:  44%|████▍     | 6548/14813 [00:17<00:22, 363.14it/s]Loading weights:  45%|████▍     | 6595/14813 [00:17<00:20, 391.34it/s]Loading weights:  45%|████▍     | 6635/14813 [00:17<00:21, 380.42it/s]Loading weights:  45%|████▌     | 6675/14813 [00:17<00:21, 384.37it/s]Loading weights:  45%|████▌     | 6716/14813 [00:17<00:20, 389.95it/s]Loading weights:  46%|████▌     | 6756/14813 [00:17<00:20, 392.11it/s]Loading weights:  46%|████▌     | 6796/14813 [00:17<00:20, 391.86it/s]Loading weights:  46%|████▌     | 6837/14813 [00:18<00:20, 396.00it/s]Loading weights:  46%|████▋     | 6878/14813 [00:18<00:19, 398.80it/s]Loading weights:  47%|████▋     | 6918/14813 [00:18<00:19, 397.23it/s]Loading weights:  47%|████▋     | 6958/14813 [00:18<00:19, 396.56it/s]Loading weights:  47%|████▋     | 7000/14813 [00:18<00:19, 401.68it/s]Loading weights:  48%|████▊     | 7041/14813 [00:18<00:19, 392.11it/s]Loading weights:  48%|████▊     | 7081/14813 [00:18<00:20, 380.97it/s]Loading weights:  48%|████▊     | 7120/14813 [00:18<00:20, 374.11it/s]Loading weights:  48%|████▊     | 7159/14813 [00:18<00:20, 378.38it/s]Loading weights:  49%|████▊     | 7200/14813 [00:18<00:19, 386.00it/s]Loading weights:  49%|████▉     | 7241/14813 [00:19<00:19, 390.61it/s]Loading weights:  49%|████▉     | 7283/14813 [00:19<00:18, 397.85it/s]Loading weights:  49%|████▉     | 7325/14813 [00:19<00:18, 402.56it/s]Loading weights:  50%|████▉     | 7366/14813 [00:19<00:18, 400.28it/s]Loading weights:  50%|█████     | 7408/14813 [00:19<00:18, 404.24it/s]Loading weights:  50%|█████     | 7449/14813 [00:19<00:18, 394.51it/s]Loading weights:  51%|█████     | 7489/14813 [00:19<00:18, 387.42it/s]Loading weights:  51%|█████     | 7528/14813 [00:19<00:19, 376.04it/s]Loading weights:  51%|█████     | 7566/14813 [00:19<00:19, 371.31it/s]Loading weights:  51%|█████▏    | 7606/14813 [00:20<00:19, 377.85it/s]Loading weights:  52%|█████▏    | 7644/14813 [00:20<00:19, 369.68it/s]Loading weights:  52%|█████▏    | 7685/14813 [00:20<00:18, 379.53it/s]Loading weights:  52%|█████▏    | 7727/14813 [00:20<00:18, 390.14it/s]Loading weights:  52%|█████▏    | 7767/14813 [00:20<00:17, 392.03it/s]Loading weights:  53%|█████▎    | 7807/14813 [00:20<00:18, 381.04it/s]Loading weights:  53%|█████▎    | 7846/14813 [00:20<00:18, 383.16it/s]Loading weights:  53%|█████▎    | 7886/14813 [00:20<00:17, 385.53it/s]Loading weights:  54%|█████▎    | 7925/14813 [00:20<00:17, 386.04it/s]Loading weights:  54%|█████▍    | 7965/14813 [00:20<00:17, 388.08it/s]Loading weights:  54%|█████▍    | 8005/14813 [00:21<00:17, 390.18it/s]Loading weights:  54%|█████▍    | 8045/14813 [00:21<00:17, 389.84it/s]Loading weights:  55%|█████▍    | 8086/14813 [00:21<00:17, 392.65it/s]Loading weights:  55%|█████▍    | 8126/14813 [00:21<00:17, 393.32it/s]Loading weights:  55%|█████▌    | 8166/14813 [00:21<00:17, 390.62it/s]Loading weights:  55%|█████▌    | 8208/14813 [00:21<00:16, 396.91it/s]Loading weights:  56%|█████▌    | 8248/14813 [00:21<00:16, 395.46it/s]Loading weights:  56%|█████▌    | 8288/14813 [00:21<00:16, 395.41it/s]Loading weights:  56%|█████▌    | 8328/14813 [00:21<00:16, 392.60it/s]Loading weights:  56%|█████▋    | 8368/14813 [00:21<00:16, 390.66it/s]Loading weights:  57%|█████▋    | 8408/14813 [00:22<00:16, 390.92it/s]Loading weights:  57%|█████▋    | 8448/14813 [00:22<00:16, 391.66it/s]Loading weights:  57%|█████▋    | 8488/14813 [00:22<00:16, 391.37it/s]Loading weights:  58%|█████▊    | 8528/14813 [00:22<00:15, 393.23it/s]Loading weights:  58%|█████▊    | 8568/14813 [00:22<00:15, 392.83it/s]Loading weights:  58%|█████▊    | 8608/14813 [00:22<00:16, 383.57it/s]Loading weights:  58%|█████▊    | 8647/14813 [00:22<00:16, 370.73it/s]Loading weights:  59%|█████▊    | 8686/14813 [00:22<00:16, 375.67it/s]Loading weights:  59%|█████▉    | 8725/14813 [00:22<00:16, 379.61it/s]Loading weights:  59%|█████▉    | 8767/14813 [00:22<00:15, 389.22it/s]Loading weights:  59%|█████▉    | 8808/14813 [00:23<00:15, 394.64it/s]Loading weights:  60%|█████▉    | 8848/14813 [00:23<00:15, 392.82it/s]Loading weights:  60%|██████    | 8888/14813 [00:23<00:15, 386.38it/s]Loading weights:  60%|██████    | 8927/14813 [00:23<00:15, 380.05it/s]Loading weights:  61%|██████    | 8966/14813 [00:23<00:15, 376.90it/s]Loading weights:  61%|██████    | 9007/14813 [00:23<00:15, 383.48it/s]Loading weights:  61%|██████    | 9046/14813 [00:23<00:14, 384.64it/s]Loading weights:  61%|██████▏   | 9086/14813 [00:23<00:14, 386.33it/s]Loading weights:  62%|██████▏   | 9127/14813 [00:23<00:14, 390.75it/s]Loading weights:  62%|██████▏   | 9167/14813 [00:24<00:14, 388.82it/s]Loading weights:  62%|██████▏   | 9209/14813 [00:24<00:14, 395.17it/s]Loading weights:  62%|██████▏   | 9249/14813 [00:24<00:14, 390.30it/s]Loading weights:  63%|██████▎   | 9290/14813 [00:24<00:14, 393.83it/s]Loading weights:  63%|██████▎   | 9330/14813 [00:24<00:14, 386.59it/s]Loading weights:  63%|██████▎   | 9369/14813 [00:24<00:14, 372.23it/s]Loading weights:  64%|██████▎   | 9407/14813 [00:24<00:15, 358.45it/s]Loading weights:  64%|██████▎   | 9443/14813 [00:24<00:15, 350.05it/s]Loading weights:  64%|██████▍   | 9481/14813 [00:24<00:14, 355.65it/s]Loading weights:  64%|██████▍   | 9518/14813 [00:24<00:14, 359.25it/s]Loading weights:  65%|██████▍   | 9556/14813 [00:25<00:14, 364.65it/s]Loading weights:  65%|██████▍   | 9593/14813 [00:25<00:14, 359.25it/s]Loading weights:  65%|██████▌   | 9630/14813 [00:25<00:14, 361.31it/s]Loading weights:  65%|██████▌   | 9667/14813 [00:25<00:14, 360.06it/s]Loading weights:  66%|██████▌   | 9705/14813 [00:25<00:14, 357.57it/s]Loading weights:  66%|██████▌   | 9747/14813 [00:25<00:13, 374.27it/s]Loading weights:  66%|██████▌   | 9785/14813 [00:25<00:13, 374.38it/s]Loading weights:  66%|██████▋   | 9824/14813 [00:25<00:13, 377.02it/s]Loading weights:  67%|██████▋   | 9862/14813 [00:25<00:13, 364.35it/s]Loading weights:  67%|██████▋   | 9900/14813 [00:26<00:13, 368.47it/s]Loading weights:  67%|██████▋   | 9937/14813 [00:26<00:13, 365.28it/s]Loading weights:  67%|██████▋   | 9976/14813 [00:26<00:13, 369.89it/s]Loading weights:  68%|██████▊   | 10014/14813 [00:26<00:12, 371.74it/s]Loading weights:  68%|██████▊   | 10055/14813 [00:26<00:12, 381.80it/s]Loading weights:  68%|██████▊   | 10095/14813 [00:26<00:12, 384.55it/s]Loading weights:  68%|██████▊   | 10134/14813 [00:26<00:12, 376.17it/s]Loading weights:  69%|██████▊   | 10172/14813 [00:26<00:13, 351.90it/s]Loading weights:  69%|██████▉   | 10208/14813 [00:26<00:13, 339.26it/s]Loading weights:  69%|██████▉   | 10246/14813 [00:26<00:13, 348.17it/s]Loading weights:  69%|██████▉   | 10285/14813 [00:27<00:12, 358.92it/s]Loading weights:  70%|██████▉   | 10322/14813 [00:27<00:13, 343.71it/s]Loading weights:  70%|██████▉   | 10357/14813 [00:27<00:13, 334.24it/s]Loading weights:  70%|███████   | 10395/14813 [00:27<00:12, 339.92it/s]Loading weights:  70%|███████   | 10430/14813 [00:27<00:12, 342.74it/s]Loading weights:  71%|███████   | 10465/14813 [00:27<00:13, 314.77it/s]Loading weights:  71%|███████   | 10499/14813 [00:27<00:13, 318.59it/s]Loading weights:  71%|███████   | 10536/14813 [00:27<00:12, 329.40it/s]Loading weights:  71%|███████▏  | 10573/14813 [00:27<00:12, 339.36it/s]Loading weights:  72%|███████▏  | 10608/14813 [00:28<00:12, 338.02it/s]Loading weights:  72%|███████▏  | 10648/14813 [00:28<00:11, 352.17it/s]Loading weights:  72%|███████▏  | 10686/14813 [00:28<00:11, 359.48it/s]Loading weights:  72%|███████▏  | 10723/14813 [00:28<00:11, 359.97it/s]Loading weights:  73%|███████▎  | 10760/14813 [00:28<00:11, 357.84it/s]Loading weights:  73%|███████▎  | 10800/14813 [00:28<00:10, 369.03it/s]Loading weights:  73%|███████▎  | 10837/14813 [00:28<00:10, 363.30it/s]Loading weights:  73%|███████▎  | 10874/14813 [00:28<00:10, 361.56it/s]Loading weights:  74%|███████▎  | 10912/14813 [00:29<00:14, 268.84it/s]Loading weights:  74%|███████▍  | 10945/14813 [00:29<00:13, 281.70it/s]Loading weights:  74%|███████▍  | 10979/14813 [00:29<00:13, 294.13it/s]Loading weights:  74%|███████▍  | 11015/14813 [00:29<00:12, 309.58it/s]Loading weights:  75%|███████▍  | 11054/14813 [00:29<00:11, 329.93it/s]Loading weights:  75%|███████▍  | 11090/14813 [00:29<00:11, 336.08it/s]Loading weights:  75%|███████▌  | 11125/14813 [00:29<00:10, 337.30it/s]Loading weights:  75%|███████▌  | 11167/14813 [00:29<00:10, 360.85it/s]Loading weights:  76%|███████▌  | 11207/14813 [00:29<00:09, 369.59it/s]Loading weights:  76%|███████▌  | 11246/14813 [00:29<00:09, 373.26it/s]Loading weights:  76%|███████▌  | 11285/14813 [00:30<00:09, 376.36it/s]Loading weights:  76%|███████▋  | 11324/14813 [00:30<00:09, 380.12it/s]Loading weights:  77%|███████▋  | 11363/14813 [00:30<00:09, 374.37it/s]Loading weights:  77%|███████▋  | 11401/14813 [00:30<00:09, 375.53it/s]Loading weights:  77%|███████▋  | 11439/14813 [00:30<00:09, 360.76it/s]Loading weights:  77%|███████▋  | 11476/14813 [00:30<00:09, 352.36it/s]Loading weights:  78%|███████▊  | 11512/14813 [00:30<00:09, 343.45it/s]Loading weights:  78%|███████▊  | 11549/14813 [00:30<00:09, 349.00it/s]Loading weights:  78%|███████▊  | 11588/14813 [00:30<00:08, 359.12it/s]Loading weights:  78%|███████▊  | 11626/14813 [00:30<00:08, 363.46it/s]Loading weights:  79%|███████▊  | 11663/14813 [00:31<00:09, 346.64it/s]Loading weights:  79%|███████▉  | 11698/14813 [00:31<00:09, 339.29it/s]Loading weights:  79%|███████▉  | 11736/14813 [00:31<00:08, 346.90it/s]Loading weights:  79%|███████▉  | 11774/14813 [00:31<00:08, 354.97it/s]Loading weights:  80%|███████▉  | 11810/14813 [00:31<00:08, 340.22it/s]Loading weights:  80%|███████▉  | 11848/14813 [00:31<00:09, 321.91it/s]Loading weights:  80%|████████  | 11890/14813 [00:31<00:08, 347.36it/s]Loading weights:  81%|████████  | 11930/14813 [00:31<00:07, 360.70it/s]Loading weights:  81%|████████  | 11967/14813 [00:31<00:08, 350.13it/s]Loading weights:  81%|████████  | 12007/14813 [00:32<00:07, 362.55it/s]Loading weights:  81%|████████▏ | 12046/14813 [00:32<00:07, 369.91it/s]Loading weights:  82%|████████▏ | 12084/14813 [00:32<00:07, 355.19it/s]Loading weights:  82%|████████▏ | 12125/14813 [00:32<00:07, 369.23it/s]Loading weights:  82%|████████▏ | 12163/14813 [00:32<00:07, 357.51it/s]Loading weights:  82%|████████▏ | 12199/14813 [00:32<00:07, 349.87it/s]Loading weights:  83%|████████▎ | 12240/14813 [00:32<00:07, 365.25it/s]Loading weights:  83%|████████▎ | 12279/14813 [00:32<00:06, 370.45it/s]Loading weights:  83%|████████▎ | 12317/14813 [00:32<00:06, 363.69it/s]Loading weights:  83%|████████▎ | 12356/14813 [00:33<00:06, 369.63it/s]Loading weights:  84%|████████▎ | 12396/14813 [00:33<00:06, 375.53it/s]Loading weights:  84%|████████▍ | 12435/14813 [00:33<00:06, 379.11it/s]Loading weights:  84%|████████▍ | 12473/14813 [00:33<00:07, 292.87it/s]Loading weights:  84%|████████▍ | 12507/14813 [00:33<00:07, 302.81it/s]Loading weights:  85%|████████▍ | 12542/14813 [00:33<00:07, 313.25it/s]Loading weights:  85%|████████▍ | 12576/14813 [00:33<00:07, 318.13it/s]Loading weights:  85%|████████▌ | 12614/14813 [00:33<00:06, 333.62it/s]Loading weights:  85%|████████▌ | 12649/14813 [00:33<00:06, 321.04it/s]Loading weights:  86%|████████▌ | 12682/14813 [00:34<00:06, 319.68it/s]Loading weights:  86%|████████▌ | 12715/14813 [00:34<00:06, 314.86it/s]Loading weights:  86%|████████▌ | 12748/14813 [00:34<00:06, 317.32it/s]Loading weights:  86%|████████▋ | 12783/14813 [00:34<00:06, 325.02it/s]Loading weights:  87%|████████▋ | 12818/14813 [00:34<00:06, 330.20it/s]Loading weights:  87%|████████▋ | 12854/14813 [00:34<00:05, 337.14it/s]Loading weights:  87%|████████▋ | 12891/14813 [00:34<00:05, 346.22it/s]Loading weights:  87%|████████▋ | 12926/14813 [00:34<00:05, 346.55it/s]Loading weights:  88%|████████▊ | 12965/14813 [00:34<00:05, 356.86it/s]Loading weights:  88%|████████▊ | 13004/14813 [00:34<00:04, 364.74it/s]Loading weights:  88%|████████▊ | 13043/14813 [00:35<00:04, 370.17it/s]Loading weights:  88%|████████▊ | 13088/14813 [00:35<00:04, 391.18it/s]Loading weights:  89%|████████▊ | 13129/14813 [00:35<00:04, 395.27it/s]Loading weights:  89%|████████▉ | 13170/14813 [00:35<00:04, 397.30it/s]Loading weights:  89%|████████▉ | 13211/14813 [00:35<00:04, 400.29it/s]Loading weights:  89%|████████▉ | 13252/14813 [00:35<00:03, 397.48it/s]Loading weights:  90%|████████▉ | 13292/14813 [00:35<00:03, 383.04it/s]Loading weights:  90%|████████▉ | 13331/14813 [00:35<00:04, 359.82it/s]Loading weights:  90%|█████████ | 13371/14813 [00:35<00:03, 370.03it/s]Loading weights:  91%|█████████ | 13409/14813 [00:36<00:03, 371.12it/s]Loading weights:  91%|█████████ | 13450/14813 [00:36<00:03, 379.68it/s]Loading weights:  91%|█████████ | 13491/14813 [00:36<00:03, 387.14it/s]Loading weights:  91%|█████████▏| 13532/14813 [00:36<00:03, 393.17it/s]Loading weights:  92%|█████████▏| 13573/14813 [00:36<00:03, 397.57it/s]Loading weights:  92%|█████████▏| 13613/14813 [00:36<00:03, 397.43it/s]Loading weights:  92%|█████████▏| 13654/14813 [00:36<00:02, 398.81it/s]Loading weights:  92%|█████████▏| 13694/14813 [00:36<00:02, 392.06it/s]Loading weights:  93%|█████████▎| 13734/14813 [00:36<00:02, 393.88it/s]Loading weights:  93%|█████████▎| 13777/14813 [00:36<00:02, 402.88it/s]Loading weights:  93%|█████████▎| 13818/14813 [00:37<00:02, 403.89it/s]Loading weights:  94%|█████████▎| 13859/14813 [00:37<00:02, 376.95it/s]Loading weights:  94%|█████████▍| 13898/14813 [00:37<00:02, 353.20it/s]Loading weights:  94%|█████████▍| 13935/14813 [00:37<00:02, 356.24it/s]Loading weights:  94%|█████████▍| 13972/14813 [00:37<00:02, 354.11it/s]Loading weights:  95%|█████████▍| 14013/14813 [00:37<00:02, 367.33it/s]Loading weights:  95%|█████████▍| 14050/14813 [00:37<00:02, 343.23it/s]Loading weights:  95%|█████████▌| 14087/14813 [00:37<00:02, 349.10it/s]Loading weights:  95%|█████████▌| 14123/14813 [00:37<00:01, 348.88it/s]Loading weights:  96%|█████████▌| 14164/14813 [00:38<00:01, 363.35it/s]Loading weights:  96%|█████████▌| 14201/14813 [00:38<00:01, 360.13it/s]Loading weights:  96%|█████████▌| 14238/14813 [00:38<00:01, 356.76it/s]Loading weights:  96%|█████████▋| 14274/14813 [00:38<00:01, 353.59it/s]Loading weights:  97%|█████████▋| 14315/14813 [00:38<00:01, 367.62it/s]Loading weights:  97%|█████████▋| 14352/14813 [00:38<00:01, 365.51it/s]Loading weights:  97%|█████████▋| 14389/14813 [00:38<00:01, 366.20it/s]Loading weights:  97%|█████████▋| 14429/14813 [00:38<00:01, 373.46it/s]Loading weights:  98%|█████████▊| 14468/14813 [00:38<00:00, 375.29it/s]Loading weights:  98%|█████████▊| 14507/14813 [00:38<00:00, 377.80it/s]Loading weights:  98%|█████████▊| 14547/14813 [00:39<00:00, 382.94it/s]Loading weights:  98%|█████████▊| 14589/14813 [00:39<00:00, 391.94it/s]Loading weights:  99%|█████████▉| 14630/14813 [00:39<00:00, 394.99it/s]Loading weights:  99%|█████████▉| 14671/14813 [00:39<00:00, 399.06it/s]Loading weights:  99%|█████████▉| 14711/14813 [00:39<00:00, 396.08it/s]Loading weights: 100%|█████████▉| 14751/14813 [00:39<00:00, 394.46it/s]Loading weights: 100%|█████████▉| 14792/14813 [00:39<00:00, 396.81it/s]Loading weights: 100%|██████████| 14813/14813 [00:40<00:00, 364.21it/s]
-Running ScienceWorld evaluation (test split, 50 episodes, 30 tasks)...
-
-[DEBUG gen #0] input_ids shape: torch.Size([1, 447]), n_messages: 1, mask_id: 156895
-[DEBUG gen #0] generated length: 35, mask_tokens_remaining: 0, eos_tokens: 1
-[DEBUG gen #0] first 60 token ids: [67001, 468, 468, 21038, 341, 21038, 13, 297, 11, 13, 268, 297, 297, 7287, 156900, 13, 297, 13, 13, 13, 13, 13, 13, 13, 198, 198, 7287, 25, 2305, 297, 297, 21038, 156900, 25, 156892]
-[DEBUG gen #0] full_response (first 300 chars): 'Thought The The sink is sink. to,. the to toAction. to.......\n\nAction: open to to sink:'
-[DEBUG gen #0] parsed action: 'open to to sink:'
-
-[DEBUG gen #1] input_ids shape: torch.Size([1, 461]), n_messages: 1, mask_id: 156895
-[DEBUG gen #1] generated length: 28, mask_tokens_remaining: 0, eos_tokens: 1
-[DEBUG gen #1] first 60 token ids: [67001, 25, 468, 21038, 268, 268, 268, 268, 268, 13, 13, 13, 198, 25, 25, 297, 297, 7287, 156900, 13, 13, 297, 297, 297, 297, 268, 13, 156892]
-[DEBUG gen #1] full_response (first 300 chars): 'Thought: The sink the the the the the...\n:: to toAction.. to to to to the.'
-[DEBUG gen #1] parsed action: ':: to toAction.. to to to to the.'
-
-[DEBUG gen #2] input_ids shape: torch.Size([1, 481]), n_messages: 1, mask_id: 156895
-[DEBUG gen #2] generated length: 40, mask_tokens_remaining: 0, eos_tokens: 1
-[DEBUG gen #2] first 60 token ids: [67001, 25, 468, 21038, 21038, 2305, 268, 268, 268, 268, 268, 268, 297, 297, 297, 297, 297, 728, 13, 13, 13, 13, 156900, 7287, 25, 728, 21038, 21038, 297, 21038, 156900, 25, 13, 13, 25, 25, 13, 13, 13, 156892]
-[DEBUG gen #2] full_response (first 300 chars): 'Thought: The sink sink open the the the the the the to to to to to go....Action: go sink sink to sink:..::...'
-[DEBUG gen #2] parsed action: 'go sink sink to sink:..::...'
-
-[DEBUG gen #3] input_ids shape: torch.Size([1, 499]), n_messages: 1, mask_id: 156895
-[DEBUG gen #3] generated length: 41, mask_tokens_remaining: 0, eos_tokens: 1
-[DEBUG gen #3] first 60 token ids: [67001, 25, 468, 21038, 341, 25, 297, 7287, 297, 21038, 297, 198, 156900, 297, 297, 268, 297, 297, 297, 268, 728, 728, 268, 268, 268, 268, 156900, 297, 7287, 198, 156900, 7287, 7287, 7287, 7287, 7287, 7287, 156900, 25, 728, 156892]
-[DEBUG gen #3] full_response (first 300 chars): 'Thought: The sink is: toAction to sink to\n to to the to to to the go go the the the the toAction\nActionActionActionActionActionAction: go'
-[DEBUG gen #3] parsed action: 'go'
-
-[DEBUG gen #4] input_ids shape: torch.Size([1, 509]), n_messages: 1, mask_id: 156895
-[DEBUG gen #4] generated length: 42, mask_tokens_remaining: 0, eos_tokens: 1
-[DEBUG gen #4] first 60 token ids: [67001, 25, 21038, 11, 268, 268, 268, 156900, 13, 13, 156900, 268, 268, 268, 268, 268, 268, 268, 268, 268, 268, 268, 268, 13, 13, 156900, 7287, 7287, 25, 728, 21038, 21038, 21038, 21038, 156900, 25, 25, 25, 13, 13, 13, 156892]
-[DEBUG gen #4] full_response (first 300 chars): 'Thought: sink, the the the.. the the the the the the the the the the the the..ActionAction: go sink sink sink sink:::...'
-[DEBUG gen #4] parsed action: 'go sink sink sink sink:::...'
-
-[DEBUG gen #50] input_ids shape: torch.Size([1, 1473]), n_messages: 1, mask_id: 156895
-[DEBUG gen #50] generated length: 39, mask_tokens_remaining: 0, eos_tokens: 1
-[DEBUG gen #50] first 60 token ids: [67001, 25, 468, 21038, 268, 268, 268, 268, 268, 268, 268, 268, 268, 268, 268, 268, 268, 268, 13, 13, 13, 13, 198, 25, 25, 25, 297, 21038, 21038, 21038, 156900, 25, 268, 268, 268, 268, 268, 268, 156892]
-[DEBUG gen #50] full_response (first 300 chars): 'Thought: The sink the the the the the the the the the the the the the the....\n::: to sink sink sink: the the the the the the'
-[DEBUG gen #50] parsed action: '::: to sink sink sink: the the the the the the'
-
-[DEBUG gen #100] input_ids shape: torch.Size([1, 445]), n_messages: 1, mask_id: 156895
-[DEBUG gen #100] generated length: 34, mask_tokens_remaining: 0, eos_tokens: 1
-[DEBUG gen #100] first 60 token ids: [67001, 25, 468, 1050, 341, 268, 268, 268, 331, 7287, 7287, 156900, 331, 331, 331, 331, 297, 297, 13, 13, 13, 13, 13, 13, 13, 13, 7287, 7287, 7287, 25, 25, 2305, 2305, 156892]
-[DEBUG gen #100] full_response (first 300 chars): 'Thought: The need is the the the IActionAction I I I I to to........ActionActionAction:: open open'
-[DEBUG gen #100] parsed action: ': open open'
-
-[DEBUG gen #150] input_ids shape: torch.Size([1, 1499]), n_messages: 1, mask_id: 156895
-[DEBUG gen #150] generated length: 38, mask_tokens_remaining: 0, eos_tokens: 1
-[DEBUG gen #150] first 60 token ids: [67001, 25, 198, 156900, 156900, 11450, 11450, 11450, 11450, 11450, 11450, 11450, 11450, 11450, 11450, 7287, 11450, 11450, 11450, 156900, 11450, 11450, 11450, 11450, 11450, 11450, 11450, 7287, 156900, 7287, 25, 728, 728, 11450, 220, 16, 156900, 156892]
-[DEBUG gen #150] full_response (first 300 chars): 'Thought:\n desk desk desk desk desk desk desk desk desk deskAction desk desk desk desk desk desk desk desk desk deskActionAction: go go desk 1'
-[DEBUG gen #150] parsed action: 'go go desk 1'
-
-[DEBUG gen #200] input_ids shape: torch.Size([1, 447]), n_messages: 1, mask_id: 156895
-[DEBUG gen #200] generated length: 38, mask_tokens_remaining: 0, eos_tokens: 1
-[DEBUG gen #200] first 60 token ids: [67001, 468, 468, 21038, 341, 21038, 268, 268, 11, 11, 268, 331, 11, 268, 268, 13, 156900, 13, 13, 13, 13, 13, 13, 13, 156900, 198, 7287, 25, 21038, 297, 297, 21038, 156900, 25, 25, 13, 25, 156892]
-[DEBUG gen #200] full_response (first 300 chars): 'Thought The The sink is sink the the,, the I, the the........\nAction: sink to to sink::.:'
-[DEBUG gen #200] parsed action: 'sink to to sink::.:'
-
-[DEBUG gen #250] input_ids shape: torch.Size([1, 1492]), n_messages: 1, mask_id: 156895
-[DEBUG gen #250] generated length: 42, mask_tokens_remaining: 0, eos_tokens: 1
-[DEBUG gen #250] first 60 token ids: [67001, 25, 468, 21038, 21038, 268, 297, 297, 297, 1037, 156900, 156900, 268, 268, 268, 297, 297, 297, 297, 268, 268, 156900, 268, 268, 268, 268, 268, 268, 268, 268, 268, 268, 198, 198, 13, 198, 25, 25, 728, 21038, 297, 156892]
-[DEBUG gen #250] full_response (first 300 chars): 'Thought: The sink sink the to to to no the the the to to to to the the the the the the the the the the the the\n\n.\n:: go sink to'
-[DEBUG gen #250] parsed action: ':: go sink to'
-
-[DEBUG gen #300] input_ids shape: torch.Size([1, 447]), n_messages: 1, mask_id: 156895
-[DEBUG gen #300] generated length: 38, mask_tokens_remaining: 0, eos_tokens: 1
-[DEBUG gen #300] first 60 token ids: [67001, 468, 468, 21038, 341, 21038, 268, 268, 11, 11, 268, 331, 11, 268, 268, 13, 156900, 13, 13, 13, 13, 13, 13, 13, 156900, 198, 7287, 25, 21038, 297, 297, 21038, 156900, 25, 25, 13, 25, 156892]
-[DEBUG gen #300] full_response (first 300 chars): 'Thought The The sink is sink the the,, the I, the the........\nAction: sink to to sink::.:'
-[DEBUG gen #300] parsed action: 'sink to to sink::.:'
-
-[DEBUG gen #350] input_ids shape: torch.Size([1, 1527]), n_messages: 1, mask_id: 156895
-[DEBUG gen #350] generated length: 57, mask_tokens_remaining: 0, eos_tokens: 1
-[DEBUG gen #350] first 60 token ids: [67001, 25, 468, 1329, 297, 297, 297, 156900, 156900, 1329, 1329, 297, 297, 297, 1329, 1329, 297, 268, 268, 268, 268, 268, 268, 268, 268, 268, 268, 13, 13, 156900, 13, 13, 198, 25, 25, 728, 21038, 21038, 21038, 21038, 156900, 268, 268, 268, 268, 268, 268, 268, 297, 297, 297, 268, 268, 268, 268, 268, 156892]
-[DEBUG gen #350] full_response (first 300 chars): 'Thought: The should to to to should should to to to should should to the the the the the the the the the the....\n:: go sink sink sink sink the the the the the the the to to to the the the the the'
-[DEBUG gen #350] parsed action: ':: go sink sink sink sink the the the the the the the to to to the the the the the'
-
-[DEBUG gen #400] input_ids shape: torch.Size([1, 433]), n_messages: 1, mask_id: 156895
-[DEBUG gen #400] generated length: 57, mask_tokens_remaining: 0, eos_tokens: 1
-[DEBUG gen #400] first 60 token ids: [67001, 25, 468, 1050, 268, 268, 268, 13, 331, 198, 2305, 2305, 297, 21038, 156900, 268, 13, 13, 13, 21038, 21038, 21038, 21038, 21038, 21038, 21038, 21038, 21038, 21038, 268, 268, 7287, 7287, 156900, 268, 21038, 7287, 13, 156900, 7287, 7287, 25, 21038, 21038, 21038, 21038, 156900, 21038, 21038, 21038, 21038, 21038, 21038, 21038, 21038, 21038, 156892]
-[DEBUG gen #400] full_response (first 300 chars): 'Thought: The need the the the. I\n open open to sink the... sink sink sink sink sink sink sink sink sink sink the theActionAction the sinkAction.ActionAction: sink sink sink sink sink sink sink sink sink sink sink sink sink'
-[DEBUG gen #400] parsed action: 'sink sink sink sink sink sink sink sink sink sink sink sink sink'
-
-[DEBUG gen #450] input_ids shape: torch.Size([1, 1564]), n_messages: 1, mask_id: 156895
-[DEBUG gen #450] generated length: 47, mask_tokens_remaining: 0, eos_tokens: 1
-[DEBUG gen #450] first 60 token ids: [67001, 25, 21038, 21038, 268, 268, 268, 268, 268, 268, 268, 13, 268, 268, 268, 268, 268, 268, 268, 268, 268, 268, 268, 268, 13, 13, 13, 13, 25, 25, 156900, 21038, 21038, 21038, 21038, 156900, 25, 268, 268, 268, 268, 268, 268, 268, 268, 297, 156892]
-[DEBUG gen #450] full_response (first 300 chars): 'Thought: sink sink the the the the the the the. the the the the the the the the the the the the....:: sink sink sink sink: the the the the the the the the to'
-[DEBUG gen #450] parsed action: 'Thought: sink sink the the the the the the the. the the the the the the the the the the the the....:: sink sink sink sink: the the the the the the the the to'
-
-[DEBUG gen #500] input_ids shape: torch.Size([1, 427]), n_messages: 1, mask_id: 156895
-[DEBUG gen #500] generated length: 62, mask_tokens_remaining: 0, eos_tokens: 1
-[DEBUG gen #500] first 60 token ids: [67001, 25, 468, 1050, 341, 268, 268, 268, 21038, 268, 268, 48023, 13, 13, 7287, 7287, 21038, 297, 297, 21038, 156900, 48023, 48023, 48023, 48023, 48023, 48023, 48023, 48023, 48023, 48023, 48023, 48023, 48023, 48023, 48023, 48023, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 25, 21038, 2305, 48023, 48023, 156900, 48023, 48023, 48023, 48023, 48023, 48023, 48023]
-[DEBUG gen #500] full_response (first 300 chars): 'Thought: The need is the the the sink the the furnace..ActionAction sink to to sink furnace furnace furnace furnace furnace furnace furnace furnace furnace furnace furnace furnace furnace furnace furnace furnaceActionActionActionActionActionActionActionActionActionAction: sink open furnace furnace f'
-[DEBUG gen #500] parsed action: 'sink open furnace furnace furnace furnace furnace furnace furnace furnace furnace'
-
-[DEBUG gen #550] input_ids shape: torch.Size([1, 5336]), n_messages: 1, mask_id: 156895
-[DEBUG gen #550] generated length: 128, mask_tokens_remaining: 0, eos_tokens: 0
-[DEBUG gen #550] first 60 token ids: [48023, 198, 48023, 48023, 48023, 7287, 48023, 48023, 7287, 7287, 7287, 48023, 48023, 7287, 7287, 7287, 7287, 7287, 23061, 23061, 23061, 23061, 23061, 7287, 48023, 7287, 48023, 48023, 48023, 7287, 23061, 23061, 23061, 23061, 48023, 48023, 48023, 48023, 48023, 7287, 7287, 48023, 48023, 48023, 7287, 7287, 48023, 48023, 23061, 48023, 7287, 7287, 7287, 48023, 48023, 48023, 48023, 48023, 23061, 48023]
-[DEBUG gen #550] full_response (first 300 chars): 'furnace\n furnace furnace furnaceAction furnace furnaceActionActionAction furnace furnaceActionActionActionActionActionburnburnburnburnburnAction furnaceAction furnace furnace furnaceActionburnburnburnburn furnace furnace furnace furnace furnaceActionAction furnace furnace furnaceActionAction furnace'
-[DEBUG gen #550] parsed action: 'furnace furnace furnaceAction furnace furnaceActionActionAction furnace furnaceActionActionActionActionActionburnburnburnburnburnAction furnaceAction furnace furnace furnaceActionburnburnburnburn furn'
-
-[DEBUG gen #600] input_ids shape: torch.Size([1, 440]), n_messages: 1, mask_id: 156895
-[DEBUG gen #600] generated length: 37, mask_tokens_remaining: 0, eos_tokens: 1
-[DEBUG gen #600] first 60 token ids: [67001, 25, 468, 9435, 9435, 8127, 9435, 156900, 9435, 9435, 13, 13, 13, 13, 7287, 331, 13, 13, 13, 13, 13, 7287, 268, 156900, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 9435, 156892]
-[DEBUG gen #600] full_response (first 300 chars): 'Thought: The cup cup closed cup cup cup....Action I.....Action theActionActionActionActionActionActionActionActionActionActionAction cup'
-[DEBUG gen #600] parsed action: 'Thought: The cup cup closed cup cup cup....Action I.....Action theActionActionActionActionActionActionActionActionActionActionAction cup'
-
-[DEBUG gen #650] input_ids shape: torch.Size([1, 1523]), n_messages: 1, mask_id: 156895
-[DEBUG gen #650] generated length: 79, mask_tokens_remaining: 0, eos_tokens: 1
-[DEBUG gen #650] first 60 token ids: [67001, 25, 9435, 9435, 9435, 198, 7287, 25, 297, 297, 220, 156900, 156900, 297, 268, 268, 268, 268, 268, 268, 268, 268, 268, 268, 268, 268, 268, 268, 13, 7287, 7287, 220, 220, 198, 156900, 156900, 9435, 9435, 25, 728, 728, 297, 220, 16, 156900, 25, 268, 268, 9435, 9435, 9435, 9435, 268, 297, 297, 9435, 9435, 268, 268, 268]
-[DEBUG gen #650] full_response (first 300 chars): 'Thought: cup cup cup\nAction: to to  to the the the the the the the the the the the the the the.ActionAction  \n cup cup: go go to 1: the the cup cup cup cup the to to cup cup the the the. toActionAction\n\n..:: go to 1 the'
-[DEBUG gen #650] parsed action: 'to to  to the the the the the the the the the the the the the the.ActionAction  \n cup cup: go go to 1: the the cup cup cup cup the to to cup cup the the the. toActionAction\n\n..:: go to 1 the'
-
-[DEBUG gen #700] input_ids shape: torch.Size([1, 437]), n_messages: 1, mask_id: 156895
-[DEBUG gen #700] generated length: 42, mask_tokens_remaining: 0, eos_tokens: 1
-[DEBUG gen #700] first 60 token ids: [67001, 468, 468, 378, 297, 268, 297, 297, 25, 198, 156900, 13, 13, 13, 13, 297, 297, 297, 7287, 268, 7287, 297, 297, 7287, 2305, 13, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 297, 297, 156892]
-[DEBUG gen #700] full_response (first 300 chars): 'Thought The The that to the to to:\n.... to to toAction theAction to toAction open.ActionActionActionActionActionActionActionActionActionActionActionActionAction to to'
-[DEBUG gen #700] parsed action: '.... to to toAction theAction to toAction open.ActionActionActionActionActionActionActionActionActionActionActionActionAction to to'
-
-[DEBUG gen #750] input_ids shape: torch.Size([1, 1560]), n_messages: 1, mask_id: 156895
-[DEBUG gen #750] generated length: 38, mask_tokens_remaining: 0, eos_tokens: 1
-[DEBUG gen #750] first 60 token ids: [67001, 25, 355, 341, 297, 297, 156900, 156900, 331, 331, 331, 331, 331, 331, 331, 13, 156900, 156900, 268, 268, 268, 268, 268, 156900, 13, 13, 13, 13, 13, 13, 13, 13, 7287, 25, 25, 3476, 297, 156892]
-[DEBUG gen #750] full_response (first 300 chars): 'Thought: A is to to I I I I I I I. the the the the the........Action:: focus to'
-[DEBUG gen #750] parsed action: ': focus to'
-
-[DEBUG gen #800] input_ids shape: torch.Size([1, 433]), n_messages: 1, mask_id: 156895
-[DEBUG gen #800] generated length: 34, mask_tokens_remaining: 0, eos_tokens: 1
-[DEBUG gen #800] first 60 token ids: [67001, 25, 468, 1050, 268, 268, 268, 13, 297, 2305, 2305, 2305, 13, 156900, 156900, 13, 13, 13, 13, 13, 13, 13, 7287, 268, 268, 268, 268, 268, 268, 13, 13, 13, 7287, 156892]
-[DEBUG gen #800] full_response (first 300 chars): 'Thought: The need the the the. to open open open........Action the the the the the the...Action'
-[DEBUG gen #800] parsed action: 'Thought: The need the the the. to open open open........Action the the the the the the...Action'
-
-[DEBUG gen #850] input_ids shape: torch.Size([1, 1414]), n_messages: 1, mask_id: 156895
-[DEBUG gen #850] generated length: 41, mask_tokens_remaining: 0, eos_tokens: 1
-[DEBUG gen #850] first 60 token ids: [67001, 25, 468, 1050, 341, 268, 268, 268, 331, 331, 297, 297, 297, 297, 297, 13, 13, 13, 198, 7287, 25, 297, 297, 220, 156900, 156900, 297, 297, 297, 297, 297, 5203, 297, 297, 297, 297, 297, 297, 7287, 297, 156892]
-[DEBUG gen #850] full_response (first 300 chars): 'Thought: The need is the the the I I to to to to to...\nAction: to to  to to to to to outside to to to to to toAction to'
-[DEBUG gen #850] parsed action: 'to to  to to to to to outside to to to to to toAction to'
-
-[DEBUG gen #900] input_ids shape: torch.Size([1, 447]), n_messages: 1, mask_id: 156895
-[DEBUG gen #900] generated length: 35, mask_tokens_remaining: 0, eos_tokens: 1
-[DEBUG gen #900] first 60 token ids: [67001, 468, 468, 21038, 341, 21038, 13, 297, 11, 13, 268, 297, 297, 7287, 156900, 13, 297, 13, 13, 13, 13, 13, 13, 13, 198, 198, 7287, 25, 2305, 297, 297, 21038, 156900, 25, 156892]
-[DEBUG gen #900] full_response (first 300 chars): 'Thought The The sink is sink. to,. the to toAction. to.......\n\nAction: open to to sink:'
-[DEBUG gen #900] parsed action: 'open to to sink:'
-
-[DEBUG gen #950] input_ids shape: torch.Size([1, 1473]), n_messages: 1, mask_id: 156895
-[DEBUG gen #950] generated length: 39, mask_tokens_remaining: 0, eos_tokens: 1
-[DEBUG gen #950] first 60 token ids: [67001, 25, 468, 21038, 268, 268, 268, 268, 268, 268, 268, 268, 268, 268, 268, 268, 268, 268, 13, 13, 13, 13, 198, 25, 25, 25, 297, 21038, 21038, 21038, 156900, 25, 268, 268, 268, 268, 268, 268, 156892]
-[DEBUG gen #950] full_response (first 300 chars): 'Thought: The sink the the the the the the the the the the the the the the....\n::: to sink sink sink: the the the the the the'
-[DEBUG gen #950] parsed action: '::: to sink sink sink: the the the the the the'
-
-[DEBUG gen #1000] input_ids shape: torch.Size([1, 445]), n_messages: 1, mask_id: 156895
-[DEBUG gen #1000] generated length: 34, mask_tokens_remaining: 0, eos_tokens: 1
-[DEBUG gen #1000] first 60 token ids: [67001, 25, 468, 1050, 341, 268, 268, 268, 331, 7287, 7287, 156900, 331, 331, 331, 331, 297, 297, 13, 13, 13, 13, 13, 13, 13, 13, 7287, 7287, 7287, 25, 25, 2305, 2305, 156892]
-[DEBUG gen #1000] full_response (first 300 chars): 'Thought: The need is the the the IActionAction I I I I to to........ActionActionAction:: open open'
-[DEBUG gen #1000] parsed action: ': open open'
-
-[DEBUG gen #1050] input_ids shape: torch.Size([1, 1325]), n_messages: 1, mask_id: 156895
-[DEBUG gen #1050] generated length: 50, mask_tokens_remaining: 0, eos_tokens: 1
-[DEBUG gen #1050] first 60 token ids: [67001, 25, 468, 11450, 268, 268, 11450, 11450, 11450, 13, 198, 198, 7287, 728, 297, 11450, 11450, 156900, 156900, 268, 268, 268, 268, 268, 11450, 11450, 156900, 268, 268, 268, 268, 268, 156900, 268, 7287, 7287, 7287, 7287, 7287, 7287, 156900, 13, 198, 7287, 25, 728, 297, 297, 11450, 156892]
-[DEBUG gen #1050] full_response (first 300 chars): 'Thought: The desk the the desk desk desk.\n\nAction go to desk desk the the the the the desk desk the the the the the theActionActionActionActionActionAction.\nAction: go to to desk'
-[DEBUG gen #1050] parsed action: 'go to to desk'
-
-[DEBUG gen #1100] input_ids shape: torch.Size([1, 447]), n_messages: 1, mask_id: 156895
-[DEBUG gen #1100] generated length: 38, mask_tokens_remaining: 0, eos_tokens: 1
-[DEBUG gen #1100] first 60 token ids: [67001, 468, 468, 21038, 341, 21038, 268, 268, 11, 11, 268, 331, 11, 268, 268, 13, 156900, 13, 13, 13, 13, 13, 13, 13, 156900, 198, 7287, 25, 21038, 297, 297, 21038, 156900, 25, 25, 13, 25, 156892]
-[DEBUG gen #1100] full_response (first 300 chars): 'Thought The The sink is sink the the,, the I, the the........\nAction: sink to to sink::.:'
-[DEBUG gen #1100] parsed action: 'sink to to sink::.:'
-
-[DEBUG gen #1150] input_ids shape: torch.Size([1, 1472]), n_messages: 1, mask_id: 156895
-[DEBUG gen #1150] generated length: 61, mask_tokens_remaining: 0, eos_tokens: 1
-[DEBUG gen #1150] first 60 token ids: [67001, 25, 468, 268, 268, 268, 268, 268, 268, 268, 268, 268, 268, 268, 268, 268, 268, 268, 268, 156900, 13, 13, 13, 198, 25, 25, 728, 21038, 21038, 21038, 21038, 156900, 25, 268, 268, 268, 268, 268, 268, 268, 7287, 297, 268, 268, 268, 268, 268, 268, 156900, 268, 268, 268, 198, 198, 198, 198, 7287, 25, 297, 21038]
-[DEBUG gen #1150] full_response (first 300 chars): 'Thought: The the the the the the the the the the the the the the the the the...\n:: go sink sink sink sink: the the the the the the theAction to the the the the the the the the the\n\n\n\nAction: to sink'
-[DEBUG gen #1150] parsed action: 'to sink'
-
-[DEBUG gen #1200] input_ids shape: torch.Size([1, 447]), n_messages: 1, mask_id: 156895
-[DEBUG gen #1200] generated length: 38, mask_tokens_remaining: 0, eos_tokens: 1
-[DEBUG gen #1200] first 60 token ids: [67001, 468, 468, 21038, 341, 21038, 268, 268, 11, 11, 268, 331, 11, 268, 268, 13, 156900, 13, 13, 13, 13, 13, 13, 13, 156900, 198, 7287, 25, 21038, 297, 297, 21038, 156900, 25, 25, 13, 25, 156892]
-[DEBUG gen #1200] full_response (first 300 chars): 'Thought The The sink is sink the the,, the I, the the........\nAction: sink to to sink::.:'
-[DEBUG gen #1200] parsed action: 'sink to to sink::.:'
-
-[DEBUG gen #1250] input_ids shape: torch.Size([1, 1527]), n_messages: 1, mask_id: 156895
-[DEBUG gen #1250] generated length: 57, mask_tokens_remaining: 0, eos_tokens: 1
-[DEBUG gen #1250] first 60 token ids: [67001, 25, 468, 1329, 297, 297, 297, 156900, 156900, 1329, 1329, 297, 297, 297, 1329, 1329, 297, 268, 268, 268, 268, 268, 268, 268, 268, 268, 268, 13, 13, 156900, 13, 13, 198, 25, 25, 728, 21038, 21038, 21038, 21038, 156900, 268, 268, 268, 268, 268, 268, 268, 297, 297, 297, 268, 268, 268, 268, 268, 156892]
-[DEBUG gen #1250] full_response (first 300 chars): 'Thought: The should to to to should should to to to should should to the the the the the the the the the the....\n:: go sink sink sink sink the the the the the the the to to to the the the the the'
-[DEBUG gen #1250] parsed action: ':: go sink sink sink sink the the the the the the the to to to the the the the the'
-
-[DEBUG gen #1300] input_ids shape: torch.Size([1, 433]), n_messages: 1, mask_id: 156895
-[DEBUG gen #1300] generated length: 57, mask_tokens_remaining: 0, eos_tokens: 1
-[DEBUG gen #1300] first 60 token ids: [67001, 25, 468, 1050, 268, 268, 268, 13, 331, 198, 2305, 2305, 297, 21038, 156900, 268, 13, 13, 13, 21038, 21038, 21038, 21038, 21038, 21038, 21038, 21038, 21038, 21038, 268, 268, 7287, 7287, 156900, 268, 21038, 7287, 13, 156900, 7287, 7287, 25, 21038, 21038, 21038, 21038, 156900, 21038, 21038, 21038, 21038, 21038, 21038, 21038, 21038, 21038, 156892]
-[DEBUG gen #1300] full_response (first 300 chars): 'Thought: The need the the the. I\n open open to sink the... sink sink sink sink sink sink sink sink sink sink the theActionAction the sinkAction.ActionAction: sink sink sink sink sink sink sink sink sink sink sink sink sink'
-[DEBUG gen #1300] parsed action: 'sink sink sink sink sink sink sink sink sink sink sink sink sink'
-
-[DEBUG gen #1350] input_ids shape: torch.Size([1, 1564]), n_messages: 1, mask_id: 156895
-[DEBUG gen #1350] generated length: 47, mask_tokens_remaining: 0, eos_tokens: 1
-[DEBUG gen #1350] first 60 token ids: [67001, 25, 21038, 21038, 268, 268, 268, 268, 268, 268, 268, 13, 268, 268, 268, 268, 268, 268, 268, 268, 268, 268, 268, 268, 13, 13, 13, 13, 25, 25, 156900, 21038, 21038, 21038, 21038, 156900, 25, 268, 268, 268, 268, 268, 268, 268, 268, 297, 156892]
-[DEBUG gen #1350] full_response (first 300 chars): 'Thought: sink sink the the the the the the the. the the the the the the the the the the the the....:: sink sink sink sink: the the the the the the the the to'
-[DEBUG gen #1350] parsed action: 'Thought: sink sink the the the the the the the. the the the the the the the the the the the the....:: sink sink sink sink: the the the the the the the the to'
-
-[DEBUG gen #1400] input_ids shape: torch.Size([1, 427]), n_messages: 1, mask_id: 156895
-[DEBUG gen #1400] generated length: 62, mask_tokens_remaining: 0, eos_tokens: 1
-[DEBUG gen #1400] first 60 token ids: [67001, 25, 468, 1050, 341, 268, 268, 268, 21038, 268, 268, 48023, 13, 13, 7287, 7287, 21038, 297, 297, 21038, 156900, 48023, 48023, 48023, 48023, 48023, 48023, 48023, 48023, 48023, 48023, 48023, 48023, 48023, 48023, 48023, 48023, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 25, 21038, 2305, 48023, 48023, 156900, 48023, 48023, 48023, 48023, 48023, 48023, 48023]
-[DEBUG gen #1400] full_response (first 300 chars): 'Thought: The need is the the the sink the the furnace..ActionAction sink to to sink furnace furnace furnace furnace furnace furnace furnace furnace furnace furnace furnace furnace furnace furnace furnace furnaceActionActionActionActionActionActionActionActionActionAction: sink open furnace furnace f'
-[DEBUG gen #1400] parsed action: 'sink open furnace furnace furnace furnace furnace furnace furnace furnace furnace sink'
-
-[DEBUG gen #1450] input_ids shape: torch.Size([1, 5651]), n_messages: 1, mask_id: 156895
-[DEBUG gen #1450] generated length: 46, mask_tokens_remaining: 0, eos_tokens: 1
-[DEBUG gen #1450] first 60 token ids: [7287, 7287, 48023, 48023, 48023, 48023, 48023, 48023, 198, 48023, 48023, 7287, 48023, 48023, 48023, 48023, 48023, 48023, 48023, 48023, 48023, 48023, 48023, 48023, 48023, 48023, 48023, 48023, 48023, 48023, 48023, 48023, 48023, 48023, 48023, 48023, 48023, 48023, 48023, 48023, 48023, 48023, 48023, 48023, 48023, 156892]
-[DEBUG gen #1450] full_response (first 300 chars): 'ActionAction furnace furnace furnace furnace furnace furnace\n furnace furnaceAction furnace furnace furnace furnace furnace furnace furnace furnace furnace furnace furnace furnace furnace furnace furnace furnace furnace furnace furnace furnace furnace furnace furnace furnace furnace furnace furnace '
-[DEBUG gen #1450] parsed action: 'furnace furnaceAction furnace furnace furnace furnace furnace furnace furnace furnace furnace furnace furnace furnace furnace furnace furnace furnace furnace furnace furnace furnace furnace furnace fu'
-
-[DEBUG gen #1500] input_ids shape: torch.Size([1, 440]), n_messages: 1, mask_id: 156895
-[DEBUG gen #1500] generated length: 37, mask_tokens_remaining: 0, eos_tokens: 1
-[DEBUG gen #1500] first 60 token ids: [67001, 25, 468, 9435, 9435, 8127, 9435, 156900, 9435, 9435, 13, 9435, 331, 331, 7287, 7287, 13, 13, 13, 13, 13, 156900, 268, 13, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 9435, 156892]
-[DEBUG gen #1500] full_response (first 300 chars): 'Thought: The cup cup closed cup cup cup. cup I IActionAction..... the.ActionActionActionActionActionActionActionActionActionActionAction cup'
-[DEBUG gen #1500] parsed action: 'Thought: The cup cup closed cup cup cup. cup I IActionAction..... the.ActionActionActionActionActionActionActionActionActionActionAction cup'
-
-[DEBUG gen #1550] input_ids shape: torch.Size([1, 1381]), n_messages: 1, mask_id: 156895
-[DEBUG gen #1550] generated length: 51, mask_tokens_remaining: 0, eos_tokens: 1
-[DEBUG gen #1550] first 60 token ids: [67001, 25, 468, 9435, 268, 268, 268, 268, 268, 268, 297, 297, 297, 268, 268, 7287, 156900, 13, 198, 7287, 25, 728, 297, 297, 220, 156900, 156900, 297, 728, 268, 7287, 268, 268, 268, 268, 268, 268, 268, 268, 268, 268, 268, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 25, 156892]
-[DEBUG gen #1550] full_response (first 300 chars): 'Thought: The cup the the the the the the to to to the theAction.\nAction: go to to  to go theAction the the the the the the the the the the theActionActionActionActionActionActionAction:'
-[DEBUG gen #1550] parsed action: ''
-
-[DEBUG gen #1600] input_ids shape: torch.Size([1, 437]), n_messages: 1, mask_id: 156895
-[DEBUG gen #1600] generated length: 42, mask_tokens_remaining: 0, eos_tokens: 1
-[DEBUG gen #1600] first 60 token ids: [67001, 468, 468, 378, 297, 268, 297, 297, 25, 198, 156900, 13, 13, 13, 13, 297, 297, 297, 7287, 268, 7287, 297, 297, 7287, 2305, 13, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 297, 297, 156892]
-[DEBUG gen #1600] full_response (first 300 chars): 'Thought The The that to the to to:\n.... to to toAction theAction to toAction open.ActionActionActionActionActionActionActionActionActionActionActionActionAction to to'
-[DEBUG gen #1600] parsed action: '.... to to toAction theAction to toAction open.ActionActionActionActionActionActionActionActionActionActionActionActionAction to to'
-
-[DEBUG gen #1650] input_ids shape: torch.Size([1, 1560]), n_messages: 1, mask_id: 156895
-[DEBUG gen #1650] generated length: 38, mask_tokens_remaining: 0, eos_tokens: 1
-[DEBUG gen #1650] first 60 token ids: [67001, 25, 355, 341, 297, 297, 156900, 156900, 331, 331, 331, 331, 331, 331, 331, 13, 156900, 156900, 268, 268, 268, 268, 268, 156900, 13, 13, 13, 13, 13, 13, 13, 13, 7287, 25, 25, 3476, 297, 156892]
-[DEBUG gen #1650] full_response (first 300 chars): 'Thought: A is to to I I I I I I I. the the the the the........Action:: focus to'
-[DEBUG gen #1650] parsed action: ': focus to'
-
-[DEBUG gen #1700] input_ids shape: torch.Size([1, 433]), n_messages: 1, mask_id: 156895
-[DEBUG gen #1700] generated length: 34, mask_tokens_remaining: 0, eos_tokens: 1
-[DEBUG gen #1700] first 60 token ids: [67001, 25, 468, 1050, 268, 268, 268, 13, 297, 2305, 2305, 2305, 13, 156900, 156900, 13, 13, 13, 13, 13, 13, 13, 7287, 268, 268, 268, 268, 268, 268, 13, 13, 13, 7287, 156892]
-[DEBUG gen #1700] full_response (first 300 chars): 'Thought: The need the the the. to open open open........Action the the the the the the...Action'
-[DEBUG gen #1700] parsed action: 'Thought: The need the the the. to open open open........Action the the the the the the...Action'
-
-[DEBUG gen #1750] input_ids shape: torch.Size([1, 1432]), n_messages: 1, mask_id: 156895
-[DEBUG gen #1750] generated length: 24, mask_tokens_remaining: 0, eos_tokens: 1
-[DEBUG gen #1750] first 60 token ids: [67001, 25, 468, 297, 297, 297, 156900, 156900, 297, 297, 297, 297, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 156892]
-[DEBUG gen #1750] full_response (first 300 chars): 'Thought: The to to to to to to to...........'
-[DEBUG gen #1750] parsed action: 'Thought: The to to to to to to to...........'
-
-[DEBUG gen #1800] input_ids shape: torch.Size([1, 447]), n_messages: 1, mask_id: 156895
-[DEBUG gen #1800] generated length: 38, mask_tokens_remaining: 0, eos_tokens: 1
-[DEBUG gen #1800] first 60 token ids: [67001, 468, 468, 21038, 341, 21038, 268, 268, 11, 11, 268, 331, 11, 268, 268, 13, 156900, 13, 13, 13, 13, 13, 13, 13, 156900, 198, 7287, 25, 21038, 297, 297, 21038, 156900, 25, 25, 13, 25, 156892]
-[DEBUG gen #1800] full_response (first 300 chars): 'Thought The The sink is sink the the,, the I, the the........\nAction: sink to to sink::.:'
-[DEBUG gen #1800] parsed action: 'sink to to sink::.:'
-
-[DEBUG gen #1850] input_ids shape: torch.Size([1, 1492]), n_messages: 1, mask_id: 156895
-[DEBUG gen #1850] generated length: 42, mask_tokens_remaining: 0, eos_tokens: 1
-[DEBUG gen #1850] first 60 token ids: [67001, 25, 468, 21038, 21038, 268, 297, 297, 297, 1037, 156900, 156900, 268, 268, 268, 297, 297, 297, 297, 268, 268, 156900, 268, 268, 268, 268, 268, 268, 268, 268, 268, 268, 198, 198, 13, 198, 25, 25, 728, 21038, 297, 156892]
-[DEBUG gen #1850] full_response (first 300 chars): 'Thought: The sink sink the to to to no the the the to to to to the the the the the the the the the the the the\n\n.\n:: go sink to'
-[DEBUG gen #1850] parsed action: ':: go sink to'
-
-[DEBUG gen #1900] input_ids shape: torch.Size([1, 433]), n_messages: 1, mask_id: 156895
-[DEBUG gen #1900] generated length: 57, mask_tokens_remaining: 0, eos_tokens: 1
-[DEBUG gen #1900] first 60 token ids: [67001, 25, 468, 1050, 268, 268, 268, 13, 331, 198, 2305, 2305, 297, 21038, 156900, 268, 13, 13, 13, 21038, 21038, 21038, 21038, 21038, 21038, 21038, 21038, 21038, 21038, 268, 268, 7287, 7287, 156900, 268, 21038, 7287, 13, 156900, 7287, 7287, 25, 21038, 21038, 21038, 21038, 156900, 21038, 21038, 21038, 21038, 21038, 21038, 21038, 21038, 21038, 156892]
-[DEBUG gen #1900] full_response (first 300 chars): 'Thought: The need the the the. I\n open open to sink the... sink sink sink sink sink sink sink sink sink sink the theActionAction the sinkAction.ActionAction: sink sink sink sink sink sink sink sink sink sink sink sink sink'
-[DEBUG gen #1900] parsed action: 'sink sink sink sink sink sink sink sink sink sink sink sink sink'
-
-[DEBUG gen #1950] input_ids shape: torch.Size([1, 1524]), n_messages: 1, mask_id: 156895
-[DEBUG gen #1950] generated length: 52, mask_tokens_remaining: 0, eos_tokens: 1
-[DEBUG gen #1950] first 60 token ids: [67001, 25, 468, 268, 21038, 297, 297, 297, 21038, 21038, 156900, 156900, 268, 268, 268, 268, 268, 268, 268, 268, 268, 268, 268, 268, 268, 268, 268, 268, 268, 268, 268, 156900, 198, 13, 13, 7287, 7287, 25, 728, 21038, 21038, 21038, 21038, 156900, 25, 25, 268, 268, 268, 268, 268, 156892]
-[DEBUG gen #1950] full_response (first 300 chars): 'Thought: The the sink to to to sink sink the the the the the the the the the the the the the the the the the the the\n..ActionAction: go sink sink sink sink:: the the the the the'
-[DEBUG gen #1950] parsed action: 'go sink sink sink sink:: the the the the the'
-
-[DEBUG gen #2000] input_ids shape: torch.Size([1, 427]), n_messages: 1, mask_id: 156895
-[DEBUG gen #2000] generated length: 62, mask_tokens_remaining: 0, eos_tokens: 1
-[DEBUG gen #2000] first 60 token ids: [67001, 25, 468, 1050, 341, 268, 268, 268, 21038, 268, 268, 48023, 13, 13, 7287, 7287, 21038, 297, 297, 21038, 156900, 48023, 48023, 48023, 48023, 48023, 48023, 48023, 48023, 48023, 48023, 48023, 48023, 48023, 48023, 48023, 48023, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 25, 21038, 2305, 48023, 48023, 156900, 48023, 48023, 48023, 48023, 48023, 48023, 48023]
-[DEBUG gen #2000] full_response (first 300 chars): 'Thought: The need is the the the sink the the furnace..ActionAction sink to to sink furnace furnace furnace furnace furnace furnace furnace furnace furnace furnace furnace furnace furnace furnace furnace furnaceActionActionActionActionActionActionActionActionActionAction: sink open furnace furnace f'
-[DEBUG gen #2000] parsed action: 'sink open furnace furnace furnace furnace furnace furnace furnace furnace furnace'
-
-[DEBUG gen #2050] input_ids shape: torch.Size([1, 5336]), n_messages: 1, mask_id: 156895
-[DEBUG gen #2050] generated length: 128, mask_tokens_remaining: 0, eos_tokens: 0
-[DEBUG gen #2050] first 60 token ids: [48023, 198, 48023, 48023, 48023, 7287, 48023, 48023, 7287, 7287, 7287, 48023, 48023, 7287, 7287, 7287, 7287, 7287, 23061, 23061, 23061, 23061, 23061, 7287, 48023, 7287, 48023, 48023, 48023, 7287, 23061, 23061, 23061, 23061, 48023, 48023, 48023, 48023, 48023, 7287, 7287, 48023, 48023, 48023, 7287, 7287, 48023, 48023, 23061, 48023, 7287, 7287, 7287, 48023, 48023, 48023, 48023, 48023, 23061, 48023]
-[DEBUG gen #2050] full_response (first 300 chars): 'furnace\n furnace furnace furnaceAction furnace furnaceActionActionAction furnace furnaceActionActionActionActionActionburnburnburnburnburnAction furnaceAction furnace furnace furnaceActionburnburnburnburn furnace furnace furnace furnace furnaceActionAction furnace furnace furnaceActionAction furnace'
-[DEBUG gen #2050] parsed action: 'furnace furnace furnaceAction furnace furnaceActionActionAction furnace furnaceActionActionActionActionActionburnburnburnburnburnAction furnaceAction furnace furnace furnaceActionburnburnburnburn furn'
-
-[DEBUG gen #2100] input_ids shape: torch.Size([1, 440]), n_messages: 1, mask_id: 156895
-[DEBUG gen #2100] generated length: 37, mask_tokens_remaining: 0, eos_tokens: 1
-[DEBUG gen #2100] first 60 token ids: [67001, 25, 468, 9435, 9435, 8127, 9435, 156900, 9435, 9435, 13, 13, 331, 331, 7287, 331, 13, 13, 13, 13, 13, 13, 156900, 13, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 9435, 156892]
-[DEBUG gen #2100] full_response (first 300 chars): 'Thought: The cup cup closed cup cup cup.. I IAction I.......ActionActionActionActionActionActionActionActionActionActionAction cup'
-[DEBUG gen #2100] parsed action: 'Thought: The cup cup closed cup cup cup.. I IAction I.......ActionActionActionActionActionActionActionActionActionActionAction cup'
-
-[DEBUG gen #2150] input_ids shape: torch.Size([1, 1565]), n_messages: 1, mask_id: 156895
-[DEBUG gen #2150] generated length: 33, mask_tokens_remaining: 0, eos_tokens: 1
-[DEBUG gen #2150] first 60 token ids: [67001, 7287, 156900, 9435, 297, 297, 13, 13, 13, 13, 728, 728, 728, 728, 728, 7287, 297, 297, 198, 156900, 7287, 198, 198, 297, 9435, 156900, 156900, 7287, 25, 728, 728, 297, 156892]
-[DEBUG gen #2150] full_response (first 300 chars): 'ThoughtAction cup to to.... go go go go goAction to to\nAction\n\n to cupAction: go go to'
-[DEBUG gen #2150] parsed action: 'go go to'
-
-[DEBUG gen #2200] input_ids shape: torch.Size([1, 437]), n_messages: 1, mask_id: 156895
-[DEBUG gen #2200] generated length: 42, mask_tokens_remaining: 0, eos_tokens: 1
-[DEBUG gen #2200] first 60 token ids: [67001, 468, 468, 378, 297, 268, 297, 297, 25, 198, 156900, 13, 13, 13, 13, 297, 297, 297, 7287, 268, 7287, 297, 297, 7287, 2305, 13, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 297, 297, 156892]
-[DEBUG gen #2200] full_response (first 300 chars): 'Thought The The that to the to to:\n.... to to toAction theAction to toAction open.ActionActionActionActionActionActionActionActionActionActionActionActionAction to to'
-[DEBUG gen #2200] parsed action: '.... to to toAction theAction to toAction open.ActionActionActionActionActionActionActionActionActionActionActionActionAction to to'
-
-[DEBUG gen #2250] input_ids shape: torch.Size([1, 1560]), n_messages: 1, mask_id: 156895
-[DEBUG gen #2250] generated length: 38, mask_tokens_remaining: 0, eos_tokens: 1
-[DEBUG gen #2250] first 60 token ids: [67001, 25, 355, 341, 297, 297, 156900, 156900, 331, 331, 331, 331, 331, 331, 331, 13, 156900, 156900, 268, 268, 268, 268, 268, 156900, 13, 13, 13, 13, 13, 13, 13, 13, 7287, 25, 25, 3476, 297, 156892]
-[DEBUG gen #2250] full_response (first 300 chars): 'Thought: A is to to I I I I I I I. the the the the the........Action:: focus to'
-[DEBUG gen #2250] parsed action: ': focus to'
-
-[DEBUG gen #2300] input_ids shape: torch.Size([1, 433]), n_messages: 1, mask_id: 156895
-[DEBUG gen #2300] generated length: 34, mask_tokens_remaining: 0, eos_tokens: 1
-[DEBUG gen #2300] first 60 token ids: [67001, 25, 468, 1050, 268, 268, 268, 13, 297, 2305, 2305, 2305, 13, 156900, 156900, 13, 13, 13, 13, 13, 13, 13, 7287, 268, 268, 268, 268, 268, 268, 13, 13, 13, 7287, 156892]
-[DEBUG gen #2300] full_response (first 300 chars): 'Thought: The need the the the. to open open open........Action the the the the the the...Action'
-[DEBUG gen #2300] parsed action: 'Thought: The need the the the. to open open open........Action the the the the the the...Action'
-
-[DEBUG gen #2350] input_ids shape: torch.Size([1, 1414]), n_messages: 1, mask_id: 156895
-[DEBUG gen #2350] generated length: 41, mask_tokens_remaining: 0, eos_tokens: 1
-[DEBUG gen #2350] first 60 token ids: [67001, 25, 468, 1050, 341, 268, 268, 268, 331, 331, 297, 297, 297, 297, 297, 13, 13, 13, 198, 7287, 25, 297, 297, 220, 156900, 156900, 297, 297, 297, 297, 297, 5203, 297, 297, 297, 297, 297, 297, 7287, 297, 156892]
-[DEBUG gen #2350] full_response (first 300 chars): 'Thought: The need is the the the I I to to to to to...\nAction: to to  to to to to to outside to to to to to toAction to'
-[DEBUG gen #2350] parsed action: 'to to  to to to to to outside to to to to to toAction to'
-
-[DEBUG gen #2400] input_ids shape: torch.Size([1, 603]), n_messages: 1, mask_id: 156895
-[DEBUG gen #2400] generated length: 34, mask_tokens_remaining: 0, eos_tokens: 1
-[DEBUG gen #2400] first 60 token ids: [67001, 25, 468, 268, 8127, 268, 268, 268, 13, 2305, 2305, 2305, 2305, 268, 268, 268, 297, 297, 268, 268, 13, 7287, 7287, 7287, 7287, 7287, 7287, 13, 13, 198, 7287, 7287, 156900, 156892]
-[DEBUG gen #2400] full_response (first 300 chars): 'Thought: The the closed the the the. open open open open the the the to to the the.ActionActionActionActionActionAction..\nActionAction'
-[DEBUG gen #2400] parsed action: 'ActionAction'
-
-[DEBUG gen #2450] input_ids shape: torch.Size([1, 1499]), n_messages: 1, mask_id: 156895
-[DEBUG gen #2450] generated length: 14, mask_tokens_remaining: 0, eos_tokens: 1
-[DEBUG gen #2450] first 60 token ids: [67001, 25, 331, 42249, 156900, 156900, 13, 13, 13, 13, 13, 13, 13, 156892]
-[DEBUG gen #2450] full_response (first 300 chars): 'Thought: I drawer.......'
-[DEBUG gen #2450] parsed action: 'Thought: I drawer.......'
-
-[DEBUG gen #2500] input_ids shape: torch.Size([1, 444]), n_messages: 1, mask_id: 156895
-[DEBUG gen #2500] generated length: 35, mask_tokens_remaining: 0, eos_tokens: 1
-[DEBUG gen #2500] first 60 token ids: [67001, 25, 468, 14972, 14972, 14972, 14972, 14972, 14972, 297, 268, 268, 14972, 268, 268, 14972, 297, 297, 14972, 13, 13, 13, 13, 13, 7287, 156900, 156900, 198, 198, 7287, 25, 297, 297, 297, 156892]
-[DEBUG gen #2500] full_response (first 300 chars): 'Thought: The studio studio studio studio studio studio to the the studio the the studio to to studio.....Action\n\nAction: to to to'
-[DEBUG gen #2500] parsed action: 'to to to'
-
-[DEBUG gen #2550] input_ids shape: torch.Size([1, 1432]), n_messages: 1, mask_id: 156895
-[DEBUG gen #2550] generated length: 39, mask_tokens_remaining: 0, eos_tokens: 1
-[DEBUG gen #2550] first 60 token ids: [67001, 25, 331, 3284, 297, 297, 156900, 156900, 13, 13, 13, 3284, 3284, 13, 268, 268, 268, 268, 268, 268, 7287, 156900, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 7287, 25, 25, 297, 297, 220, 156892]
-[DEBUG gen #2550] full_response (first 300 chars): 'Thought: I room to to... room room. the the the the the theAction..........Action:: to to'
-[DEBUG gen #2550] parsed action: ': to to'
-
-[DEBUG gen #2600] input_ids shape: torch.Size([1, 440]), n_messages: 1, mask_id: 156895
-[DEBUG gen #2600] generated length: 37, mask_tokens_remaining: 0, eos_tokens: 1
-[DEBUG gen #2600] first 60 token ids: [67001, 25, 468, 9435, 9435, 8127, 9435, 156900, 9435, 13, 13, 13, 13, 331, 13, 13, 13, 13, 13, 13, 13, 156900, 268, 13, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 2305, 156892]
-[DEBUG gen #2600] full_response (first 300 chars): 'Thought: The cup cup closed cup cup.... I....... the.ActionActionActionActionActionActionActionActionActionActionAction open'
-[DEBUG gen #2600] parsed action: 'Thought: The cup cup closed cup cup.... I....... the.ActionActionActionActionActionActionActionActionActionActionAction open'
-
-[DEBUG gen #2650] input_ids shape: torch.Size([1, 1442]), n_messages: 1, mask_id: 156895
-[DEBUG gen #2650] generated length: 72, mask_tokens_remaining: 0, eos_tokens: 1
-[DEBUG gen #2650] first 60 token ids: [67001, 25, 468, 9435, 268, 268, 268, 268, 268, 268, 268, 268, 297, 297, 156900, 297, 156900, 268, 13, 13, 13, 13, 25, 25, 728, 297, 220, 220, 16, 156900, 25, 156900, 9435, 268, 268, 268, 268, 9435, 268, 268, 268, 268, 268, 268, 268, 156900, 156900, 156900, 9435, 7287, 198, 156900, 13, 13, 7287, 25, 728, 297, 220, 220]
-[DEBUG gen #2650] full_response (first 300 chars): 'Thought: The cup the the the the the the the the to to to the....:: go to  1: cup the the the the cup the the the the the the the cupAction\n..Action: go to  1: cup cup cup cup cup cup cup'
-[DEBUG gen #2650] parsed action: 'go to  1: cup cup cup cup cup cup cup'
-
-[DEBUG gen #2700] input_ids shape: torch.Size([1, 437]), n_messages: 1, mask_id: 156895
-[DEBUG gen #2700] generated length: 42, mask_tokens_remaining: 0, eos_tokens: 1
-[DEBUG gen #2700] first 60 token ids: [67001, 468, 468, 378, 297, 268, 297, 297, 25, 198, 156900, 13, 13, 13, 13, 297, 297, 297, 7287, 268, 7287, 297, 297, 7287, 2305, 13, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 297, 297, 156892]
-[DEBUG gen #2700] full_response (first 300 chars): 'Thought The The that to the to to:\n.... to to toAction theAction to toAction open.ActionActionActionActionActionActionActionActionActionActionActionActionAction to to'
-[DEBUG gen #2700] parsed action: '.... to to toAction theAction to toAction open.ActionActionActionActionActionActionActionActionActionActionActionActionAction to to'
-
-[DEBUG gen #2750] input_ids shape: torch.Size([1, 1560]), n_messages: 1, mask_id: 156895
-[DEBUG gen #2750] generated length: 38, mask_tokens_remaining: 0, eos_tokens: 1
-[DEBUG gen #2750] first 60 token ids: [67001, 25, 355, 341, 297, 297, 156900, 156900, 331, 331, 331, 331, 331, 331, 331, 13, 156900, 156900, 268, 268, 268, 268, 268, 156900, 13, 13, 13, 13, 13, 13, 13, 13, 7287, 25, 25, 3476, 297, 156892]
-[DEBUG gen #2750] full_response (first 300 chars): 'Thought: A is to to I I I I I I I. the the the the the........Action:: focus to'
-[DEBUG gen #2750] parsed action: ': focus to'
-
-[DEBUG gen #2800] input_ids shape: torch.Size([1, 433]), n_messages: 1, mask_id: 156895
-[DEBUG gen #2800] generated length: 34, mask_tokens_remaining: 0, eos_tokens: 1
-[DEBUG gen #2800] first 60 token ids: [67001, 25, 468, 1050, 268, 268, 268, 13, 297, 2305, 2305, 2305, 13, 156900, 156900, 13, 13, 13, 13, 13, 13, 13, 7287, 268, 268, 268, 268, 268, 268, 13, 13, 13, 7287, 156892]
-[DEBUG gen #2800] full_response (first 300 chars): 'Thought: The need the the the. to open open open........Action the the the the the the...Action'
-[DEBUG gen #2800] parsed action: 'Thought: The need the the the. to open open open........Action the the the the the the...Action'
-
-[DEBUG gen #2850] input_ids shape: torch.Size([1, 1432]), n_messages: 1, mask_id: 156895
-[DEBUG gen #2850] generated length: 24, mask_tokens_remaining: 0, eos_tokens: 1
-[DEBUG gen #2850] first 60 token ids: [67001, 25, 468, 297, 297, 297, 156900, 156900, 297, 297, 297, 297, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 156892]
-[DEBUG gen #2850] full_response (first 300 chars): 'Thought: The to to to to to to to...........'
-[DEBUG gen #2850] parsed action: 'Thought: The to to to to to to to...........'
-
-[DEBUG gen #2900] input_ids shape: torch.Size([1, 603]), n_messages: 1, mask_id: 156895
-[DEBUG gen #2900] generated length: 34, mask_tokens_remaining: 0, eos_tokens: 1
-[DEBUG gen #2900] first 60 token ids: [67001, 25, 468, 268, 8127, 268, 268, 268, 13, 2305, 2305, 2305, 2305, 268, 268, 268, 297, 297, 268, 268, 13, 7287, 7287, 7287, 7287, 7287, 7287, 13, 13, 198, 7287, 7287, 156900, 156892]
-[DEBUG gen #2900] full_response (first 300 chars): 'Thought: The the closed the the the. open open open open the the the to to the the.ActionActionActionActionActionAction..\nActionAction'
-[DEBUG gen #2900] parsed action: 'ActionAction'
-
-[DEBUG gen #2950] input_ids shape: torch.Size([1, 1481]), n_messages: 1, mask_id: 156895
-[DEBUG gen #2950] generated length: 24, mask_tokens_remaining: 0, eos_tokens: 1
-[DEBUG gen #2950] first 60 token ids: [67001, 25, 468, 1050, 42249, 42249, 42249, 42249, 156900, 268, 268, 268, 13, 13, 198, 7287, 7287, 25, 297, 42249, 220, 16, 156900, 156892]
-[DEBUG gen #2950] full_response (first 300 chars): 'Thought: The need drawer drawer drawer drawer the the the..\nActionAction: to drawer 1'
-[DEBUG gen #2950] parsed action: 'to drawer 1'
-
-[DEBUG gen #3000] input_ids shape: torch.Size([1, 444]), n_messages: 1, mask_id: 156895
-[DEBUG gen #3000] generated length: 35, mask_tokens_remaining: 0, eos_tokens: 1
-[DEBUG gen #3000] first 60 token ids: [67001, 25, 468, 14972, 14972, 14972, 14972, 14972, 14972, 297, 268, 268, 14972, 268, 268, 14972, 297, 297, 14972, 13, 13, 13, 13, 13, 7287, 156900, 156900, 198, 198, 7287, 25, 297, 297, 297, 156892]
-[DEBUG gen #3000] full_response (first 300 chars): 'Thought: The studio studio studio studio studio studio to the the studio the the studio to to studio.....Action\n\nAction: to to to'
-[DEBUG gen #3000] parsed action: 'to to to'
-
-[DEBUG gen #3050] input_ids shape: torch.Size([1, 1438]), n_messages: 1, mask_id: 156895
-[DEBUG gen #3050] generated length: 37, mask_tokens_remaining: 0, eos_tokens: 1
-[DEBUG gen #3050] first 60 token ids: [67001, 25, 468, 268, 268, 268, 268, 3284, 3284, 3284, 13, 268, 268, 268, 268, 268, 268, 3284, 13, 13, 13, 13, 13, 13, 13, 13, 7287, 25, 25, 297, 297, 220, 60, 156900, 297, 7287, 156892]
-[DEBUG gen #3050] full_response (first 300 chars): 'Thought: The the the the the room room room. the the the the the the room........Action:: to to ] toAction'
-[DEBUG gen #3050] parsed action: ': to to ] toAction'
-
-[DEBUG gen #3100] input_ids shape: torch.Size([1, 476]), n_messages: 1, mask_id: 156895
-[DEBUG gen #3100] generated length: 32, mask_tokens_remaining: 0, eos_tokens: 1
-[DEBUG gen #3100] first 60 token ids: [67001, 25, 468, 9435, 9435, 9435, 13, 268, 13, 13, 13, 13, 13, 13, 13, 7287, 297, 7287, 13, 13, 13, 7287, 13, 156900, 7287, 7287, 7287, 7287, 7287, 7287, 25, 156892]
-[DEBUG gen #3100] full_response (first 300 chars): 'Thought: The cup cup cup. the.......Action toAction...Action.ActionActionActionActionActionAction:'
-[DEBUG gen #3100] parsed action: ''
-
-[DEBUG gen #3150] input_ids shape: torch.Size([1, 4079]), n_messages: 1, mask_id: 156895
-[DEBUG gen #3150] generated length: 128, mask_tokens_remaining: 0, eos_tokens: 0
-[DEBUG gen #3150] first 60 token ids: [7287, 25, 9435, 8260, 8260, 8260, 8260, 8260, 8260, 198, 7287, 8260, 8260, 7287, 7287, 7287, 7287, 8260, 9435, 9435, 9435, 9435, 9435, 7287, 9435, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 8260, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 8260, 7287, 7287, 9435, 9435, 8260, 8260, 7287, 7287, 7287, 7287, 7287, 7287, 7287]
-[DEBUG gen #3150] full_response (first 300 chars): 'Action: cup paint paint paint paint paint paint\nAction paint paintActionActionActionAction paint cup cup cup cup cupAction cupActionActionActionActionActionActionActionActionActionAction paintActionActionActionActionActionActionActionActionActionAction paintActionAction cup cup paint paintActionActi'
-[DEBUG gen #3150] parsed action: 'cup paint paint paint paint paint paint\nAction paint paintActionActionActionAction paint cup cup cup cup cupAction cupActionActionActionActionActionActionActionActionActionAction paintActionActionActi'
-
-[DEBUG gen #3200] input_ids shape: torch.Size([1, 428]), n_messages: 1, mask_id: 156895
-[DEBUG gen #3200] generated length: 28, mask_tokens_remaining: 0, eos_tokens: 1
-[DEBUG gen #3200] first 60 token ids: [67001, 25, 468, 1050, 341, 268, 268, 268, 268, 268, 268, 13, 13, 198, 7287, 25, 7287, 4753, 7287, 156900, 13, 25, 13, 156900, 156900, 13, 13, 156892]
-[DEBUG gen #3200] full_response (first 300 chars): 'Thought: The need is the the the the the the..\nAction:Action bedAction.:...'
-[DEBUG gen #3200] parsed action: 'Action bedAction.:...'
-
-[DEBUG gen #3250] input_ids shape: torch.Size([1, 1447]), n_messages: 1, mask_id: 156895
-[DEBUG gen #3250] generated length: 24, mask_tokens_remaining: 0, eos_tokens: 1
-[DEBUG gen #3250] first 60 token ids: [67001, 25, 331, 297, 297, 297, 297, 297, 297, 297, 297, 297, 297, 198, 198, 198, 7287, 7287, 25, 728, 297, 4753, 4753, 156892]
-[DEBUG gen #3250] full_response (first 300 chars): 'Thought: I to to to to to to to to to to\n\n\nActionAction: go to bed bed'
-[DEBUG gen #3250] parsed action: 'go to bed bed'
-
-[DEBUG gen #3300] input_ids shape: torch.Size([1, 447]), n_messages: 1, mask_id: 156895
-[DEBUG gen #3300] generated length: 40, mask_tokens_remaining: 0, eos_tokens: 1
-[DEBUG gen #3300] first 60 token ids: [67001, 468, 468, 21038, 341, 21038, 268, 268, 11, 11, 268, 11, 331, 13, 13, 13, 156900, 13, 13, 13, 13, 13, 13, 13, 156900, 198, 7287, 25, 21038, 297, 297, 21038, 156900, 25, 25, 13, 13, 2305, 2305, 156892]
-[DEBUG gen #3300] full_response (first 300 chars): 'Thought The The sink is sink the the,, the, I..........\nAction: sink to to sink::.. open open'
-[DEBUG gen #3300] parsed action: 'sink to to sink::.. open open'
-
-[DEBUG gen #3350] input_ids shape: torch.Size([1, 1539]), n_messages: 1, mask_id: 156895
-[DEBUG gen #3350] generated length: 58, mask_tokens_remaining: 0, eos_tokens: 1
-[DEBUG gen #3350] first 60 token ids: [67001, 25, 468, 1050, 21038, 268, 268, 268, 268, 1329, 268, 268, 268, 268, 7287, 268, 268, 268, 13, 13, 198, 198, 25, 25, 297, 297, 156900, 21038, 156900, 25, 25, 268, 268, 268, 268, 297, 297, 297, 297, 297, 268, 268, 268, 268, 268, 268, 7287, 198, 198, 198, 198, 198, 198, 25, 25, 25, 297, 156892]
-[DEBUG gen #3350] full_response (first 300 chars): 'Thought: The need sink the the the the should the the the theAction the the the..\n\n:: to to sink:: the the the the to to to to to the the the the the theAction\n\n\n\n\n\n::: to'
-[DEBUG gen #3350] parsed action: '::: to'
-
-[DEBUG gen #3400] input_ids shape: torch.Size([1, 439]), n_messages: 1, mask_id: 156895
-[DEBUG gen #3400] generated length: 38, mask_tokens_remaining: 0, eos_tokens: 1
-[DEBUG gen #3400] first 60 token ids: [67001, 25, 468, 9435, 560, 268, 25, 156900, 156900, 9435, 13, 13, 331, 331, 331, 331, 331, 331, 13, 7287, 268, 268, 268, 268, 156900, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 25, 2305, 156892]
-[DEBUG gen #3400] full_response (first 300 chars): 'Thought: The cup can the: cup.. I I I I I I.Action the the the theActionActionActionActionActionActionActionActionActionAction: open'
-[DEBUG gen #3400] parsed action: 'open'
-
-[DEBUG gen #3450] input_ids shape: torch.Size([1, 2464]), n_messages: 1, mask_id: 156895
-[DEBUG gen #3450] generated length: 127, mask_tokens_remaining: 0, eos_tokens: 1
-[DEBUG gen #3450] first 60 token ids: [67001, 65155, 131287, 65155, 65155, 65155, 65155, 65155, 65155, 65155, 65155, 65155, 65155, 65155, 65155, 65155, 198, 198, 198, 198, 198, 198, 198, 198, 198, 198, 25, 25, 65155, 65155, 65155, 156900, 25, 25, 65155, 65155, 65155, 65155, 65155, 65155, 65155, 65155, 65155, 65155, 65155, 65155, 65155, 198, 198, 198, 198, 198, 198, 198, 198, 198, 198, 25, 25, 25]
-[DEBUG gen #3450] full_response (first 300 chars): 'Thought jug Jug jug jug jug jug jug jug jug jug jug jug jug jug jug\n\n\n\n\n\n\n\n\n\n:: jug jug jug:: jug jug jug jug jug jug jug jug jug jug jug jug jug\n\n\n\n\n\n\n\n\n\n:::: jug:: jug jug jug jug jug jug jug jug jug jug jug jug jug:\n\n\n\n\n\n\n\n\n::: jug jug jug:: jug jug jug jug jug jug jug jug jug jug jug jug\n\n\n\n\n\n\n\n'
-[DEBUG gen #3450] parsed action: '::: jug jug'
-
-[DEBUG gen #3500] input_ids shape: torch.Size([1, 440]), n_messages: 1, mask_id: 156895
-[DEBUG gen #3500] generated length: 37, mask_tokens_remaining: 0, eos_tokens: 1
-[DEBUG gen #3500] first 60 token ids: [67001, 25, 468, 9435, 9435, 8127, 9435, 156900, 9435, 9435, 13, 13, 331, 331, 13, 7287, 13, 13, 13, 13, 13, 7287, 268, 156900, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 2305, 156892]
-[DEBUG gen #3500] full_response (first 300 chars): 'Thought: The cup cup closed cup cup cup.. I I.Action.....Action theActionActionActionActionActionActionActionActionActionActionAction open'
-[DEBUG gen #3500] parsed action: 'Thought: The cup cup closed cup cup cup.. I I.Action.....Action theActionActionActionActionActionActionActionActionActionActionAction open'
-
-[DEBUG gen #3550] input_ids shape: torch.Size([1, 1520]), n_messages: 1, mask_id: 156895
-[DEBUG gen #3550] generated length: 47, mask_tokens_remaining: 0, eos_tokens: 1
-[DEBUG gen #3550] first 60 token ids: [67001, 25, 331, 1050, 268, 268, 13, 13, 198, 25, 25, 9435, 297, 297, 9435, 156900, 9435, 13, 13, 13, 13, 13, 13, 9435, 268, 268, 13, 268, 268, 268, 268, 156900, 7287, 7287, 7287, 198, 198, 156900, 13, 198, 7287, 25, 728, 728, 297, 220, 156892]
-[DEBUG gen #3550] full_response (first 300 chars): 'Thought: I need the the..\n:: cup to to cup cup...... cup the the. the the the theActionActionAction\n\n.\nAction: go go to'
-[DEBUG gen #3550] parsed action: 'go go to'
-
-[DEBUG gen #3600] input_ids shape: torch.Size([1, 437]), n_messages: 1, mask_id: 156895
-[DEBUG gen #3600] generated length: 42, mask_tokens_remaining: 0, eos_tokens: 1
-[DEBUG gen #3600] first 60 token ids: [67001, 468, 468, 378, 297, 268, 297, 297, 25, 198, 156900, 13, 13, 13, 13, 297, 297, 297, 7287, 268, 7287, 297, 297, 7287, 2305, 13, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 297, 297, 156892]
-[DEBUG gen #3600] full_response (first 300 chars): 'Thought The The that to the to to:\n.... to to toAction theAction to toAction open.ActionActionActionActionActionActionActionActionActionActionActionActionAction to to'
-[DEBUG gen #3600] parsed action: '.... to to toAction theAction to toAction open.ActionActionActionActionActionActionActionActionActionActionActionActionAction to to'
-
-[DEBUG gen #3650] input_ids shape: torch.Size([1, 1560]), n_messages: 1, mask_id: 156895
-[DEBUG gen #3650] generated length: 38, mask_tokens_remaining: 0, eos_tokens: 1
-[DEBUG gen #3650] first 60 token ids: [67001, 25, 355, 341, 297, 297, 156900, 156900, 331, 331, 331, 331, 331, 331, 331, 13, 156900, 156900, 268, 268, 268, 268, 268, 156900, 13, 13, 13, 13, 13, 13, 13, 13, 7287, 25, 25, 3476, 297, 156892]
-[DEBUG gen #3650] full_response (first 300 chars): 'Thought: A is to to I I I I I I I. the the the the the........Action:: focus to'
-[DEBUG gen #3650] parsed action: ': focus to'
-
-[DEBUG gen #3700] input_ids shape: torch.Size([1, 433]), n_messages: 1, mask_id: 156895
-[DEBUG gen #3700] generated length: 34, mask_tokens_remaining: 0, eos_tokens: 1
-[DEBUG gen #3700] first 60 token ids: [67001, 25, 468, 1050, 268, 268, 268, 13, 297, 2305, 2305, 2305, 13, 156900, 156900, 13, 13, 13, 13, 13, 13, 13, 7287, 268, 268, 268, 268, 268, 268, 13, 13, 13, 7287, 156892]
-[DEBUG gen #3700] full_response (first 300 chars): 'Thought: The need the the the. to open open open........Action the the the the the the...Action'
-[DEBUG gen #3700] parsed action: 'Thought: The need the the the. to open open open........Action the the the the the the...Action'
-
-[DEBUG gen #3750] input_ids shape: torch.Size([1, 1414]), n_messages: 1, mask_id: 156895
-[DEBUG gen #3750] generated length: 41, mask_tokens_remaining: 0, eos_tokens: 1
-[DEBUG gen #3750] first 60 token ids: [67001, 25, 468, 1050, 341, 268, 268, 268, 331, 331, 297, 297, 297, 297, 297, 13, 13, 13, 198, 7287, 25, 297, 297, 220, 156900, 156900, 297, 297, 297, 297, 297, 5203, 297, 297, 297, 297, 297, 297, 7287, 297, 156892]
-[DEBUG gen #3750] full_response (first 300 chars): 'Thought: The need is the the the I I to to to to to...\nAction: to to  to to to to to outside to to to to to toAction to'
-[DEBUG gen #3750] parsed action: 'to to  to to to to to outside to to to to to toAction to'
-
-[DEBUG gen #3800] input_ids shape: torch.Size([1, 603]), n_messages: 1, mask_id: 156895
-[DEBUG gen #3800] generated length: 34, mask_tokens_remaining: 0, eos_tokens: 1
-[DEBUG gen #3800] first 60 token ids: [67001, 25, 468, 268, 8127, 268, 268, 268, 13, 2305, 2305, 2305, 2305, 268, 268, 268, 297, 297, 268, 268, 13, 7287, 7287, 7287, 7287, 7287, 7287, 13, 13, 198, 7287, 7287, 156900, 156892]
-[DEBUG gen #3800] full_response (first 300 chars): 'Thought: The the closed the the the. open open open open the the the to to the the.ActionActionActionActionActionAction..\nActionAction'
-[DEBUG gen #3800] parsed action: 'ActionAction'
-
-[DEBUG gen #3850] input_ids shape: torch.Size([1, 1488]), n_messages: 1, mask_id: 156895
-[DEBUG gen #3850] generated length: 24, mask_tokens_remaining: 0, eos_tokens: 1
-[DEBUG gen #3850] first 60 token ids: [67001, 25, 468, 42249, 268, 42249, 42249, 13, 13, 7287, 25, 13, 42249, 220, 156900, 156900, 13, 13, 13, 13, 13, 13, 13, 156892]
-[DEBUG gen #3850] full_response (first 300 chars): 'Thought: The drawer the drawer drawer..Action:. drawer .......'
-[DEBUG gen #3850] parsed action: '. drawer .......'
-
-[DEBUG gen #3900] input_ids shape: torch.Size([1, 444]), n_messages: 1, mask_id: 156895
-[DEBUG gen #3900] generated length: 35, mask_tokens_remaining: 0, eos_tokens: 1
-[DEBUG gen #3900] first 60 token ids: [67001, 25, 468, 14972, 14972, 14972, 14972, 14972, 14972, 297, 268, 268, 14972, 268, 268, 14972, 297, 297, 14972, 13, 13, 13, 13, 13, 7287, 156900, 156900, 198, 198, 7287, 25, 297, 297, 297, 156892]
-[DEBUG gen #3900] full_response (first 300 chars): 'Thought: The studio studio studio studio studio studio to the the studio the the studio to to studio.....Action\n\nAction: to to to'
-[DEBUG gen #3900] parsed action: 'to to to'
-
-[DEBUG gen #3950] input_ids shape: torch.Size([1, 1438]), n_messages: 1, mask_id: 156895
-[DEBUG gen #3950] generated length: 37, mask_tokens_remaining: 0, eos_tokens: 1
-[DEBUG gen #3950] first 60 token ids: [67001, 25, 468, 268, 268, 268, 268, 3284, 3284, 3284, 13, 268, 268, 268, 268, 268, 268, 3284, 13, 13, 13, 13, 13, 13, 13, 13, 7287, 25, 25, 297, 297, 220, 60, 156900, 297, 7287, 156892]
-[DEBUG gen #3950] full_response (first 300 chars): 'Thought: The the the the the room room room. the the the the the the room........Action:: to to ] toAction'
-[DEBUG gen #3950] parsed action: ': to to ] toAction'
-
-[DEBUG gen #4000] input_ids shape: torch.Size([1, 476]), n_messages: 1, mask_id: 156895
-[DEBUG gen #4000] generated length: 32, mask_tokens_remaining: 0, eos_tokens: 1
-[DEBUG gen #4000] first 60 token ids: [67001, 25, 468, 9435, 9435, 9435, 13, 268, 13, 13, 13, 13, 13, 13, 13, 7287, 297, 7287, 13, 13, 13, 7287, 13, 156900, 7287, 7287, 7287, 7287, 7287, 7287, 25, 156892]
-[DEBUG gen #4000] full_response (first 300 chars): 'Thought: The cup cup cup. the.......Action toAction...Action.ActionActionActionActionActionAction:'
-[DEBUG gen #4000] parsed action: ''
-
-[DEBUG gen #4050] input_ids shape: torch.Size([1, 4047]), n_messages: 1, mask_id: 156895
-[DEBUG gen #4050] generated length: 128, mask_tokens_remaining: 0, eos_tokens: 0
-[DEBUG gen #4050] first 60 token ids: [7287, 25, 8260, 8260, 8260, 8260, 8260, 8260, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 8260, 8260, 8260, 8260, 8260, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 8260, 8260, 7287, 7287, 8260, 8260, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 7287]
-[DEBUG gen #4050] full_response (first 300 chars): 'Action: paint paint paint paint paint paintActionActionActionActionActionActionActionActionAction paint paint paint paint paintActionActionActionActionActionActionActionActionActionActionActionActionActionActionActionActionActionActionActionActionActionActionAction paint paintActionAction paint pain'
-[DEBUG gen #4050] parsed action: 'paint paint paint paint paint paintActionActionActionActionActionActionActionActionAction paint paint paint paint paintActionActionActionActionActionActionActionActionActionActionActionActionActionAct'
-
-[DEBUG gen #4100] input_ids shape: torch.Size([1, 428]), n_messages: 1, mask_id: 156895
-[DEBUG gen #4100] generated length: 28, mask_tokens_remaining: 0, eos_tokens: 1
-[DEBUG gen #4100] first 60 token ids: [67001, 25, 468, 1050, 341, 268, 268, 268, 268, 268, 268, 13, 13, 198, 7287, 25, 7287, 4753, 7287, 156900, 13, 25, 13, 156900, 156900, 13, 13, 156892]
-[DEBUG gen #4100] full_response (first 300 chars): 'Thought: The need is the the the the the the..\nAction:Action bedAction.:...'
-[DEBUG gen #4100] parsed action: 'Action bedAction.:...'
-
-[DEBUG gen #4150] input_ids shape: torch.Size([1, 1418]), n_messages: 1, mask_id: 156895
-[DEBUG gen #4150] generated length: 28, mask_tokens_remaining: 0, eos_tokens: 1
-[DEBUG gen #4150] first 60 token ids: [67001, 25, 468, 1050, 297, 728, 297, 297, 13, 268, 13, 13, 13, 198, 7287, 7287, 728, 156900, 297, 156900, 156900, 156900, 13, 13, 13, 297, 297, 156892]
-[DEBUG gen #4150] full_response (first 300 chars): 'Thought: The need to go to to. the...\nActionAction go to... to to'
-[DEBUG gen #4150] parsed action: 'ActionAction go to... to to'
-
-[DEBUG gen #4200] input_ids shape: torch.Size([1, 447]), n_messages: 1, mask_id: 156895
-[DEBUG gen #4200] generated length: 40, mask_tokens_remaining: 0, eos_tokens: 1
-[DEBUG gen #4200] first 60 token ids: [67001, 468, 468, 21038, 341, 21038, 268, 268, 11, 11, 268, 11, 331, 13, 13, 13, 156900, 13, 13, 13, 13, 13, 13, 13, 156900, 198, 7287, 25, 21038, 297, 297, 21038, 156900, 25, 25, 13, 13, 2305, 2305, 156892]
-[DEBUG gen #4200] full_response (first 300 chars): 'Thought The The sink is sink the the,, the, I..........\nAction: sink to to sink::.. open open'
-[DEBUG gen #4200] parsed action: 'sink to to sink::.. open open'
-
-[DEBUG gen #4250] input_ids shape: torch.Size([1, 1459]), n_messages: 1, mask_id: 156895
-[DEBUG gen #4250] generated length: 43, mask_tokens_remaining: 0, eos_tokens: 1
-[DEBUG gen #4250] first 60 token ids: [67001, 25, 468, 341, 268, 297, 297, 198, 25, 297, 297, 156900, 156900, 297, 297, 297, 297, 297, 297, 268, 268, 268, 268, 268, 268, 268, 268, 268, 13, 198, 268, 198, 198, 198, 198, 156900, 25, 25, 25, 297, 297, 297, 156892]
-[DEBUG gen #4250] full_response (first 300 chars): 'Thought: The is the to to\n: to to to to to to to to the the the the the the the the the.\n the\n\n\n\n::: to to to'
-[DEBUG gen #4250] parsed action: '::: to to to'
-
-[DEBUG gen #4300] input_ids shape: torch.Size([1, 439]), n_messages: 1, mask_id: 156895
-[DEBUG gen #4300] generated length: 38, mask_tokens_remaining: 0, eos_tokens: 1
-[DEBUG gen #4300] first 60 token ids: [67001, 25, 468, 9435, 297, 8127, 25, 156900, 156900, 9435, 13, 13, 331, 331, 331, 331, 331, 13, 13, 13, 13, 13, 268, 268, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 156900, 156892]
-[DEBUG gen #4300] full_response (first 300 chars): 'Thought: The cup to closed: cup.. I I I I I..... the theActionActionActionActionActionActionActionActionActionActionActionAction'
-[DEBUG gen #4300] parsed action: 'Thought: The cup to closed: cup.. I I I I I..... the theActionActionActionActionActionActionActionActionActionActionActionAction'
-
-[DEBUG gen #4350] input_ids shape: torch.Size([1, 2414]), n_messages: 1, mask_id: 156895
-[DEBUG gen #4350] generated length: 114, mask_tokens_remaining: 0, eos_tokens: 1
-[DEBUG gen #4350] first 60 token ids: [67001, 25, 4948, 65155, 65155, 65155, 65155, 65155, 65155, 65155, 65155, 65155, 65155, 65155, 65155, 65155, 65155, 156900, 65155, 65155, 65155, 65155, 65155, 65155, 65155, 65155, 65155, 65155, 65155, 65155, 65155, 65155, 65155, 65155, 65155, 65155, 65155, 65155, 65155, 65155, 65155, 65155, 65155, 65155, 65155, 65155, 65155, 65155, 65155, 156900, 65155, 65155, 65155, 65155, 65155, 65155, 65155, 65155, 65155, 65155]
-[DEBUG gen #4350] full_response (first 300 chars): 'Thought: Now jug jug jug jug jug jug jug jug jug jug jug jug jug jug jug jug jug jug jug jug jug jug jug jug jug jug jug jug jug jug jug jug jug jug jug jug jug jug jug jug jug jug jug jug jug jug jug jug jug jug jug jug jug jug jug jug jug jug jug jug jug\n\n\n\n\n\n\n\n jug jug jug jug jug jug jug jug jug'
-[DEBUG gen #4350] parsed action: 'jug:: jug jug'
-
-[DEBUG gen #4400] input_ids shape: torch.Size([1, 439]), n_messages: 1, mask_id: 156895
-[DEBUG gen #4400] generated length: 46, mask_tokens_remaining: 0, eos_tokens: 1
-[DEBUG gen #4400] first 60 token ids: [67001, 25, 468, 9435, 297, 268, 9435, 156900, 156900, 297, 268, 331, 331, 331, 331, 331, 297, 13, 13, 13, 268, 268, 268, 268, 268, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 25, 2305, 297, 220, 16, 156900, 7287, 7287, 7287, 156900, 156892]
-[DEBUG gen #4400] full_response (first 300 chars): 'Thought: The cup to the cup to the I I I I I to... the the the the theActionActionActionActionActionActionActionActionActionAction: open to 1ActionActionAction'
-[DEBUG gen #4400] parsed action: 'open to 1ActionActionAction'
-
-[DEBUG gen #4450] input_ids shape: torch.Size([1, 1547]), n_messages: 1, mask_id: 156895
-[DEBUG gen #4450] generated length: 30, mask_tokens_remaining: 0, eos_tokens: 1
-[DEBUG gen #4450] first 60 token ids: [67001, 25, 119011, 9435, 42249, 42249, 42249, 42249, 42249, 42249, 42249, 13, 13, 7287, 7287, 25, 728, 42249, 220, 17, 156900, 42249, 42249, 42249, 42249, 42249, 42249, 42249, 42249, 156892]
-[DEBUG gen #4450] full_response (first 300 chars): 'Thought: Drawer cup drawer drawer drawer drawer drawer drawer drawer..ActionAction: go drawer 2 drawer drawer drawer drawer drawer drawer drawer drawer'
-[DEBUG gen #4450] parsed action: 'go drawer 2 drawer drawer drawer drawer drawer drawer drawer drawer'
-
-[DEBUG gen #4500] input_ids shape: torch.Size([1, 427]), n_messages: 1, mask_id: 156895
-[DEBUG gen #4500] generated length: 62, mask_tokens_remaining: 0, eos_tokens: 1
-[DEBUG gen #4500] first 60 token ids: [67001, 25, 468, 1050, 341, 268, 268, 268, 21038, 268, 268, 48023, 13, 13, 7287, 7287, 21038, 297, 297, 21038, 156900, 48023, 48023, 48023, 48023, 48023, 48023, 48023, 48023, 48023, 48023, 48023, 48023, 48023, 48023, 48023, 48023, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 7287, 25, 21038, 2305, 48023, 48023, 156900, 48023, 48023, 48023, 48023, 48023, 48023, 48023]
-[DEBUG gen #4500] full_response (first 300 chars): 'Thought: The need is the the the sink the the furnace..ActionAction sink to to sink furnace furnace furnace furnace furnace furnace furnace furnace furnace furnace furnace furnace furnace furnace furnace furnaceActionActionActionActionActionActionActionActionActionAction: sink open furnace furnace f'
-[DEBUG gen #4500] parsed action: 'sink open furnace furnace furnace furnace furnace furnace furnace furnace furnace sink'

@@ -1,189 +1,0 @@
-You are using a model of type `llada2_moe` to instantiate a model of type `llada2_moe_veomni`. This may be expected if you are loading a checkpoint that shares a subset of the architecture (e.g., loading a `sam2_video` checkpoint into `Sam2Model`), but is otherwise not supported and can yield errors. Please verify that the checkpoint is compatible with the model you are instantiating.
-`torch_dtype` is deprecated! Use `dtype` instead!
-Loading model with device_map={'': 'cuda:0'}...
-[INFO|/scratch/e1507650/AnyOrderTraining/aomt/dFactory/VeOmni/veomni/ops/__init__.py:50] 03/17/2026 22:57:12 >> ✅ VeOmni ops patch applied.
-[INFO|/scratch/e1507650/AnyOrderTraining/aomt/dFactory/VeOmni/veomni/__init__.py:25] 03/17/2026 22:57:12 >> 
-========== Environment Variables ==========
-MODELING_BACKEND=veomni (source=default)
-USE_GROUP_GEMM=1 (source=default)
-VEOMNI_USE_LIGER_KERNEL=1 (source=default)
-===========================================
-[INFO|/scratch/e1507650/AnyOrderTraining/aomt/dFactory/VeOmni/veomni/__init__.py:26] 03/17/2026 22:57:12 >> 
-=========== OPS ============
-_fused_moe_forward = None
-_flash_attention_forward = transformers_flash_attention_forward
-_cross_entropy = eager_cross_entropy
-==============================
-Loading weights:   0%|          | 0/14813 [00:00<?, ?it/s]Loading weights:   2%|▏         | 285/14813 [00:00<00:05, 2794.89it/s]Loading weights:   4%|▍         | 565/14813 [00:00<00:18, 761.33it/s] Loading weights:   5%|▍         | 710/14813 [00:00<00:21, 660.46it/s]Loading weights:   5%|▌         | 812/14813 [00:01<00:22, 611.78it/s]Loading weights:   6%|▌         | 893/14813 [00:01<00:24, 577.72it/s]Loading weights:   6%|▋         | 962/14813 [00:01<00:24, 561.62it/s]Loading weights:   7%|▋         | 1025/14813 [00:01<00:25, 548.60it/s]Loading weights:   7%|▋         | 1084/14813 [00:01<00:25, 535.31it/s]Loading weights:   8%|▊         | 1140/14813 [00:01<00:26, 524.13it/s]Loading weights:   8%|▊         | 1194/14813 [00:01<00:26, 511.16it/s]Loading weights:   8%|▊         | 1246/14813 [00:02<00:27, 501.51it/s]Loading weights:   9%|▉         | 1297/14813 [00:02<00:27, 500.28it/s]Loading weights:   9%|▉         | 1348/14813 [00:02<00:26, 501.57it/s]Loading weights:   9%|▉         | 1399/14813 [00:02<00:26, 500.74it/s]Loading weights:  10%|▉         | 1450/14813 [00:02<00:26, 497.48it/s]Loading weights:  10%|█         | 1500/14813 [00:02<00:26, 495.54it/s]Loading weights:  10%|█         | 1550/14813 [00:02<00:26, 493.71it/s]Loading weights:  11%|█         | 1600/14813 [00:02<00:27, 474.17it/s]Loading weights:  11%|█         | 1648/14813 [00:02<00:28, 469.50it/s]Loading weights:  11%|█▏        | 1698/14813 [00:02<00:27, 477.73it/s]Loading weights:  12%|█▏        | 1747/14813 [00:03<00:27, 479.64it/s]Loading weights:  12%|█▏        | 1799/14813 [00:03<00:26, 488.45it/s]Loading weights:  12%|█▏        | 1849/14813 [00:03<00:26, 491.38it/s]Loading weights:  13%|█▎        | 1899/14813 [00:03<00:26, 493.47it/s]Loading weights:  13%|█▎        | 1949/14813 [00:03<00:26, 487.24it/s]Loading weights:  14%|█▎        | 2000/14813 [00:03<00:26, 491.37it/s]Loading weights:  14%|█▍        | 2051/14813 [00:03<00:25, 496.25it/s]Loading weights:  14%|█▍        | 2101/14813 [00:03<00:25, 496.13it/s]Loading weights:  15%|█▍        | 2153/14813 [00:03<00:25, 500.25it/s]Loading weights:  15%|█▍        | 2205/14813 [00:03<00:24, 505.68it/s]Loading weights:  15%|█▌        | 2256/14813 [00:04<00:25, 500.21it/s]Loading weights:  16%|█▌        | 2308/14813 [00:04<00:24, 504.08it/s]Loading weights:  16%|█▌        | 2359/14813 [00:04<00:24, 500.15it/s]Loading weights:  16%|█▋        | 2410/14813 [00:04<00:25, 492.23it/s]Loading weights:  17%|█▋        | 2460/14813 [00:04<00:25, 490.77it/s]Loading weights:  17%|█▋        | 2510/14813 [00:04<00:25, 490.48it/s]Loading weights:  17%|█▋        | 2560/14813 [00:04<00:25, 487.07it/s]Loading weights:  18%|█▊        | 2609/14813 [00:04<00:25, 485.75it/s]Loading weights:  18%|█▊        | 2658/14813 [00:04<00:25, 479.71it/s]Loading weights:  18%|█▊        | 2708/14813 [00:05<00:25, 483.65it/s]Loading weights:  19%|█▊        | 2757/14813 [00:05<00:24, 483.24it/s]Loading weights:  19%|█▉        | 2806/14813 [00:05<00:24, 482.37it/s]Loading weights:  19%|█▉        | 2855/14813 [00:05<00:24, 482.16it/s]Loading weights:  20%|█▉        | 2905/14813 [00:05<00:24, 486.25it/s]Loading weights:  20%|█▉        | 2955/14813 [00:05<00:24, 489.10it/s]Loading weights:  20%|██        | 3005/14813 [00:05<00:24, 491.62it/s]Loading weights:  21%|██        | 3055/14813 [00:05<00:24, 488.07it/s]Loading weights:  21%|██        | 3105/14813 [00:05<00:23, 489.44it/s]Loading weights:  21%|██▏       | 3154/14813 [00:05<00:24, 479.05it/s]Loading weights:  22%|██▏       | 3202/14813 [00:06<00:24, 472.40it/s]Loading weights:  22%|██▏       | 3250/14813 [00:06<00:24, 473.93it/s]Loading weights:  22%|██▏       | 3300/14813 [00:06<00:23, 481.36it/s]Loading weights:  23%|██▎       | 3349/14813 [00:06<00:23, 482.23it/s]Loading weights:  23%|██▎       | 3399/14813 [00:06<00:23, 485.09it/s]Loading weights:  23%|██▎       | 3450/14813 [00:06<00:23, 489.60it/s]Loading weights:  24%|██▎       | 3499/14813 [00:06<00:23, 484.97it/s]Loading weights:  24%|██▍       | 3551/14813 [00:06<00:22, 492.17it/s]Loading weights:  24%|██▍       | 3601/14813 [00:06<00:22, 492.20it/s]Loading weights:  25%|██▍       | 3652/14813 [00:06<00:22, 495.96it/s]Loading weights:  25%|██▍       | 3702/14813 [00:07<00:22, 493.33it/s]Loading weights:  25%|██▌       | 3752/14813 [00:07<00:22, 493.34it/s]Loading weights:  26%|██▌       | 3802/14813 [00:07<00:22, 493.13it/s]Loading weights:  26%|██▌       | 3852/14813 [00:07<00:22, 489.35it/s]Loading weights:  26%|██▋       | 3906/14813 [00:07<00:22, 491.71it/s]Loading weights:  27%|██▋       | 3956/14813 [00:07<00:22, 472.63it/s]Loading weights:  27%|██▋       | 4004/14813 [00:07<00:23, 469.55it/s]Loading weights:  27%|██▋       | 4052/14813 [00:07<00:22, 469.80it/s]Loading weights:  28%|██▊       | 4100/14813 [00:07<00:22, 471.54it/s]Loading weights:  28%|██▊       | 4148/14813 [00:08<00:22, 473.41it/s]Loading weights:  28%|██▊       | 4196/14813 [00:08<00:22, 472.04it/s]Loading weights:  29%|██▊       | 4244/14813 [00:08<00:22, 472.90it/s]Loading weights:  29%|██▉       | 4293/14813 [00:08<00:22, 477.03it/s]Loading weights:  29%|██▉       | 4344/14813 [00:08<00:21, 484.51it/s]Loading weights:  30%|██▉       | 4393/14813 [00:08<00:21, 482.78it/s]Loading weights:  30%|██▉       | 4442/14813 [00:08<00:21, 483.79it/s]Loading weights:  30%|███       | 4491/14813 [00:08<00:21, 481.85it/s]Loading weights:  31%|███       | 4540/14813 [00:08<00:21, 477.28it/s]Loading weights:  31%|███       | 4588/14813 [00:08<00:21, 477.57it/s]Loading weights:  31%|███▏      | 4637/14813 [00:09<00:21, 479.50it/s]Loading weights:  32%|███▏      | 4685/14813 [00:09<00:21, 473.75it/s]Loading weights:  32%|███▏      | 4733/14813 [00:09<00:21, 461.82it/s]Loading weights:  32%|███▏      | 4780/14813 [00:09<00:21, 462.17it/s]Loading weights:  33%|███▎      | 4828/14813 [00:09<00:21, 467.36it/s]Loading weights:  33%|███▎      | 4875/14813 [00:09<00:21, 467.56it/s]Loading weights:  33%|███▎      | 4923/14813 [00:09<00:21, 469.68it/s]Loading weights:  34%|███▎      | 4971/14813 [00:09<00:20, 471.22it/s]Loading weights:  34%|███▍      | 5020/14813 [00:09<00:20, 475.25it/s]Loading weights:  34%|███▍      | 5068/14813 [00:09<00:20, 473.49it/s]Loading weights:  35%|███▍      | 5117/14813 [00:10<00:20, 477.15it/s]Loading weights:  35%|███▍      | 5166/14813 [00:10<00:20, 478.77it/s]Loading weights:  35%|███▌      | 5214/14813 [00:10<00:20, 471.50it/s]Loading weights:  36%|███▌      | 5262/14813 [00:10<00:20, 461.46it/s]Loading weights:  36%|███▌      | 5309/14813 [00:10<00:20, 462.58it/s]Loading weights:  36%|███▌      | 5356/14813 [00:10<00:20, 457.86it/s]Loading weights:  36%|███▋      | 5402/14813 [00:10<00:20, 452.03it/s]Loading weights:  37%|███▋      | 5450/14813 [00:10<00:20, 459.74it/s]Loading weights:  37%|███▋      | 5497/14813 [00:10<00:20, 451.62it/s]Loading weights:  37%|███▋      | 5543/14813 [00:10<00:20, 444.55it/s]Loading weights:  38%|███▊      | 5588/14813 [00:11<00:20, 444.12it/s]Loading weights:  38%|███▊      | 5634/14813 [00:11<00:20, 447.74it/s]Loading weights:  38%|███▊      | 5681/14813 [00:11<00:20, 454.02it/s]Loading weights:  39%|███▊      | 5729/14813 [00:11<00:19, 460.17it/s]Loading weights:  39%|███▉      | 5777/14813 [00:11<00:19, 464.34it/s]Loading weights:  39%|███▉      | 5824/14813 [00:11<00:19, 462.75it/s]Loading weights:  40%|███▉      | 5872/14813 [00:11<00:19, 465.40it/s]Loading weights:  40%|███▉      | 5920/14813 [00:11<00:18, 469.16it/s]Loading weights:  40%|████      | 5970/14813 [00:11<00:18, 478.09it/s]Loading weights:  41%|████      | 6018/14813 [00:12<00:18, 473.33it/s]Loading weights:  41%|████      | 6066/14813 [00:12<00:18, 468.24it/s]Loading weights:  41%|████▏     | 6113/14813 [00:12<00:18, 465.28it/s]Loading weights:  42%|████▏     | 6160/14813 [00:12<00:18, 466.58it/s]Loading weights:  42%|████▏     | 6207/14813 [00:12<00:18, 461.98it/s]Loading weights:  42%|████▏     | 6254/14813 [00:12<00:18, 451.92it/s]Loading weights:  43%|████▎     | 6300/14813 [00:12<00:19, 447.71it/s]Loading weights:  43%|████▎     | 6345/14813 [00:12<00:19, 443.73it/s]Loading weights:  43%|████▎     | 6395/14813 [00:12<00:18, 458.44it/s]Loading weights:  43%|████▎     | 6442/14813 [00:12<00:18, 460.61it/s]Loading weights:  44%|████▍     | 6490/14813 [00:13<00:17, 463.37it/s]Loading weights:  44%|████▍     | 6539/14813 [00:13<00:17, 469.11it/s]Loading weights:  44%|████▍     | 6587/14813 [00:13<00:17, 468.99it/s]Loading weights:  45%|████▍     | 6635/14813 [00:13<00:17, 472.17it/s]Loading weights:  45%|████▌     | 6685/14813 [00:13<00:17, 477.54it/s]Loading weights:  45%|████▌     | 6735/14813 [00:13<00:16, 481.27it/s]Loading weights:  46%|████▌     | 6784/14813 [00:13<00:16, 483.02it/s]Loading weights:  46%|████▌     | 6833/14813 [00:13<00:16, 480.94it/s]Loading weights:  46%|████▋     | 6883/14813 [00:13<00:16, 483.72it/s]Loading weights:  47%|████▋     | 6933/14813 [00:13<00:16, 487.44it/s]Loading weights:  47%|████▋     | 6982/14813 [00:14<00:16, 487.68it/s]Loading weights:  47%|████▋     | 7031/14813 [00:14<00:16, 474.31it/s]Loading weights:  48%|████▊     | 7079/14813 [00:14<00:16, 458.84it/s]Loading weights:  48%|████▊     | 7126/14813 [00:14<00:16, 454.90it/s]Loading weights:  48%|████▊     | 7175/14813 [00:14<00:16, 462.90it/s]Loading weights:  49%|████▉     | 7225/14813 [00:14<00:16, 473.65it/s]Loading weights:  49%|████▉     | 7274/14813 [00:14<00:15, 476.35it/s]Loading weights:  49%|████▉     | 7322/14813 [00:14<00:15, 475.70it/s]Loading weights:  50%|████▉     | 7371/14813 [00:14<00:15, 478.00it/s]Loading weights:  50%|█████     | 7421/14813 [00:14<00:15, 483.46it/s]Loading weights:  50%|█████     | 7470/14813 [00:15<00:15, 480.79it/s]Loading weights:  51%|█████     | 7520/14813 [00:15<00:15, 484.44it/s]Loading weights:  51%|█████     | 7571/14813 [00:15<00:14, 491.65it/s]Loading weights:  51%|█████▏    | 7621/14813 [00:15<00:14, 486.92it/s]Loading weights:  52%|█████▏    | 7671/14813 [00:15<00:14, 489.99it/s]Loading weights:  52%|█████▏    | 7723/14813 [00:15<00:14, 496.65it/s]Loading weights:  52%|█████▏    | 7773/14813 [00:15<00:14, 488.81it/s]Loading weights:  53%|█████▎    | 7822/14813 [00:15<00:14, 476.41it/s]Loading weights:  53%|█████▎    | 7870/14813 [00:15<00:14, 474.20it/s]Loading weights:  53%|█████▎    | 7921/14813 [00:16<00:14, 481.99it/s]Loading weights:  54%|█████▍    | 7970/14813 [00:16<00:14, 477.84it/s]Loading weights:  54%|█████▍    | 8020/14813 [00:16<00:14, 482.79it/s]Loading weights:  54%|█████▍    | 8069/14813 [00:16<00:14, 476.34it/s]Loading weights:  55%|█████▍    | 8118/14813 [00:16<00:13, 479.15it/s]Loading weights:  55%|█████▌    | 8168/14813 [00:16<00:13, 483.97it/s]Loading weights:  55%|█████▌    | 8217/14813 [00:16<00:13, 484.28it/s]Loading weights:  56%|█████▌    | 8267/14813 [00:16<00:13, 486.80it/s]Loading weights:  56%|█████▌    | 8316/14813 [00:16<00:13, 485.63it/s]Loading weights:  56%|█████▋    | 8365/14813 [00:16<00:13, 481.80it/s]Loading weights:  57%|█████▋    | 8414/14813 [00:17<00:13, 474.88it/s]Loading weights:  57%|█████▋    | 8462/14813 [00:17<00:13, 472.06it/s]Loading weights:  57%|█████▋    | 8510/14813 [00:17<00:13, 472.02it/s]Loading weights:  58%|█████▊    | 8558/14813 [00:17<00:13, 473.09it/s]Loading weights:  58%|█████▊    | 8606/14813 [00:17<00:13, 462.42it/s]Loading weights:  58%|█████▊    | 8653/14813 [00:17<00:13, 463.80it/s]Loading weights:  59%|█████▊    | 8702/14813 [00:17<00:12, 470.47it/s]Loading weights:  59%|█████▉    | 8750/14813 [00:17<00:12, 473.15it/s]Loading weights:  59%|█████▉    | 8798/14813 [00:17<00:12, 472.52it/s]Loading weights:  60%|█████▉    | 8848/14813 [00:17<00:12, 480.50it/s]Loading weights:  60%|██████    | 8897/14813 [00:18<00:12, 479.64it/s]Loading weights:  60%|██████    | 8945/14813 [00:18<00:12, 477.20it/s]Loading weights:  61%|██████    | 8993/14813 [00:18<00:12, 476.54it/s]Loading weights:  61%|██████    | 9041/14813 [00:18<00:12, 474.71it/s]Loading weights:  61%|██████▏   | 9089/14813 [00:18<00:12, 476.14it/s]Loading weights:  62%|██████▏   | 9137/14813 [00:18<00:11, 473.08it/s]Loading weights:  62%|██████▏   | 9185/14813 [00:18<00:11, 473.59it/s]Loading weights:  62%|██████▏   | 9234/14813 [00:18<00:11, 476.12it/s]Loading weights:  63%|██████▎   | 9282/14813 [00:18<00:11, 474.54it/s]Loading weights:  63%|██████▎   | 9330/14813 [00:18<00:11, 473.82it/s]Loading weights:  63%|██████▎   | 9378/14813 [00:19<00:12, 450.16it/s]Loading weights:  64%|██████▎   | 9424/14813 [00:19<00:12, 445.35it/s]Loading weights:  64%|██████▍   | 9470/14813 [00:19<00:11, 448.26it/s]Loading weights:  64%|██████▍   | 9518/14813 [00:19<00:11, 456.02it/s]Loading weights:  65%|██████▍   | 9565/14813 [00:19<00:11, 458.56it/s]Loading weights:  65%|██████▍   | 9614/14813 [00:19<00:11, 465.01it/s]Loading weights:  65%|██████▌   | 9661/14813 [00:19<00:11, 466.01it/s]Loading weights:  66%|██████▌   | 9708/14813 [00:19<00:11, 463.77it/s]Loading weights:  66%|██████▌   | 9755/14813 [00:19<00:10, 465.41it/s]Loading weights:  66%|██████▌   | 9802/14813 [00:20<00:10, 464.27it/s]Loading weights:  66%|██████▋   | 9849/14813 [00:20<00:10, 465.58it/s]Loading weights:  67%|██████▋   | 9897/14813 [00:20<00:10, 468.94it/s]Loading weights:  67%|██████▋   | 9944/14813 [00:20<00:10, 468.35it/s]Loading weights:  67%|██████▋   | 9993/14813 [00:20<00:10, 471.85it/s]Loading weights:  68%|██████▊   | 10041/14813 [00:20<00:10, 471.61it/s]Loading weights:  68%|██████▊   | 10089/14813 [00:20<00:09, 473.71it/s]Loading weights:  68%|██████▊   | 10138/14813 [00:20<00:09, 473.94it/s]Loading weights:  69%|██████▉   | 10186/14813 [00:20<00:10, 460.65it/s]Loading weights:  69%|██████▉   | 10233/14813 [00:20<00:09, 458.28it/s]Loading weights:  69%|██████▉   | 10280/14813 [00:21<00:09, 459.64it/s]Loading weights:  70%|██████▉   | 10327/14813 [00:21<00:09, 457.73it/s]Loading weights:  70%|███████   | 10373/14813 [00:21<00:09, 451.43it/s]Loading weights:  70%|███████   | 10423/14813 [00:21<00:09, 462.92it/s]Loading weights:  71%|███████   | 10470/14813 [00:21<00:09, 462.77it/s]Loading weights:  71%|███████   | 10520/14813 [00:21<00:09, 471.34it/s]Loading weights:  71%|███████▏  | 10568/14813 [00:21<00:09, 468.65it/s]Loading weights:  72%|███████▏  | 10615/14813 [00:21<00:09, 462.04it/s]Loading weights:  72%|███████▏  | 10662/14813 [00:21<00:08, 461.52it/s]Loading weights:  72%|███████▏  | 10710/14813 [00:21<00:08, 466.33it/s]Loading weights:  73%|███████▎  | 10757/14813 [00:22<00:08, 462.12it/s]Loading weights:  73%|███████▎  | 10804/14813 [00:22<00:08, 462.46it/s]Loading weights:  73%|███████▎  | 10851/14813 [00:22<00:08, 462.88it/s]Loading weights:  74%|███████▎  | 10901/14813 [00:22<00:08, 471.35it/s]Loading weights:  74%|███████▍  | 10949/14813 [00:22<00:08, 458.67it/s]Loading weights:  74%|███████▍  | 10995/14813 [00:22<00:08, 457.33it/s]Loading weights:  75%|███████▍  | 11041/14813 [00:22<00:08, 450.15it/s]Loading weights:  75%|███████▍  | 11087/14813 [00:22<00:08, 449.97it/s]Loading weights:  75%|███████▌  | 11134/14813 [00:22<00:08, 455.50it/s]Loading weights:  75%|███████▌  | 11183/14813 [00:23<00:07, 464.22it/s]Loading weights:  76%|███████▌  | 11230/14813 [00:23<00:07, 463.41it/s]Loading weights:  76%|███████▌  | 11279/14813 [00:23<00:07, 467.80it/s]Loading weights:  76%|███████▋  | 11328/14813 [00:23<00:07, 471.49it/s]Loading weights:  77%|███████▋  | 11376/14813 [00:23<00:07, 472.82it/s]Loading weights:  77%|███████▋  | 11424/14813 [00:23<00:07, 469.36it/s]Loading weights:  77%|███████▋  | 11471/14813 [00:23<00:07, 468.45it/s]Loading weights:  78%|███████▊  | 11519/14813 [00:23<00:06, 471.18it/s]Loading weights:  78%|███████▊  | 11567/14813 [00:23<00:06, 469.73it/s]Loading weights:  78%|███████▊  | 11614/14813 [00:23<00:06, 467.99it/s]Loading weights:  79%|███████▊  | 11662/14813 [00:24<00:06, 468.84it/s]Loading weights:  79%|███████▉  | 11709/14813 [00:24<00:06, 466.72it/s]Loading weights:  79%|███████▉  | 11756/14813 [00:24<00:06, 467.22it/s]Loading weights:  80%|███████▉  | 11805/14813 [00:24<00:06, 472.13it/s]Loading weights:  80%|████████  | 11854/14813 [00:24<00:06, 475.69it/s]Loading weights:  80%|████████  | 11903/14813 [00:24<00:06, 478.19it/s]Loading weights:  81%|████████  | 11953/14813 [00:24<00:05, 483.61it/s]Loading weights:  81%|████████  | 12003/14813 [00:24<00:05, 485.37it/s]Loading weights:  81%|████████▏ | 12052/14813 [00:24<00:05, 481.88it/s]Loading weights:  82%|████████▏ | 12101/14813 [00:24<00:05, 483.05it/s]Loading weights:  82%|████████▏ | 12150/14813 [00:25<00:05, 473.84it/s]Loading weights:  82%|████████▏ | 12199/14813 [00:25<00:05, 477.79it/s]Loading weights:  83%|████████▎ | 12247/14813 [00:25<00:05, 473.41it/s]Loading weights:  83%|████████▎ | 12296/14813 [00:25<00:05, 477.49it/s]Loading weights:  83%|████████▎ | 12344/14813 [00:25<00:05, 476.08it/s]Loading weights:  84%|████████▎ | 12392/14813 [00:25<00:05, 473.29it/s]Loading weights:  84%|████████▍ | 12441/14813 [00:25<00:04, 476.56it/s]Loading weights:  84%|████████▍ | 12489/14813 [00:25<00:04, 466.61it/s]Loading weights:  85%|████████▍ | 12536/14813 [00:25<00:04, 466.04it/s]Loading weights:  85%|████████▍ | 12584/14813 [00:25<00:04, 468.61it/s]Loading weights:  85%|████████▌ | 12635/14813 [00:26<00:04, 479.35it/s]Loading weights:  86%|████████▌ | 12685/14813 [00:26<00:04, 484.31it/s]Loading weights:  86%|████████▌ | 12735/14813 [00:26<00:04, 488.41it/s]Loading weights:  86%|████████▋ | 12786/14813 [00:26<00:04, 492.33it/s]Loading weights:  87%|████████▋ | 12838/14813 [00:26<00:03, 498.12it/s]Loading weights:  87%|████████▋ | 12888/14813 [00:26<00:03, 494.13it/s]Loading weights:  87%|████████▋ | 12938/14813 [00:26<00:03, 486.23it/s]Loading weights:  88%|████████▊ | 12987/14813 [00:26<00:03, 486.76it/s]Loading weights:  88%|████████▊ | 13038/14813 [00:26<00:03, 493.02it/s]Loading weights:  88%|████████▊ | 13088/14813 [00:26<00:03, 487.26it/s]Loading weights:  89%|████████▊ | 13138/14813 [00:27<00:03, 490.60it/s]Loading weights:  89%|████████▉ | 13189/14813 [00:27<00:03, 493.69it/s]Loading weights:  89%|████████▉ | 13239/14813 [00:27<00:03, 493.49it/s]Loading weights:  90%|████████▉ | 13289/14813 [00:27<00:03, 473.69it/s]Loading weights:  90%|█████████ | 13337/14813 [00:27<00:03, 462.03it/s]Loading weights:  90%|█████████ | 13384/14813 [00:27<00:03, 461.04it/s]Loading weights:  91%|█████████ | 13431/14813 [00:27<00:03, 459.52it/s]Loading weights:  91%|█████████ | 13478/14813 [00:27<00:02, 457.46it/s]Loading weights:  91%|█████████▏| 13524/14813 [00:27<00:02, 455.75it/s]Loading weights:  92%|█████████▏| 13570/14813 [00:28<00:02, 451.08it/s]Loading weights:  92%|█████████▏| 13616/14813 [00:28<00:02, 447.61it/s]Loading weights:  92%|█████████▏| 13661/14813 [00:28<00:02, 440.21it/s]Loading weights:  93%|█████████▎| 13708/14813 [00:28<00:02, 445.81it/s]Loading weights:  93%|█████████▎| 13754/14813 [00:28<00:02, 449.25it/s]Loading weights:  93%|█████████▎| 13800/14813 [00:28<00:02, 451.94it/s]Loading weights:  93%|█████████▎| 13847/14813 [00:28<00:02, 456.43it/s]Loading weights:  94%|█████████▍| 13894/14813 [00:28<00:01, 459.54it/s]Loading weights:  94%|█████████▍| 13940/14813 [00:28<00:01, 459.35it/s]Loading weights:  94%|█████████▍| 13986/14813 [00:28<00:01, 458.99it/s]Loading weights:  95%|█████████▍| 14033/14813 [00:29<00:01, 455.94it/s]Loading weights:  95%|█████████▌| 14079/14813 [00:29<00:01, 449.71it/s]Loading weights:  95%|█████████▌| 14125/14813 [00:29<00:01, 449.98it/s]Loading weights:  96%|█████████▌| 14171/14813 [00:29<00:01, 449.90it/s]Loading weights:  96%|█████████▌| 14217/14813 [00:29<00:01, 450.34it/s]Loading weights:  96%|█████████▋| 14264/14813 [00:29<00:01, 454.25it/s]Loading weights:  97%|█████████▋| 14310/14813 [00:29<00:01, 455.41it/s]Loading weights:  97%|█████████▋| 14356/14813 [00:29<00:01, 454.76it/s]Loading weights:  97%|█████████▋| 14403/14813 [00:29<00:00, 456.86it/s]Loading weights:  98%|█████████▊| 14449/14813 [00:29<00:00, 452.76it/s]Loading weights:  98%|█████████▊| 14496/14813 [00:30<00:00, 457.32it/s]Loading weights:  98%|█████████▊| 14542/14813 [00:30<00:00, 454.84it/s]Loading weights:  99%|█████████▊| 14592/14813 [00:30<00:00, 467.99it/s]Loading weights:  99%|█████████▉| 14639/14813 [00:30<00:00, 466.50it/s]Loading weights:  99%|█████████▉| 14686/14813 [00:30<00:00, 467.39it/s]Loading weights:  99%|█████████▉| 14733/14813 [00:30<00:00, 463.86it/s]Loading weights: 100%|█████████▉| 14780/14813 [00:30<00:00, 463.30it/s]Loading weights: 100%|██████████| 14813/14813 [00:31<00:00, 470.90it/s]
-WebShop server not detected. Starting it now...
-  Waiting for server... (0/30)
-  Waiting for server... (5/30)
-  Waiting for server... (10/30)
-  Waiting for server... (15/30)
-  Waiting for server... (20/30)
-  Waiting for server... (25/30)
-Traceback (most recent call last):
-  File "/scratch/e1507650/conda/envs/aomt/lib/python3.11/site-packages/urllib3/connection.py", line 204, in _new_conn
-    sock = connection.create_connection(
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/scratch/e1507650/conda/envs/aomt/lib/python3.11/site-packages/urllib3/util/connection.py", line 85, in create_connection
-    raise err
-  File "/scratch/e1507650/conda/envs/aomt/lib/python3.11/site-packages/urllib3/util/connection.py", line 73, in create_connection
-    sock.connect(sa)
-ConnectionRefusedError: [Errno 111] Connection refused
-
-The above exception was the direct cause of the following exception:
-
-Traceback (most recent call last):
-  File "/scratch/e1507650/conda/envs/aomt/lib/python3.11/site-packages/urllib3/connectionpool.py", line 787, in urlopen
-    response = self._make_request(
-               ^^^^^^^^^^^^^^^^^^^
-  File "/scratch/e1507650/conda/envs/aomt/lib/python3.11/site-packages/urllib3/connectionpool.py", line 493, in _make_request
-    conn.request(
-  File "/scratch/e1507650/conda/envs/aomt/lib/python3.11/site-packages/urllib3/connection.py", line 500, in request
-    self.endheaders()
-  File "/scratch/e1507650/conda/envs/aomt/lib/python3.11/http/client.py", line 1318, in endheaders
-    self._send_output(message_body, encode_chunked=encode_chunked)
-  File "/scratch/e1507650/conda/envs/aomt/lib/python3.11/http/client.py", line 1078, in _send_output
-    self.send(msg)
-  File "/scratch/e1507650/conda/envs/aomt/lib/python3.11/http/client.py", line 1016, in send
-    self.connect()
-  File "/scratch/e1507650/conda/envs/aomt/lib/python3.11/site-packages/urllib3/connection.py", line 331, in connect
-    self.sock = self._new_conn()
-                ^^^^^^^^^^^^^^^^
-  File "/scratch/e1507650/conda/envs/aomt/lib/python3.11/site-packages/urllib3/connection.py", line 219, in _new_conn
-    raise NewConnectionError(
-urllib3.exceptions.NewConnectionError: HTTPConnection(host='localhost', port=3000): Failed to establish a new connection: [Errno 111] Connection refused
-
-The above exception was the direct cause of the following exception:
-
-Traceback (most recent call last):
-  File "/scratch/e1507650/conda/envs/aomt/lib/python3.11/site-packages/requests/adapters.py", line 644, in send
-    resp = conn.urlopen(
-           ^^^^^^^^^^^^^
-  File "/scratch/e1507650/conda/envs/aomt/lib/python3.11/site-packages/urllib3/connectionpool.py", line 841, in urlopen
-    retries = retries.increment(
-              ^^^^^^^^^^^^^^^^^^
-  File "/scratch/e1507650/conda/envs/aomt/lib/python3.11/site-packages/urllib3/util/retry.py", line 535, in increment
-    raise MaxRetryError(_pool, url, reason) from reason  # type: ignore[arg-type]
-    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-urllib3.exceptions.MaxRetryError: HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: / (Caused by NewConnectionError("HTTPConnection(host='localhost', port=3000): Failed to establish a new connection: [Errno 111] Connection refused"))
-
-During handling of the above exception, another exception occurred:
-
-Traceback (most recent call last):
-  File "/scratch/e1507650/AnyOrderTraining/aomt/eval/task_eval.py", line 180, in evaluate_webshop
-    requests.get(webshop_url, timeout=2)
-  File "/scratch/e1507650/conda/envs/aomt/lib/python3.11/site-packages/requests/api.py", line 73, in get
-    return request("get", url, params=params, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/scratch/e1507650/conda/envs/aomt/lib/python3.11/site-packages/requests/api.py", line 59, in request
-    return session.request(method=method, url=url, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/scratch/e1507650/conda/envs/aomt/lib/python3.11/site-packages/requests/sessions.py", line 589, in request
-    resp = self.send(prep, **send_kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/scratch/e1507650/conda/envs/aomt/lib/python3.11/site-packages/requests/sessions.py", line 703, in send
-    r = adapter.send(request, **kwargs)
-        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/scratch/e1507650/conda/envs/aomt/lib/python3.11/site-packages/requests/adapters.py", line 677, in send
-    raise ConnectionError(e, request=request)
-requests.exceptions.ConnectionError: HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: / (Caused by NewConnectionError("HTTPConnection(host='localhost', port=3000): Failed to establish a new connection: [Errno 111] Connection refused"))
-
-During handling of the above exception, another exception occurred:
-
-Traceback (most recent call last):
-  File "/scratch/e1507650/AnyOrderTraining/aomt/eval/task_eval.py", line 397, in <module>
-    main()
-  File "/scratch/e1507650/AnyOrderTraining/aomt/eval/task_eval.py", line 385, in main
-    result = evaluate_webshop(model, tokenizer, split=args.split, n_episodes=args.n_episodes, **gen_params)
-             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/scratch/e1507650/AnyOrderTraining/aomt/eval/task_eval.py", line 199, in evaluate_webshop
-    raise RuntimeError("Failed to start WebShop server. Please run 'bash aomt/eval/WebShop/run_prod.sh' manually.")
-RuntimeError: Failed to start WebShop server. Please run 'bash aomt/eval/WebShop/run_prod.sh' manually.
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              WebShop server not detected. Starting it now...
-  Waiting for server... (0/30)
-  Waiting for server... (5/30)
-  Waiting for server... (10/30)
-  Waiting for server... (15/30)
-  Waiting for server... (20/30)
-  Waiting for server... (25/30)
-Traceback (most recent call last):
-  File "/scratch/e1507650/conda/envs/aomt/lib/python3.11/site-packages/urllib3/connection.py", line 204, in _new_conn
-    sock = connection.create_connection(
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/scratch/e1507650/conda/envs/aomt/lib/python3.11/site-packages/urllib3/util/connection.py", line 85, in create_connection
-    raise err
-  File "/scratch/e1507650/conda/envs/aomt/lib/python3.11/site-packages/urllib3/util/connection.py", line 73, in create_connection
-    sock.connect(sa)
-ConnectionRefusedError: [Errno 111] Connection refused
-
-The above exception was the direct cause of the following exception:
-
-Traceback (most recent call last):
-  File "/scratch/e1507650/conda/envs/aomt/lib/python3.11/site-packages/urllib3/connectionpool.py", line 787, in urlopen
-    response = self._make_request(
-               ^^^^^^^^^^^^^^^^^^^
-  File "/scratch/e1507650/conda/envs/aomt/lib/python3.11/site-packages/urllib3/connectionpool.py", line 493, in _make_request
-    conn.request(
-  File "/scratch/e1507650/conda/envs/aomt/lib/python3.11/site-packages/urllib3/connection.py", line 500, in request
-    self.endheaders()
-  File "/scratch/e1507650/conda/envs/aomt/lib/python3.11/http/client.py", line 1318, in endheaders
-    self._send_output(message_body, encode_chunked=encode_chunked)
-  File "/scratch/e1507650/conda/envs/aomt/lib/python3.11/http/client.py", line 1078, in _send_output
-    self.send(msg)
-  File "/scratch/e1507650/conda/envs/aomt/lib/python3.11/http/client.py", line 1016, in send
-    self.connect()
-  File "/scratch/e1507650/conda/envs/aomt/lib/python3.11/site-packages/urllib3/connection.py", line 331, in connect
-    self.sock = self._new_conn()
-                ^^^^^^^^^^^^^^^^
-  File "/scratch/e1507650/conda/envs/aomt/lib/python3.11/site-packages/urllib3/connection.py", line 219, in _new_conn
-    raise NewConnectionError(
-urllib3.exceptions.NewConnectionError: HTTPConnection(host='localhost', port=3000): Failed to establish a new connection: [Errno 111] Connection refused
-
-The above exception was the direct cause of the following exception:
-
-Traceback (most recent call last):
-  File "/scratch/e1507650/conda/envs/aomt/lib/python3.11/site-packages/requests/adapters.py", line 644, in send
-    resp = conn.urlopen(
-           ^^^^^^^^^^^^^
-  File "/scratch/e1507650/conda/envs/aomt/lib/python3.11/site-packages/urllib3/connectionpool.py", line 841, in urlopen
-    retries = retries.increment(
-              ^^^^^^^^^^^^^^^^^^
-  File "/scratch/e1507650/conda/envs/aomt/lib/python3.11/site-packages/urllib3/util/retry.py", line 535, in increment
-    raise MaxRetryError(_pool, url, reason) from reason  # type: ignore[arg-type]
-    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-urllib3.exceptions.MaxRetryError: HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: / (Caused by NewConnectionError("HTTPConnection(host='localhost', port=3000): Failed to establish a new connection: [Errno 111] Connection refused"))
-
-During handling of the above exception, another exception occurred:
-
-Traceback (most recent call last):
-  File "/scratch/e1507650/AnyOrderTraining/aomt/eval/task_eval.py", line 180, in evaluate_webshop
-    requests.get(webshop_url, timeout=2)
-  File "/scratch/e1507650/conda/envs/aomt/lib/python3.11/site-packages/requests/api.py", line 73, in get
-    return request("get", url, params=params, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/scratch/e1507650/conda/envs/aomt/lib/python3.11/site-packages/requests/api.py", line 59, in request
-    return session.request(method=method, url=url, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/scratch/e1507650/conda/envs/aomt/lib/python3.11/site-packages/requests/sessions.py", line 589, in request
-    resp = self.send(prep, **send_kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/scratch/e1507650/conda/envs/aomt/lib/python3.11/site-packages/requests/sessions.py", line 703, in send
-    r = adapter.send(request, **kwargs)
-        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/scratch/e1507650/conda/envs/aomt/lib/python3.11/site-packages/requests/adapters.py", line 677, in send
-    raise ConnectionError(e, request=request)
-requests.exceptions.ConnectionError: HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: / (Caused by NewConnectionError("HTTPConnection(host='localhost', port=3000): Failed to establish a new connection: [Errno 111] Connection refused"))
-
-During handling of the above exception, another exception occurred:
-
-Traceback (most recent call last):
-  File "/scratch/e1507650/AnyOrderTraining/aomt/eval/task_eval.py", line 397, in <module>
-    main()
-  File "/scratch/e1507650/AnyOrderTraining/aomt/eval/task_eval.py", line 385, in main
-    result = evaluate_webshop(model, tokenizer, split=args.split, n_episodes=args.n_episodes, **gen_params)
-             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/scratch/e1507650/AnyOrderTraining/aomt/eval/task_eval.py", line 199, in evaluate_webshop
-    raise RuntimeError("Failed to start WebShop server. Please run 'bash aomt/eval/WebShop/run_prod.sh' manually.")
-RuntimeError: Failed to start WebShop server. Please run 'bash aomt/eval/WebShop/run_prod.sh' manually.

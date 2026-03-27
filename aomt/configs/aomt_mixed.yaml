@@ -1,8 +1,8 @@
 # configs/aomt_mixed.yaml
-# Main Method: Any-Order Masked Training (Joint Observation & Action masking)
+# Proposed 2: Any-Order Masked Training (Mixed Observations and Actions)
 model:
-  model_path:      ./weights/llada2-mini-merged
-  tokenizer_path:  ./weights/LLaDA2.0-mini
+  model_path:      ./models/llada2-mini-merged
+  tokenizer_path:  ./models/llada2-mini-sep
 
 data:
   train_path:  ./data/cache/aomt_train.jsonl
@@ -10,15 +10,15 @@ data:
 
 train:
   output_dir:                    ./checkpoints/aomt_mixed
-  num_epochs:                    5
-  learning_rate:                 2.5e-5
+  num_epochs:                    10
+  learning_rate:                 5e-5
   lr_scheduler:                  cosine
-  min_lr:                        2.5e-6
-  warmup_steps:                  50
+  min_lr:                        5e-6
+  warmup_steps:                  100
   weight_decay:                  0.1
   gradient_clip:                 1.0
   per_device_batch_size:         2
-  gradient_accumulation_steps:   8      # effective batch = 2 × 4 GPUs × 8 = 64
+  gradient_accumulation_steps:   8
   max_seq_length:                2048
   mixed_precision:               bf16
   save_steps:                    500
@@ -26,5 +26,5 @@ train:
   fsdp_type:                     fsdp2
 
 aomt:
-  mode:       mixed
-  mask_prob:  0.25   # ablation: [0.15, 0.25, 0.40, 0.50]
+  mode: mixed
+  mask_prob: 0.25

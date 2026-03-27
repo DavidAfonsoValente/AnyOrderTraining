@@ -1,8 +1,8 @@
 # configs/prefix_sft_stage2.yaml
-# Baseline 2 Stage 2: Policy restoration (Next-action prediction)
+# Baseline 2: Prefix SFT Stage 2 (Policy Fine-Tuning)
 model:
-  model_path:      ./weights/prefix_sft_s1_merged   # Stage 1 ckpt, re-merged
-  tokenizer_path:  ./weights/LLaDA2.0-mini
+  model_path:      ./models/prefix_sft_s1_merged
+  tokenizer_path:  ./models/llada2-mini-sep
 
 data:
   train_path:  ./data/cache/sft_standard_train.jsonl
@@ -11,19 +11,16 @@ data:
 train:
   output_dir:                    ./checkpoints/prefix_sft_s2
   num_epochs:                    3
-  learning_rate:                 2.5e-5
+  learning_rate:                 2e-5
   lr_scheduler:                  cosine
-  min_lr:                        2.5e-6
+  min_lr:                        2e-6
   warmup_steps:                  50
   weight_decay:                  0.1
   gradient_clip:                 1.0
   per_device_batch_size:         4
-  gradient_accumulation_steps:   4      # effective batch = 4 × 4 GPUs × 4 = 64
+  gradient_accumulation_steps:   4
   max_seq_length:                2048
   mixed_precision:               bf16
   save_steps:                    500
   gradient_checkpointing:        true
   fsdp_type:                     fsdp2
-
-masking:
-  mode: standard

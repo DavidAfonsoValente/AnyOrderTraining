@@ -1,84 +1,96 @@
-"""
-data/prepare_data.py
-Converts raw expert trajectories (agent-eto/eto-sft-trajectory) into JSONL files 
-per training mode: Standard SFT, Prefix SFT Stage 1, and AOMT.
-"""
+# aomt/data/prepare_data.py
 
 import argparse
 import json
 import os
-from pathlib import Path
 from datasets import load_dataset
-from transformers import AutoTokenizer
-from data.utils import load_robust_dataset
 
-def parse_units(conversations):
-    """Strictly alternating obs/act units. First turn always obs."""
+def parse_trajectory(example: dict) -> list | None:
+    """
+    Parse one ETO example into a list of {"type": "obs"/"act", "text": str}.
+
+    CRITICAL: ETO dataset uses {"from": "human"/"gpt", "value": "…"}
+              NOT {"role": "user"/"assistant", "content": "…"}
+    """
     units = []
-    for turn in conversations:
-        utype = "obs" if turn["from"] == "human" else "act"
-        units.append({"type": utype, "text": turn["value"]})
-    assert all(u["type"] == ("obs" if i % 2 == 0 else "act")
-               for i, u in enumerate(units)), "Non-alternating trajectory"
+    if "conversations" not in example:
+        return None
+    for turn in example["conversations"]:
+        role  = turn["from"]    # "human" or "gpt" — NOT "role"
+        text  = turn["value"]   # actual content    — NOT "content"
+        utype = "obs" if role == "human" else "act"
+        units.append({"type": utype, "text": text})
+
+    # Validate strictly alternating obs/act structure
+    for i, u in enumerate(units):
+        expected = "obs" if i % 2 == 0 else "act"
+        if u["type"] != expected:
+            return None  # skip malformed
     return units
 
-def make_standard_sft(units, sep="\n"):
+def make_standard_sft_examples(units: list, sep: str = "\n") -> list:
     """
-    One datapoint per action. Prompt = full causal history up to O_t.
-    Response = A_t.
+    T examples per trajectory. Each example: predict A_t from full causal history.
     """
-    datapoints = []
-    prompt_parts = []
+    examples = []
+    history  = []
+
     for unit in units:
         if unit["type"] == "obs":
-            prompt_parts.append(unit["text"])
-        else:
-            datapoints.append({
+            history.append(unit["text"])
+        else:  # "act"
+            if not history:
+                continue
+            examples.append({
                 "messages": [
-                    {"role": "user",      "content": sep.join(prompt_parts)},
+                    {"role": "user",      "content": sep.join(history)},
                     {"role": "assistant", "content": unit["text"]},
                 ]
             })
-            prompt_parts.append(unit["text"])
-    return datapoints
+            history.append(unit["text"])
 
-def make_prefix_sft_s1(units, sep="\n"):
+    return examples
+
+def make_prefix_sft_s1_examples(units: list, sep: str = "\n") -> list:
     """
-    One datapoint per (O_t, A_t, O_{t+1}) triple.
-    Prompt = (O_t, A_t) local context ONLY.
-    Response = O_{t+1}.
+    T-1 examples per trajectory. Each example: predict O_{t+1} from (O_t, A_t).
+    LOCAL context only — not full history.
     """
-    datapoints = []
+    examples = []
     for i in range(len(units) - 2):
-        if (units[i]["type"] == "obs" and
-            units[i+1]["type"] == "act" and
-            units[i+2]["type"] == "obs"):
-            datapoints.append({
+        if (units[i]["type"] == "obs"
+                and units[i+1]["type"] == "act"
+                and units[i+2]["type"] == "obs"):
+            examples.append({
                 "messages": [
                     {"role": "user",
-                     "content": units[i]["text"] + sep + units[i+1]["text"]},
+                     "content": sep.join([units[i]["text"], units[i+1]["text"]])},
                     {"role": "assistant", "content": units[i+2]["text"]},
                 ]
             })
-    return datapoints
+    return examples
 
-def make_aomt_datapoint(units):
-    """One datapoint per full trajectory."""
+def make_aomt_datapoint(units: list) -> dict:
+    """One datapoint per trajectory. Masking happens at training time."""
     return {
         "unit_texts": [u["text"] for u in units],
         "unit_types": [u["type"] for u in units],
     }
 
 def main():
-    parser = argparse.ArgumentParser(description="Prepare data for AOMT training")
-    parser.add_argument("--raw_dir", type=str, default="./data/raw/", help="Path to raw dataset")
-    parser.add_argument("--output_dir", type=str, default="./data/cache/", help="Path to save processed JSONL files")
-    parser.add_argument("--tokenizer", type=str, required=True, help="Path to tokenizer")
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--output_dir", type=str, default="./data/cache/")
     args = parser.parse_args()
 
     os.makedirs(args.output_dir, exist_ok=True)
 
-    dataset = load_robust_dataset()
+    print("Loading ETO dataset...")
+    # Using the local dataset if available, otherwise from HF
+    try:
+        dataset = load_dataset("agent-eto/eto-sft-trajectory")
+    except:
+        print("Failed to load from HF, check if dataset is available locally or check your connection.")
+        return
 
     for split in ["train", "test"]:
         print(f"Processing {split} split...")
@@ -87,10 +99,12 @@ def main():
         aomt_data = []
 
         for ex in dataset[split]:
-            units = parse_units(ex["conversations"])
+            units = parse_trajectory(ex)
+            if not units:
+                continue
             
-            sft_data.extend(make_standard_sft(units))
-            prefix_s1_data.extend(make_prefix_sft_s1(units))
+            sft_data.extend(make_standard_sft_examples(units))
+            prefix_s1_data.extend(make_prefix_sft_s1_examples(units))
             aomt_data.append(make_aomt_datapoint(units))
 
         # Write files
