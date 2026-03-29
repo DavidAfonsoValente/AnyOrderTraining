@@ -1,7 +1,7 @@
 import os, sys, json
 # Add aomt to path
 sys.path.insert(0, os.path.join(os.getcwd(), 'aomt'))
-from data.utils import load_robust_dataset
+from aomt.data.utils import load_robust_dataset
 
 print("--- Robust Dataset Loading ---")
 try:

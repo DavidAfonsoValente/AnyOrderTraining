@@ -40,7 +40,8 @@ def generate_action(
 ) -> str:
     """
     Generate one assistant turn using LLaDA2.0-mini masked diffusion.
-    Uses chat template — correct for Standard SFT and Prefix SFT.
+    Uses chat template — correct for Standard SFT and Prefix SFT, and AOMT at inference time
+    to demonstrate training-inference mismatch disadvantages AOMT.
     """
     # For one-shot, use a single block of size gen_length
     block_length = gen_length if steps == 1 else 32
@@ -80,55 +81,4 @@ def generate_action(
 
     return tokenizer.decode(generated, skip_special_tokens=True).strip()
 
-
-def generate_action_flat(
-    model,
-    tokenizer,
-    history_parts: list,     # list of strings (obs/act alternating)
-    gen_length: int = 256,
-    steps: int = 32,
-    temperature: float = 0.0,
-) -> str:
-    """
-    Generate one assistant turn using AOMT-Mixed flat trajectory format.
-    Matches Training: O_0 [EOS] A_0 [EOS] ... O_t [EOS] [MASK]*gen_length
-    """
-    sep_id = tokenizer.eos_token_id
-    all_ids = []
-    for i, text in enumerate(history_parts):
-        ids = tokenizer.encode(text, add_special_tokens=False)
-        all_ids.extend(ids)
-        # Trailing EOS after every element
-        all_ids.append(sep_id)
-
-    input_ids = torch.tensor([all_ids], dtype=torch.long).to(next(model.parameters()).device)
-    prompt_len = input_ids.shape[1]
-
-    block_length = 32
-    if steps == 1: block_length = gen_length
-    
-    assert gen_length % block_length == 0
-
-    generate_kwargs = dict(
-        gen_length=gen_length,
-        block_length=block_length,
-        steps=steps,
-        temperature=temperature,
-        cfg_scale=0.0,
-        remasking="low_confidence",
-    )
-    if model._supports_eos_early_stop:
-        generate_kwargs["eos_early_stop"] = True
-
-    with torch.no_grad():
-        output_ids = model.generate(input_ids, **generate_kwargs)
-
-    generated = output_ids[0, prompt_len:]
-
-    # EOS truncation
-    eos_positions = (generated == sep_id).nonzero(as_tuple=True)[0]
-    if len(eos_positions) > 0:
-        generated = generated[:eos_positions[0]]
-
-    return tokenizer.decode(generated, skip_special_tokens=True).strip()
 
