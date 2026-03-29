@@ -2,8 +2,8 @@
 #SBATCH --job-name=aomt_maskprob_eval
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
-#SBATCH --gpus=a100:1
-#SBATCH --cpus-per-task=16
+#SBATCH --gres=gpu:a100-80:1
+#SBATCH --cpus-per-task=8
 #SBATCH --mem=64G
 #SBATCH --time=06:00:00
 #SBATCH --output=logs/eval_maskprob_sweep_%j.out
