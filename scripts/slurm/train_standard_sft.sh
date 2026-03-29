@@ -2,7 +2,7 @@
 #SBATCH --job-name=aomt_standard_sft
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
-#SBATCH --gres=gpu:a100-80:1
+#SBATCH --gpus=a100:1
 #SBATCH --cpus-per-task=16
 #SBATCH --mem=64G
 #SBATCH --time=12:00:00
@@ -17,9 +17,8 @@ RUN_NAME="standard_sft"
 OUTPUT_DIR="outputs/${RUN_NAME}"
 mkdir -p "${OUTPUT_DIR}" logs
 
-echo "[$(date)] Starting Standard SFT training on 1x A100-80GB"
+echo "[$(date)] Starting Standard SFT training on 1x A100"
 
-# Use nproc_per_node=1 since we are using 1x A100-80
 torchrun --nproc_per_node=1 \
   aomt/tasks/train_standard_sft.py \
     --model_name_or_path  ./models/llada2-mini-sep \

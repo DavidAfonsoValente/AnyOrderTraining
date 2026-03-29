@@ -2,7 +2,7 @@
 #SBATCH --job-name=aomt_maskprob_eval
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
-#SBATCH --gres=gpu:a100-80:1
+#SBATCH --gpus=a100:1
 #SBATCH --cpus-per-task=16
 #SBATCH --mem=64G
 #SBATCH --time=06:00:00
@@ -15,7 +15,7 @@ export PYTHONPATH=.
 RESULTS_DIR="eval/results/maskprob_sweep"
 mkdir -p "${RESULTS_DIR}" logs
 
-echo "[$(date)] Evaluating mask_prob sweep on ALFWorld (seen) using 1x A100-80GB"
+echo "[$(date)] Evaluating mask_prob sweep on ALFWorld (seen) using 1x A100"
 
 for MASK_PROB in 0.15 0.25 0.40 0.50; do
     CKPT="outputs/aomt_mixed_p${MASK_PROB}/epoch_2" 

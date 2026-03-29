@@ -1,29 +1,21 @@
 #!/bin/bash
 # Master pipeline submission script
-# Usage: ACCOUNT=your_account_name bash scripts/slurm/pipeline_submit.sh
+# Usage: bash scripts/slurm/pipeline_submit.sh
 
 set -euo pipefail
 
-# Detect Account if not provided
-if [ -z "${ACCOUNT:-}" ]; then
-    echo "Error: ACCOUNT environment variable is not set."
-    echo "Run 'sshare -U \$USER' to find your account and then run:"
-    echo "  ACCOUNT=your_account bash scripts/slurm/pipeline_submit.sh"
-    exit 1
-fi
-
-# Set partition to gpu-long based on sinfo (needed for >3h jobs)
+# Set partition to gpu-long based on sinfo (needed for training > 3h)
 PARTITION="${PARTITION:-gpu-long}"
 SLURM_DIR="scripts/slurm"
 mkdir -p logs
 
-sbatch_flags="--partition=${PARTITION} --account=${ACCOUNT}"
+# We do not specify --account; Slurm will use your default account.
+sbatch_flags="--partition=${PARTITION}"
 
 echo "=== Submitting AOMT training pipeline ==="
-echo "Account:   ${ACCOUNT}"
 echo "Partition: ${PARTITION}"
 
-# Phase 1: Training (1x A100-80GB per job)
+# Phase 1: Training
 JID_SFT=$(sbatch ${sbatch_flags} ${SLURM_DIR}/train_standard_sft.sh | awk '{print $NF}')
 echo "Standard SFT:           job ${JID_SFT}"
 
@@ -41,11 +33,12 @@ for MASK_PROB in 0.15 0.25 0.40 0.50; do
     SWEEP_JIDS="${SWEEP_JIDS}${SWEEP_JIDS:+,}${JID}"
 done
 
-# Step 2: Eval sweep (Needs only 1 GPU, can run in 'gpu' partition if needed, but gpu-long is fine)
+# Step 2: Eval sweep (depends on sweep training)
 JID_SWEEP_EVAL=$(sbatch ${sbatch_flags} --dependency=afterok:${SWEEP_JIDS} ${SLURM_DIR}/eval_maskprob_sweep_alfworld.sh | awk '{print $NF}')
 echo "Mask prob eval:         job ${JID_SWEEP_EVAL}"
 
 echo ""
 echo "=== ACTION REQUIRED ==="
-echo "Inspect sweep results in eval/results/maskprob_sweep/ when done, then run:"
-echo "  ACCOUNT=${ACCOUNT} BEST_MASK_PROB=0.25 sbatch scripts/slurm/train_aomt_mixed_final.sh"
+echo "Once the sweep jobs finish, check results in eval/results/maskprob_sweep/"
+echo "Then launch final AOMT training:"
+echo "  BEST_MASK_PROB=0.25 sbatch scripts/slurm/train_aomt_mixed_final.sh"
