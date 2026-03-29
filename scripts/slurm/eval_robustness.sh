@@ -2,7 +2,7 @@
 #SBATCH --job-name=aomt_robustness
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
-#SBATCH --gres=gpu:a100:1
+#SBATCH --gres=gpu:a100-80:1
 #SBATCH --cpus-per-task=16
 #SBATCH --mem=64G
 #SBATCH --time=12:00:00
@@ -31,9 +31,7 @@ for METHOD in standard_sft prefix_sft aomt_mixed; do
             --method              "${METHOD}" \
             --checkpoint_dir      "${CKPT}" \
             --benchmark           alfworld \
-            --split               eval_in_distribution \
-            --steps               32 \
-            --gen_length          256 \
+            --split               seen \
             --obs_corruption_rate "${RHO}" \
             --output_json         "${OUT}" \
             2>&1 | tee "${RESULTS_DIR}/${METHOD}_rho${RHO}.log"

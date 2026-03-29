@@ -30,28 +30,28 @@ This generates `sft_standard`, `prefix_sft_s1`, and `aomt` JSONL files.
 
 ## 3. Cluster & GPU Configuration
 
-Based on the `@cluster_info.md`, this project is optimized for **A100 (80GB)** or **H100** nodes. 
+This project is optimized for the **SoC Compute Cluster**. 
 
-### Recommended GPU Flags:
-*   **For Training (MoE 16B):** Requires at least 4x A100-40 or 2x A100-80.
-    *   `#SBATCH --gres=gpu:a100-80:4`
-*   **For Evaluation:** Can run on a single V100 or A100.
-    *   `#SBATCH --gres=gpu:nv:1 -C v100` (or `a100-40:1`)
-
-**Note:** All scripts in `scripts/slurm/` use generic `#SBATCH` directives. Edit these files to match your account name and preferred partition before submitting.
+### Hardware Targeting:
+*   **Partition:** Use **`gpu-long`** for all training and evaluation (3-day limit). The standard `gpu` partition has a 3-hour limit which is insufficient.
+*   **GPU Type:** Request **`a100-80:1`** (NVIDIA A100 80GB). 
+*   **Account:** You must provide your cluster account name. Find it by running:
+    ```bash
+    sshare -U $USER | awk 'NR==3 {print $2}'
+    ```
 
 ---
 
 ## 4. Experimental Workflow
 
-The pipeline is divided into three phases.
-
 ### Phase 1: Automated Baselines & Sweep
-Submit the master pipeline script. This launches Standard SFT, Prefix SFT (Stage 1), and the AOMT `mask_prob` sweep ({0.15, 0.25, 0.40, 0.50}) in parallel.
+Submit the master pipeline script. **You must set the ACCOUNT variable.**
 
 ```bash
-bash scripts/slurm/pipeline_submit.sh
+# Replace 'your_account' with the result from the sshare command above
+ACCOUNT=your_account bash scripts/slurm/pipeline_submit.sh
 ```
+
 
 ### Phase 2: Selection & Final AOMT Training
 1.  Wait for the jobs to finish.

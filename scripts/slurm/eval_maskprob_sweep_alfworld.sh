@@ -2,7 +2,7 @@
 #SBATCH --job-name=aomt_maskprob_eval
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
-#SBATCH --gres=gpu:a100:1
+#SBATCH --gres=gpu:a100-80:1
 #SBATCH --cpus-per-task=16
 #SBATCH --mem=64G
 #SBATCH --time=06:00:00
@@ -15,10 +15,10 @@ export PYTHONPATH=.
 RESULTS_DIR="eval/results/maskprob_sweep"
 mkdir -p "${RESULTS_DIR}" logs
 
-echo "[$(date)] Evaluating mask_prob sweep on ALFWorld (seen)"
+echo "[$(date)] Evaluating mask_prob sweep on ALFWorld (seen) using 1x A100-80GB"
 
 for MASK_PROB in 0.15 0.25 0.40 0.50; do
-    CKPT="outputs/aomt_mixed_p${MASK_PROB}/epoch_4" # Assume 5 epochs (0-4)
+    CKPT="outputs/aomt_mixed_p${MASK_PROB}/epoch_2" 
     if [ ! -d "${CKPT}" ]; then
         echo "WARNING: checkpoint not found: ${CKPT} — skipping"
         continue
@@ -28,9 +28,7 @@ for MASK_PROB in 0.15 0.25 0.40 0.50; do
         --method          aomt_mixed \
         --checkpoint_dir  "${CKPT}" \
         --benchmark       alfworld \
-        --split           eval_in_distribution \
-        --steps           32 \
-        --gen_length      256 \
+        --split           seen \
         --output_json     "${RESULTS_DIR}/aomt_mixed_p${MASK_PROB}_alfworld_seen.json" \
         2>&1 | tee "${RESULTS_DIR}/aomt_mixed_p${MASK_PROB}_alfworld_seen.log"
 done

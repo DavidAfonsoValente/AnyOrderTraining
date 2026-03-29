@@ -2,9 +2,9 @@
 #SBATCH --job-name=aomt_prefix_stage1
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
-#SBATCH --gres=gpu:a100:4
-#SBATCH --cpus-per-task=32
-#SBATCH --mem=128G
+#SBATCH --gres=gpu:a100-80:1
+#SBATCH --cpus-per-task=16
+#SBATCH --mem=64G
 #SBATCH --time=12:00:00
 #SBATCH --output=logs/prefix_sft_stage1_%j.out
 #SBATCH --error=logs/prefix_sft_stage1_%j.err
@@ -17,9 +17,9 @@ RUN_NAME="prefix_sft_stage1"
 OUTPUT_DIR="outputs/${RUN_NAME}"
 mkdir -p "${OUTPUT_DIR}" logs
 
-echo "[$(date)] Starting Prefix SFT Stage 1 (IWM) training"
+echo "[$(date)] Starting Prefix SFT Stage 1 (IWM) training on 1x A100-80GB"
 
-torchrun --nproc_per_node=4 \
+torchrun --nproc_per_node=1 \
   aomt/tasks/train_standard_sft.py \
     --model_name_or_path  ./models/llada2-mini-sep \
     --train_data_path     data/cache/prefix_sft_stage1_train.jsonl \
