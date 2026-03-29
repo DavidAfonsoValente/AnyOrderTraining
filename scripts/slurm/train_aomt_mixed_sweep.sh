@@ -1,6 +1,7 @@
 #!/bin/bash
 # Usage: MASK_PROB=0.25 sbatch train_aomt_mixed_sweep.sh
 #SBATCH --job-name=aomt_mixed_sweep
+#SBATCH --partition=gpu-long
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --gres=gpu:a100-80:1

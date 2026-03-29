@@ -1,5 +1,6 @@
 #!/bin/bash
 #SBATCH --job-name=aomt_steps_ablation
+#SBATCH --partition=gpu-long
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --gres=gpu:a100-80:1
