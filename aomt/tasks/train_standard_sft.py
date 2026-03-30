@@ -186,7 +186,11 @@ def main():
             masked_input_ids, labels = apply_response_unit_mask(input_ids, prompt_lengths, mask_token_id)
             
             pad_id = tokenizer.pad_token_id or tokenizer.eos_token_id or 0
-            attn_mask = (input_ids != pad_id).long()
+            batch_size, seq_len = input_ids.shape
+            
+            # LLaDA 2.0 requires 4D block attention mask: (batch, 1, seq_len, seq_len)
+            padding_mask = (input_ids != pad_id)
+            attn_mask = padding_mask.view(batch_size, 1, 1, seq_len).expand(-1, -1, seq_len, -1)
             
             autocast_device = "cuda" if "cuda" in device_name else "cpu"
             with torch.amp.autocast(autocast_device, enabled=use_bf16, dtype=torch.bfloat16):

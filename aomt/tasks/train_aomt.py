@@ -238,7 +238,14 @@ def main():
             labels = batch["labels"]
             
             pad_id = tokenizer.pad_token_id or tokenizer.eos_token_id or 0
-            attn_mask = (input_ids != pad_id).long()
+            batch_size, seq_len = input_ids.shape
+            
+            # LLaDA 2.0 requires 4D block attention mask: (batch, 1, seq_len, seq_len)
+            # Create a 2D padding mask [B, L]
+            padding_mask = (input_ids != pad_id)
+            # Expand to 4D [B, 1, L, L] where mask[b, 0, i, j] is padding_mask[b, j]
+            # This allows each token to attend to all non-padding tokens.
+            attn_mask = padding_mask.view(batch_size, 1, 1, seq_len).expand(-1, -1, seq_len, -1)
             
             with torch.amp.autocast("cuda", enabled=use_bf16, dtype=torch.bfloat16):
                 logits = model(input_ids=input_ids, attention_mask=attn_mask, use_cache=False).logits
