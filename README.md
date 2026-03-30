@@ -44,12 +44,8 @@ This project is optimized for the **SoC Compute Cluster**.
 
 ## 4. Experimental Workflow
 
-### Phase 1: Automated Baselines & Sweep
-Submit the master pipeline script. **You must set the ACCOUNT variable.**
-
 ```bash
-# Replace 'your_account' with the result from the sshare command above
-ACCOUNT=your_account bash scripts/slurm/pipeline_submit.sh
+bash scripts/slurm/pipeline_submit.sh
 ```
 
 
@@ -59,7 +55,7 @@ ACCOUNT=your_account bash scripts/slurm/pipeline_submit.sh
 3.  Identify the `mask_prob` with the highest success rate on ALFWorld.
 4.  Launch the final training run (example using $p=0.25$):
     ```bash
-    BEST_MASK_PROB=0.25 sbatch scripts/slurm/train_aomt_mixed_final.sh
+    sbatch scripts/slurm/train_aomt_mixed_final.sh
     ```
 
 ### Phase 3: Final Evaluation (Table Generation)
@@ -67,24 +63,25 @@ Once training is complete, run the evaluation scripts to generate data for the p
 
 | Task | Command | Output Table |
 | :--- | :--- | :--- |
-| **Main Results** | `sbatch scripts/slurm/eval_main_results.sh` | **Table 1** (All Success Rates) |
-| **Steps Sweep** | `sbatch scripts/slurm/eval_steps_ablation.sh` | **Table 2** (Alignment Analysis) |
+| **Main Results** | `sbatch scripts/slurm/eval_main_results.sh` | **Table 1** (Main Benchmarks) |
+| **Mask Sweep** | `sbatch scripts/slurm/eval_maskprob_sweep_alfworld.sh` | **Table 2** (Ablation) |
 | **Robustness** | `sbatch scripts/slurm/eval_robustness.sh` | **Table 5** ($\rho$ Noise Sweep) |
-| **NLL Analysis** | `sbatch scripts/slurm/eval_nllobs_checkpoints.sh` | **Figure 3** (Correlation Plot) |
+| **NLL Analysis** | `sbatch scripts/slurm/eval_nllobs_checkpoints.sh` | **Table 4 & Figure 1** |
 
 ---
 
 ## 5. Directory Structure
 
 *   `aomt/tasks/`: Core training logic (AOMT vs. Standard SFT).
-*   `aomt/inference.py`: Masked diffusion unmasking logic (Chat vs. Flat).
+*   `aomt/inference.py`: Masked diffusion unmasking logic (Chat Template).
 *   `eval/task_eval.py`: Environment loop and inference dispatcher.
-*   `scripts/slurm/`: Self-contained job scripts for the cluster.
+*   `scripts/slurm/`: Job scripts for the cluster.
 *   `outputs/`: Model checkpoints.
-*   `eval/results/`: JSON results and logs for paper tables.
+*   `eval/results/`: JSON results for paper tables.
 
 ## 6. Technical Implementation Notes
 
 *   **Training Format:** AOMT uses a **Flat Trajectory** format: `O_0 [EOS] A_0 [EOS] ... O_T [EOS]`.
-*   **Inference Format:** Standard SFT uses the Chat Template; AOMT uses the Flat Trajectory format to prevent distribution mismatch.
+*   **Inference Format:** ALL methods use the **Chat Template** format per paper spec.
 *   **ReAct:** All models are trained on full reasoning strings (`Thought: ... \n Action: ...`).
+
