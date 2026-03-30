@@ -4,7 +4,16 @@ import os
 import json
 import argparse
 from aomt.data.utils import load_robust_dataset
-from aomt.data.parse_trajectories import parse_trajectory
+from aomt.data.unit_parser import parse_conversation_to_trajectory
+
+def parse_trajectory(example):
+    """Wrap unit_parser to return a simple list of unit dicts for this script."""
+    try:
+        traj = parse_conversation_to_trajectory(example)
+        return [{"unit_type": u.unit_type, "text": u.text} for u in traj.units]
+    except Exception as e:
+        print(f"Skipping example due to error: {e}")
+        return []
 
 def make_standard_sft_examples(units):
     """
