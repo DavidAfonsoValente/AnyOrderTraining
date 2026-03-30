@@ -25,7 +25,7 @@ echo "[$(date)] Starting AOMT-Mixed training with mask_prob=${MASK_PROB} on 1x A
 
 torchrun --nproc_per_node=1 \
   aomt/tasks/train_aomt.py \
-    aomt/configs/aomt_mixed.yaml \
+    --config aomt/configs/aomt_mixed.yaml \
     --mask_prob "${MASK_PROB}"
 
 echo "[$(date)] AOMT-Mixed (p=${MASK_PROB}) training complete. Output: ${OUTPUT_DIR}"

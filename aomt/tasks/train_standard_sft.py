@@ -101,10 +101,14 @@ def main():
     parser.add_argument("--config", type=str, required=True)
     parser.add_argument("--max_steps", type=int, default=None)
     parser.add_argument("--device", type=str, default=None)
+    parser.add_argument("--model_name_or_path", type=str, default=None)
     args_cli = parser.parse_args()
 
     with open(args_cli.config, "r") as f:
         config = yaml.safe_load(f)
+
+    if args_cli.model_name_or_path:
+        config["model"]["model_path"] = args_cli.model_name_or_path
 
     if args_cli.device == "cpu":
         device_name = "cpu"
@@ -128,16 +132,21 @@ def main():
         get_torch_device().set_device(device_name)
         init_device = "meta" if ps_fsdp_enabled else "cuda"
     
-    tokenizer = build_tokenizer(config["model"]["tokenizer_path"])
+    tokenizer_path = os.path.abspath(config["model"]["tokenizer_path"])
+    model_path = os.path.abspath(config["model"]["model_path"])
+    config_path = os.path.abspath(config["model"].get("config_path", model_path))
+
+    tokenizer = build_tokenizer(tokenizer_path)
     mask_token_id = tokenizer.mask_token_id or 156895
+    pad_id = tokenizer.pad_token_id if tokenizer.pad_token_id is not None else (tokenizer.eos_token_id or 0)
     
     dataset = SFTDataset(config["data"]["train_path"], tokenizer, config["train"]["max_seq_length"])
     sampler = torch.utils.data.distributed.DistributedSampler(dataset, num_replicas=ps_world_size, rank=ps_global_rank, shuffle=True)
     dataloader = torch.utils.data.DataLoader(dataset, batch_size=config["train"]["per_device_batch_size"], 
-                                             sampler=sampler, collate_fn=lambda b: collate_fn(b, tokenizer.pad_token_id or 0))
+                                             sampler=sampler, collate_fn=lambda b: collate_fn(b, pad_id))
 
-    model = build_foundation_model(weights_path=config["model"]["model_path"],
-                                   config_path=config["model"].get("config_path", config["model"]["model_path"]),
+    model = build_foundation_model(weights_path=model_path,
+                                   config_path=config_path,
                                    torch_dtype="bfloat16" if config["train"]["mixed_precision"] == "bf16" else "float32",
                                    attn_implementation="sdpa", init_device=init_device,
                                    moe_implementation="fused")

@@ -163,7 +163,7 @@ def main():
         dist.init_process_group(backend=get_nccl_backend())
     
     parser = argparse.ArgumentParser()
-    parser.add_argument("config", type=str)
+    parser.add_argument("--config", type=str, required=True)
     # Expose mask_prob for ablation sweep
     parser.add_argument("--mask_prob", type=float, default=None)
     args = parser.parse_args()
@@ -182,8 +182,12 @@ def main():
     device_name = f"{device_type}:{ps.local_rank}"
     get_torch_device().set_device(device_name)
     
-    tokenizer = build_tokenizer(config["model"]["tokenizer_path"])
-    mask_token_id = get_mask_token_id(config["model"]["tokenizer_path"])
+    tokenizer_path = os.path.abspath(config["model"]["tokenizer_path"])
+    model_path = os.path.abspath(config["model"]["model_path"])
+    config_path = os.path.abspath(config["model"].get("config_path", model_path))
+
+    tokenizer = build_tokenizer(tokenizer_path)
+    mask_token_id = get_mask_token_id(tokenizer_path)
     
     dataset = AOMTDataset(
         config["data"]["train_path"], 
@@ -196,8 +200,8 @@ def main():
     dataloader = torch.utils.data.DataLoader(dataset, batch_size=config["train"]["per_device_batch_size"], 
                                              sampler=sampler, collate_fn=lambda b: collate_fn(b, tokenizer.pad_token_id or 0))
 
-    model = build_foundation_model(weights_path=config["model"]["model_path"],
-                                   config_path=config["model"].get("config_path", config["model"]["model_path"]),
+    model = build_foundation_model(weights_path=model_path,
+                                   config_path=config_path,
                                    torch_dtype="bfloat16" if config["train"]["mixed_precision"] == "bf16" else "float32",
                                    attn_implementation="sdpa", init_device=init_device,
                                    moe_implementation="fused")

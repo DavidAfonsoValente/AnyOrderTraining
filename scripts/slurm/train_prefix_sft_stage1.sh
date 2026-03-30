@@ -20,24 +20,6 @@ mkdir -p "${OUTPUT_DIR}" logs
 
 echo "[$(date)] Starting Prefix SFT Stage 1 (IWM) training on 1x A100"
 
-torchrun --nproc_per_node=1 \
-  aomt/tasks/train_standard_sft.py \
-    --model_name_or_path  ./models/llada2-mini-sep \
-    --train_data_path     data/cache/prefix_sft_stage1_train.jsonl \
-    --output_dir          "${OUTPUT_DIR}" \
-    --learning_rate       2.5e-5 \
-    --lr_scheduler_type   cosine \
-    --min_lr              2.5e-6 \
-    --warmup_steps        50 \
-    --weight_decay        0.1 \
-    --max_grad_norm       1.0 \
-    --per_device_train_batch_size 16 \
-    --gradient_accumulation_steps 1 \
-    --num_train_epochs    3 \
-    --max_seq_length      2048 \
-    --bf16 \
-    --gradient_checkpointing \
-    --save_strategy       epoch \
-    --logging_steps       10
+python3 aomt/tasks/train_standard_sft.py --config aomt/configs/prefix_sft_stage1.yaml
 
 echo "[$(date)] Prefix SFT Stage 1 complete. Output: ${OUTPUT_DIR}"

@@ -23,22 +23,7 @@ echo "[$(date)] Starting Prefix SFT Stage 2 from: ${STAGE1_CKPT} on 1x A100"
 
 torchrun --nproc_per_node=1 \
   aomt/tasks/train_standard_sft.py \
-    --model_name_or_path  "${STAGE1_CKPT}" \
-    --train_data_path     data/cache/sft_standard_train.jsonl \
-    --output_dir          "${OUTPUT_DIR}" \
-    --learning_rate       2.5e-5 \
-    --lr_scheduler_type   cosine \
-    --min_lr              2.5e-6 \
-    --warmup_steps        50 \
-    --weight_decay        0.1 \
-    --max_grad_norm       1.0 \
-    --per_device_train_batch_size 16 \
-    --gradient_accumulation_steps 1 \
-    --num_train_epochs    3 \
-    --max_seq_length      2048 \
-    --bf16 \
-    --gradient_checkpointing \
-    --save_strategy       epoch \
-    --logging_steps       10
+    --config aomt/configs/prefix_sft_stage2.yaml \
+    --model_name_or_path "${STAGE1_CKPT}"
 
 echo "[$(date)] Prefix SFT Stage 2 complete. Output: ${OUTPUT_DIR}"

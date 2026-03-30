@@ -23,7 +23,7 @@ echo "[$(date)] Training final AOMT-Mixed with mask_prob=${BEST_MASK_PROB} on 1x
 
 torchrun --nproc_per_node=1 \
   aomt/tasks/train_aomt.py \
-    aomt/configs/aomt_mixed.yaml \
+    --config aomt/configs/aomt_mixed.yaml \
     --mask_prob "${BEST_MASK_PROB}"
 
 echo "[$(date)] Final AOMT-Mixed training complete. Output: ${OUTPUT_DIR}"
