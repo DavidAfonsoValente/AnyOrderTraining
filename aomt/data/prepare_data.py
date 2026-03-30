@@ -3,7 +3,6 @@
 import os
 import json
 import argparse
-from datasets import concatenate_datasets
 from aomt.data.utils import load_robust_dataset
 from aomt.data.parse_trajectories import parse_trajectory
 
@@ -57,34 +56,16 @@ def make_aomt_datapoint(units):
         "unit_types": [u["unit_type"] for u in units]
     }
 
-def process_and_save():
-    # Merge
-    all_ds, alfworld_ds, sciworld_ds, webshop_ds = load_robust_dataset()
-    combined = concatenate_datasets(all_ds)
-    
-    # Split into train/test (90/10)
-    split_ds = combined.train_test_split(test_size=0.1, seed=42)
-    
-    # Also return individual benchmark datasets for test-set NLL_obs
-    benchmarks = {
-        "alfworld": alfworld_ds.train_test_split(test_size=0.1, seed=42)["test"],
-        "scienceworld": sciworld_ds.train_test_split(test_size=0.1, seed=42)["test"],
-        "webshop": webshop_ds.train_test_split(test_size=0.1, seed=42)["test"]
-    }
-    
-    return split_ds, benchmarks
-
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--output_dir", type=str, default="./data/cache/")
-    parser.add_argument("--tokenizer", type=str, help="Path to tokenizer (optional for this script)")
     args = parser.parse_args()
 
     os.makedirs(args.output_dir, exist_ok=True)
 
     print("Loading ETO dataset via robust loader...")
     try:
-        dataset, benchmark_tests = process_and_save()
+        dataset, benchmark_tests = load_robust_dataset()
     except Exception as e:
         print(f"Failed to load dataset: {e}")
         return
