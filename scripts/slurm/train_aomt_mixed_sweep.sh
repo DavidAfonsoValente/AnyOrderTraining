@@ -12,7 +12,7 @@
 #SBATCH --error=logs/aomt_mixed_sweep_%j.err
 
 set -euo pipefail
-export PYTHONPATH=.
+source aomt/activate_env.sh
 export TOKENIZERS_PARALLELISM=false
 
 # Use the first argument or the environment variable

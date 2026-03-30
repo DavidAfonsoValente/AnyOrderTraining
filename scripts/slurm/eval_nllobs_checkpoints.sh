@@ -11,7 +11,7 @@
 #SBATCH --error=logs/eval_nllobs_%j.err
 
 set -euo pipefail
-export PYTHONPATH=.
+source aomt/activate_env.sh
 
 CKPT_BASE="outputs/aomt_mixed_final"
 RESULTS_DIR="eval/results/nllobs"

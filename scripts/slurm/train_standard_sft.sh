@@ -11,7 +11,7 @@
 #SBATCH --error=logs/standard_sft_%j.err
 
 set -euo pipefail
-export PYTHONPATH=.
+source aomt/activate_env.sh
 export TOKENIZERS_PARALLELISM=false
 
 RUN_NAME="standard_sft"

@@ -156,11 +156,11 @@ def main():
     from veomni.distributed.torch_parallelize import build_parallelize_model
     from veomni.optim import build_lr_scheduler, build_optimizer
     from veomni.utils import helper
-    from veomni.utils.device import get_device_type, get_dist_comm_backend, get_torch_device
+    from veomni.utils.device import get_device_type, get_nccl_backend, get_torch_device
     from veomni.utils.dist_utils import all_reduce
 
     if "RANK" in os.environ and not dist.is_initialized():
-        dist.init_process_group(backend=get_dist_comm_backend())
+        dist.init_process_group(backend=get_nccl_backend())
     
     parser = argparse.ArgumentParser()
     parser.add_argument("config", type=str)

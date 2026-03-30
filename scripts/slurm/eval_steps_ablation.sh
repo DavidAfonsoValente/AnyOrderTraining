@@ -11,7 +11,7 @@
 #SBATCH --error=logs/eval_steps_ablation_%j.err
 
 set -euo pipefail
-export PYTHONPATH=.
+source aomt/activate_env.sh
 
 RESULTS_DIR="eval/results/steps_ablation"
 mkdir -p "${RESULTS_DIR}" logs

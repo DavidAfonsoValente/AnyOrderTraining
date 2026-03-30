@@ -11,7 +11,7 @@
 #SBATCH --error=logs/aomt_mixed_final_%j.err
 
 set -euo pipefail
-export PYTHONPATH=.
+source aomt/activate_env.sh
 export TOKENIZERS_PARALLELISM=false
 
 BEST_MASK_PROB="${BEST_MASK_PROB:-0.25}"

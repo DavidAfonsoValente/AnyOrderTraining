@@ -11,7 +11,7 @@
 #SBATCH --error=logs/prefix_sft_stage2_%j.err
 
 set -euo pipefail
-export PYTHONPATH=.
+source aomt/activate_env.sh
 export TOKENIZERS_PARALLELISM=false
 
 STAGE1_CKPT="${STAGE1_CKPT_PATH:-outputs/prefix_sft_stage1/epoch_2}"

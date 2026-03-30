@@ -11,7 +11,7 @@
 #SBATCH --error=logs/eval_maskprob_sweep_%j.err
 
 set -euo pipefail
-export PYTHONPATH=.
+source aomt/activate_env.sh
 
 RESULTS_DIR="eval/results/maskprob_sweep"
 mkdir -p "${RESULTS_DIR}" logs
