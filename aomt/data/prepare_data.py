@@ -15,55 +15,59 @@ def parse_trajectory(example):
         print(f"Skipping example due to error: {e}")
         return []
 
-def make_standard_sft_examples(units):
+def stream_standard_sft_examples(units, file_obj):
     """
     Standard SFT: Full causal history joined by \n.
-    Messages: [user=O0\nA0...Ot, assistant=At]
-    One example per action in the trajectory.
+    Writes one example per action directly to file_obj.
     """
-    examples = []
     history = []
+    count = 0
     for i in range(len(units)):
         if units[i]["unit_type"] == "obs":
             history.append(units[i]["text"])
         elif units[i]["unit_type"] == "act":
-            # assistant turn
-            examples.append({
+            entry = {
                 "messages": [
                     {"role": "user", "content": "\n".join(history)},
                     {"role": "assistant", "content": units[i]["text"]}
                 ]
-            })
-            # Add action to history for next step
+            }
+            file_obj.write(json.dumps(entry, ensure_ascii=False) + "\n")
             history.append(units[i]["text"])
-    return examples
+            count += 1
+    return count
 
-def make_prefix_sft_s1_examples(units):
+def stream_prefix_sft_s1_examples(units, file_obj):
     """
     Prefix SFT Stage 1: Local pair only. 
-    Messages: [user=Ot\nAt, assistant=Ot+1]
+    Writes entries directly to file_obj.
     """
-    examples = []
+    count = 0
     sep = "\n"
     for i in range(len(units) - 2):
         if units[i]["unit_type"] == "obs" and units[i+1]["unit_type"] == "act" and units[i+2]["unit_type"] == "obs":
-            examples.append({
+            entry = {
                 "messages": [
                     {"role": "user", 
                      "content": sep.join([units[i]["text"], units[i+1]["text"]])},
                     {"role": "assistant", "content": units[i+2]["text"]},
                 ]
-            })
-    return examples
+            }
+            file_obj.write(json.dumps(entry, ensure_ascii=False) + "\n")
+            count += 1
+    return count
 
-def make_aomt_datapoint(units):
+def stream_aomt_datapoint(units, file_obj):
     """
     AOMT: Flat trajectory.
+    Writes entry directly to file_obj.
     """
-    return {
+    entry = {
         "unit_texts": [u["text"] for u in units],
         "unit_types": [u["unit_type"] for u in units]
     }
+    file_obj.write(json.dumps(entry, ensure_ascii=False) + "\n")
+    return 1
 
 def main():
     parser = argparse.ArgumentParser()
@@ -79,33 +83,34 @@ def main():
         print(f"Failed to load dataset: {e}")
         return
 
-    # 1. Main Splits
+    # 1. Main Splits (Streaming to avoid MemoryError)
     for split in ["train", "test"]:
         print(f"Processing {split} split...")
-        sft_data = []
-        prefix_s1_data = []
-        aomt_data = []
-
-        for ex in dataset[split]:
-            units = parse_trajectory(ex)
-            if not units:
-                continue
+        
+        paths = {
+            "sft_standard": os.path.join(args.output_dir, f"sft_standard_{split}.jsonl"),
+            "prefix_sft_s1": os.path.join(args.output_dir, f"prefix_sft_s1_{split}.jsonl"),
+            "aomt": os.path.join(args.output_dir, f"aomt_{split}.jsonl")
+        }
+        
+        counts = {"sft_standard": 0, "prefix_sft_s1": 0, "aomt": 0}
+        
+        # Open all files for this split
+        with open(paths["sft_standard"], "w") as f_sft, \
+             open(paths["prefix_sft_s1"], "w") as f_pre, \
+             open(paths["aomt"], "w") as f_aomt:
             
-            sft_data.extend(make_standard_sft_examples(units))
-            prefix_s1_data.extend(make_prefix_sft_s1_examples(units))
-            aomt_data.append(make_aomt_datapoint(units))
+            for ex in dataset[split]:
+                units = parse_trajectory(ex)
+                if not units:
+                    continue
+                
+                counts["sft_standard"] += stream_standard_sft_examples(units, f_sft)
+                counts["prefix_sft_s1"] += stream_prefix_sft_s1_examples(units, f_pre)
+                counts["aomt"] += stream_aomt_datapoint(units, f_aomt)
 
-        # Write files
-        for name, data in [
-            ("sft_standard", sft_data),
-            ("prefix_sft_s1", prefix_s1_data),
-            ("aomt", aomt_data)
-        ]:
-            out_path = os.path.join(args.output_dir, f"{name}_{split}.jsonl")
-            with open(out_path, "w") as f:
-                for entry in data:
-                    f.write(json.dumps(entry, ensure_ascii=False) + "\n")
-            print(f"  Wrote {len(data)} entries to {out_path}")
+        for name, count in counts.items():
+            print(f"  Wrote {count} entries to {paths[name]}")
 
     # 2. Benchmark-specific AOMT test sets (Required for Table 4)
     for b_name, b_ds in benchmark_tests.items():
@@ -115,8 +120,7 @@ def main():
             for ex in b_ds:
                 units = parse_trajectory(ex)
                 if not units: continue
-                f.write(json.dumps(make_aomt_datapoint(units), ensure_ascii=False) + "\n")
-                count += 1
+                count += stream_aomt_datapoint(units, f)
         print(f"  Wrote {count} entries to {out_path}")
 
 if __name__ == "__main__":
