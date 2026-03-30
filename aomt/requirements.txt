@@ -3,11 +3,18 @@
 # install `triton`, and keep USE_GROUP_GEMM=1 (default in VeOmni). CPU-only torch will not use Triton.
 torch>=2.5.0
 triton>=3.0.0; sys_platform == "linux"
-transformers>=4.56.2
+transformers>=4.46.0
 datasets
 accelerate
 huggingface_hub
 numpy<2.0.0
+einops
+requests
+tqdm
+diffusers
+torchdata
+torchvision
+timm
 
 # Evaluation Environments
 alfworld

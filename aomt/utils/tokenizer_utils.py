@@ -18,9 +18,23 @@ def get_mask_token_id(tokenizer_path: str) -> int:
     return mid
 
 def extract_action_from_react(text: str) -> str:
-    """Extract ALFWorld/ScienceWorld action from ReAct-format generation."""
-    if "Action:" in text:
-        after = text.split("Action:")[-1].strip()
-        return after.split("\n")[0].strip()
+    """
+    Extract ALFWorld/ScienceWorld action from ReAct-format generation.
+    Matches Spec: 'Thought: <reasoning>\nAction: <action>'
+    """
+    # 1. Try to find 'Action:' line
+    for line in text.split("\n"):
+        if line.strip().startswith("Action:"):
+            return line.replace("Action:", "").strip()
+    
+    # 2. Fallback: Take the last non-empty line
     lines = [l.strip() for l in text.strip().split("\n") if l.strip()]
-    return lines[-1] if lines else text.strip()
+    if not lines:
+        return text.strip()
+    
+    # If the last line is a Thought, we might have truncated the Action.
+    if lines[-1].startswith("Thought:"):
+        # Very likely truncated or failed to generate action.
+        return "" 
+        
+    return lines[-1]

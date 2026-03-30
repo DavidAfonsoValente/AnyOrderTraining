@@ -74,55 +74,76 @@ def make_prefix_sft_s1_examples(units: list, sep: str = "\n") -> list:
                 ]
             })
     return examples
+# Merge
+combined = concatenate_datasets(all_ds)
 
-def make_aomt_datapoint(units: list) -> dict:
-    """One datapoint per trajectory. Masking happens at training time."""
-    return {
-        "unit_texts": [u["text"] for u in units],
-        "unit_types": [u["type"] for u in units],
-    }
+# Split into train/test (90/10)
+split_ds = combined.train_test_split(test_size=0.1, seed=42)
+
+# Also return individual benchmark datasets for test-set NLL_obs
+benchmarks = {
+    "alfworld": alfworld_ds.train_test_split(test_size=0.1, seed=42)["test"],
+    "scienceworld": sciworld_ds.train_test_split(test_size=0.1, seed=42)["test"],
+    "webshop": webshop_ds.train_test_split(test_size=0.1, seed=42)["test"]
+}
+
+return split_ds, benchmarks
 
 def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--output_dir", type=str, default="./data/cache/")
-    parser.add_argument("--tokenizer", type=str, help="Path to tokenizer (optional for this script)")
-    args = parser.parse_args()
+parser = argparse.ArgumentParser()
+parser.add_argument("--output_dir", type=str, default="./data/cache/")
+parser.add_argument("--tokenizer", type=str, help="Path to tokenizer (optional for this script)")
+args = parser.parse_args()
 
-    os.makedirs(args.output_dir, exist_ok=True)
+os.makedirs(args.output_dir, exist_ok=True)
 
-    print("Loading ETO dataset via robust loader...")
-    try:
-        dataset = load_robust_dataset()
-    except Exception as e:
-        print(f"Failed to load dataset: {e}")
-        return
+print("Loading ETO dataset via robust loader...")
+try:
+    dataset, benchmark_tests = load_robust_dataset()
+except Exception as e:
+    print(f"Failed to load dataset: {e}")
+    return
 
-    for split in ["train", "test"]:
-        print(f"Processing {split} split...")
-        sft_data = []
-        prefix_s1_data = []
-        aomt_data = []
+# 1. Main Splits
+for split in ["train", "test"]:
+    print(f"Processing {split} split...")
+    sft_data = []
+    prefix_s1_data = []
+    aomt_data = []
 
-        for ex in dataset[split]:
+    for ex in dataset[split]:
+        units = parse_trajectory(ex)
+        if not units:
+            continue
+
+        sft_data.extend(make_standard_sft_examples(units))
+        prefix_s1_data.extend(make_prefix_sft_s1_examples(units))
+        aomt_data.append(make_aomt_datapoint(units))
+
+    # Write files
+    for name, data in [
+        ("sft_standard", sft_data),
+        ("prefix_sft_s1", prefix_s1_data),
+        ("aomt", aomt_data)
+    ]:
+        out_path = os.path.join(args.output_dir, f"{name}_{split}.jsonl")
+        with open(out_path, "w") as f:
+            for entry in data:
+                f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+        print(f"  Wrote {len(data)} entries to {out_path}")
+
+# 2. Benchmark-specific AOMT test sets (Required for Table 4)
+for b_name, b_ds in benchmark_tests.items():
+    out_path = os.path.join(args.output_dir, f"{b_name}_aomt_test.jsonl")
+    count = 0
+    with open(out_path, "w") as f:
+        for ex in b_ds:
             units = parse_trajectory(ex)
-            if not units:
-                continue
-            
-            sft_data.extend(make_standard_sft_examples(units))
-            prefix_s1_data.extend(make_prefix_sft_s1_examples(units))
-            aomt_data.append(make_aomt_datapoint(units))
+            if not units: continue
+            f.write(json.dumps(make_aomt_datapoint(units), ensure_ascii=False) + "\n")
+            count += 1
+    print(f"  Wrote {count} entries to {out_path}")
 
-        # Write files
-        for name, data in [
-            ("sft_standard", sft_data),
-            ("prefix_sft_s1", prefix_s1_data),
-            ("aomt", aomt_data)
-        ]:
-            out_path = os.path.join(args.output_dir, f"{name}_{split}.jsonl")
-            with open(out_path, "w") as f:
-                for entry in data:
-                    f.write(json.dumps(entry, ensure_ascii=False) + "\n")
-            print(f"  Wrote {len(data)} entries to {out_path}")
 
 if __name__ == "__main__":
     main()

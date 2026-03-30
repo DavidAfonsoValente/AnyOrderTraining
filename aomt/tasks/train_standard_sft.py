@@ -13,6 +13,9 @@ import argparse
 from tqdm import tqdm
 import numpy as np
 import json
+
+# Apply transformers patch before other imports
+from aomt.utils import patch_transformers
 from unittest.mock import MagicMock
 
 # Mock CUDA before any imports that might trigger CUDA checks

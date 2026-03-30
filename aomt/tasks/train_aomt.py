@@ -14,6 +14,9 @@ from tqdm import tqdm
 import numpy as np
 import json
 
+# Apply transformers patch before other imports
+from aomt.utils import patch_transformers
+
 # aomt imports
 from aomt.utils.tokenizer_utils import get_mask_token_id
 
@@ -253,6 +256,19 @@ def main():
 
         save_path = os.path.join(config["train"]["output_dir"], f"epoch_{epoch}")
         save_model_weights(save_path, model.state_dict(), global_rank=ps.global_rank)
+
+        # Log NLL_obs at each epoch checkpoint (Required for Figure 1)
+        if ps.global_rank == 0:
+            print(f"Logging NLL_obs for epoch {epoch}...")
+            # We call the external script to avoid complexity in this FSDP process
+            nll_log_cmd = (
+                f"python3 eval/compute_nllobs.py "
+                f"--checkpoint_dir {save_path} "
+                f"--benchmark scienceworld "
+                f"--split test "
+                f"--output_json {config['train']['output_dir']}/nll_log_epoch{epoch}.json"
+            )
+            os.system(nll_log_cmd)
 
     if dist.is_initialized(): dist.destroy_process_group()
 
