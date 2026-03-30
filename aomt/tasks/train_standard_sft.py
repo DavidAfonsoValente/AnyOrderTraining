@@ -190,7 +190,8 @@ def main():
             
             # LLaDA 2.0 requires 4D block attention mask: (batch, 1, seq_len, seq_len)
             padding_mask = (input_ids != pad_id)
-            attn_mask = padding_mask.view(batch_size, 1, 1, seq_len).expand(-1, -1, seq_len, -1)
+            dtype = torch.bfloat16 if use_bf16 else torch.float32
+            attn_mask = padding_mask.view(batch_size, 1, 1, seq_len).expand(-1, -1, seq_len, -1).to(dtype)
             
             autocast_device = "cuda" if "cuda" in device_name else "cpu"
             with torch.amp.autocast(autocast_device, enabled=use_bf16, dtype=torch.bfloat16):

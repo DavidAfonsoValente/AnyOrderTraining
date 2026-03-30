@@ -243,9 +243,9 @@ def main():
             # LLaDA 2.0 requires 4D block attention mask: (batch, 1, seq_len, seq_len)
             # Create a 2D padding mask [B, L]
             padding_mask = (input_ids != pad_id)
-            # Expand to 4D [B, 1, L, L] where mask[b, 0, i, j] is padding_mask[b, j]
-            # This allows each token to attend to all non-padding tokens.
-            attn_mask = padding_mask.view(batch_size, 1, 1, seq_len).expand(-1, -1, seq_len, -1)
+            # Expand to 4D [B, 1, L, L] and cast to dtype
+            dtype = torch.bfloat16 if use_bf16 else torch.float32
+            attn_mask = padding_mask.view(batch_size, 1, 1, seq_len).expand(-1, -1, seq_len, -1).to(dtype)
             
             with torch.amp.autocast("cuda", enabled=use_bf16, dtype=torch.bfloat16):
                 logits = model(input_ids=input_ids, attention_mask=attn_mask, use_cache=False).logits
