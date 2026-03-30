@@ -3,6 +3,7 @@
 # Usage: bash scripts/slurm/pipeline_submit.sh
 
 set -euo pipefail
+source aomt/activate_env.sh
 
 # Set partition to gpu-long based on sinfo (needed for training > 3h)
 PARTITION="${PARTITION:-gpu-long}"
