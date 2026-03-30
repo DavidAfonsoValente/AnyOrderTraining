@@ -20,6 +20,7 @@ mkdir -p "${OUTPUT_DIR}" logs
 
 echo "[$(date)] Starting Standard SFT training on 1x A100"
 
-python3 aomt/tasks/train_standard_sft.py --config aomt/configs/sft_standard.yaml
+torchrun --nproc_per_node=1 \
+  aomt/tasks/train_standard_sft.py --config aomt/configs/sft_standard.yaml
 
 echo "[$(date)] Standard SFT training complete. Output: ${OUTPUT_DIR}"

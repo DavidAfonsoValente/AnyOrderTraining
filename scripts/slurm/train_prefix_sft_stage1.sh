@@ -20,6 +20,7 @@ mkdir -p "${OUTPUT_DIR}" logs
 
 echo "[$(date)] Starting Prefix SFT Stage 1 (IWM) training on 1x A100"
 
-python3 aomt/tasks/train_standard_sft.py --config aomt/configs/prefix_sft_stage1.yaml
+torchrun --nproc_per_node=1 \
+  aomt/tasks/train_standard_sft.py --config aomt/configs/prefix_sft_stage1.yaml
 
 echo "[$(date)] Prefix SFT Stage 1 complete. Output: ${OUTPUT_DIR}"
