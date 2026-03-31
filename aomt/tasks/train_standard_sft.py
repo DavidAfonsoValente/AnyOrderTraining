@@ -195,7 +195,7 @@ def main():
             
             autocast_device = "cuda" if "cuda" in device_name else "cpu"
             with torch.amp.autocast(autocast_device, enabled=use_bf16, dtype=torch.bfloat16):
-                logits = model(input_ids=masked_input_ids, attention_mask=attn_mask, use_cache=False).logits
+                logits = model(input_ids=masked_input_ids, attention_mask=attn_mask, use_cache=False, return_dict=True).logits
                 loss = compute_unit_mask_loss(logits, labels)
 
             if global_step < 10 and ps_global_rank == 0:

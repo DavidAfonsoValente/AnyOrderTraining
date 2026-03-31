@@ -248,7 +248,7 @@ def main():
             attn_mask = padding_mask.view(batch_size, 1, 1, seq_len).expand(-1, -1, seq_len, -1).to(dtype)
             
             with torch.amp.autocast("cuda", enabled=use_bf16, dtype=torch.bfloat16):
-                logits = model(input_ids=input_ids, attention_mask=attn_mask, use_cache=False).logits
+                logits = model(input_ids=input_ids, attention_mask=attn_mask, use_cache=False, return_dict=True).logits
                 loss = compute_unit_mask_loss(logits, labels)
 
             scaled_loss = loss / accum_steps
