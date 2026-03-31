@@ -80,6 +80,12 @@ class SFTDataset(torch.utils.data.Dataset):
         if hasattr(prompt_ids, "input_ids"):
             prompt_ids = prompt_ids.input_ids
         prompt_len = min(len(prompt_ids), len(input_ids))
+        
+        # Diagnostic & Safeguard: LLaDA 2.0-mini actual vocab is 156891
+        # though config says 157184. Any ID >= 156891 will trigger CUDA assert.
+        ACTUAL_VOCAB_SIZE = 156891
+        input_ids = [min(tid, ACTUAL_VOCAB_SIZE - 1) for tid in input_ids]
+        
         return {"input_ids": torch.tensor(input_ids, dtype=torch.long), "prompt_len": prompt_len}
 
 def collate_fn(batch, pad_id):
@@ -138,6 +144,9 @@ def main():
 
     tokenizer = build_tokenizer(tokenizer_path)
     mask_token_id = tokenizer.mask_token_id or 156895
+    # LLaDA 2.0-mini actual logit dimension is 156891
+    mask_token_id = min(mask_token_id, 156891 - 1)
+    
     pad_id = tokenizer.pad_token_id if tokenizer.pad_token_id is not None else (tokenizer.eos_token_id or 0)
     
     dataset = SFTDataset(config["data"]["train_path"], tokenizer, config["train"]["max_seq_length"])

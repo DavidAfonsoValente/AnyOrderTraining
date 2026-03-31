@@ -54,12 +54,18 @@ def apply_unit_mask(
         ids = tokenizer.encode(text, add_special_tokens=False)
         if not ids:
             continue
+        
+        # Diagnostic & Safeguard: LLaDA 2.0-mini actual vocab is 156891
+        # Any ID >= 156891 will trigger CUDA assert.
+        ACTUAL_VOCAB_SIZE = 156891
+        ids = [min(tid, ACTUAL_VOCAB_SIZE - 1) for tid in ids]
+        
         start = len(all_ids)
         all_ids.extend(ids)
         end = len(all_ids)
         spans.append((start, end, utype))
         # EOS separator AFTER every unit including the last
-        all_ids.append(sep_token_id)
+        all_ids.append(min(sep_token_id, ACTUAL_VOCAB_SIZE - 1))
 
     if not all_ids:
         dummy = torch.zeros(1, dtype=torch.long)
@@ -186,8 +192,12 @@ def main():
     model_path = os.path.abspath(config["model"]["model_path"])
     config_path = os.path.abspath(config["model"].get("config_path", model_path))
 
+    ACTUAL_VOCAB_SIZE = 156891
+    mask_token_id = min(mask_token_id, ACTUAL_VOCAB_SIZE - 1)
+    
     tokenizer = build_tokenizer(tokenizer_path)
     mask_token_id = get_mask_token_id(tokenizer_path)
+    mask_token_id = min(mask_token_id, ACTUAL_VOCAB_SIZE - 1)
     
     dataset = AOMTDataset(
         config["data"]["train_path"], 
