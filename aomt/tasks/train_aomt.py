@@ -25,13 +25,20 @@ os.environ["HF_HUB_TRUST_REMOTE_CODE"] = "1"
 os.environ["TRUST_REMOTE_CODE"] = "1"
 
 def compute_unit_mask_loss(logits: torch.Tensor, labels: torch.Tensor) -> torch.Tensor:
-    """Cross-entropy over labeled (masked) positions only."""
+    """Shared loss function: Cross-entropy over masked positions only."""
+    # Robustness Fix: Clip labels to valid logit range [0, n_classes-1]
+    n_classes = logits.size(-1)
+    mask = (labels != -100)
+    if mask.any():
+        labels[mask] = labels[mask].clamp(0, n_classes - 1)
+
     return F.cross_entropy(
-        logits.view(-1, logits.size(-1)),
+        logits.view(-1, n_classes),
         labels.view(-1),
         ignore_index=-100,
         reduction="mean",
     )
+
 
 def apply_unit_mask(
     unit_texts: list,    # list of strings, alternating obs/act
@@ -193,7 +200,6 @@ def main():
     config_path = os.path.abspath(config["model"].get("config_path", model_path))
 
     ACTUAL_VOCAB_SIZE = 156891
-    mask_token_id = min(mask_token_id, ACTUAL_VOCAB_SIZE - 1)
     
     tokenizer = build_tokenizer(tokenizer_path)
     mask_token_id = get_mask_token_id(tokenizer_path)

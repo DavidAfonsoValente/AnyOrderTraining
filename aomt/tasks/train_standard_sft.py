@@ -35,8 +35,15 @@ os.environ["TRUST_REMOTE_CODE"] = "1"
 
 def compute_unit_mask_loss(logits: torch.Tensor, labels: torch.Tensor) -> torch.Tensor:
     """Shared loss function: Cross-entropy over masked positions only."""
+    # Robustness Fix: Clip labels to valid logit range [0, n_classes-1]
+    # This prevents CUDA device-side asserts if tokenizer produces IDs outside model vocab.
+    n_classes = logits.size(-1)
+    mask = (labels != -100)
+    if mask.any():
+        labels[mask] = labels[mask].clamp(0, n_classes - 1)
+        
     return F.cross_entropy(
-        logits.view(-1, logits.size(-1)),
+        logits.view(-1, n_classes),
         labels.view(-1),
         ignore_index=-100,
         reduction="mean",
