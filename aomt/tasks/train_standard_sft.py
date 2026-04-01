@@ -101,6 +101,11 @@ def collate_fn(batch, pad_id):
     return {"input_ids": input_ids, "prompt_lens": prompt_lens}
 
 def main():
+    # Strict Device Binding: Must happen before any distributed initialization
+    local_rank = int(os.environ.get("LOCAL_RANK", 0))
+    torch.cuda.set_device(local_rank)
+    device_name = f"cuda:{local_rank}"
+
     # dFactory/VeOmni Imports
     from veomni.models import build_foundation_model, build_tokenizer, save_model_weights
     from veomni.distributed.parallel_state import init_parallel_state, get_parallel_state
@@ -140,9 +145,6 @@ def main():
         ps_global_rank = ps.global_rank
         ps_fsdp_enabled = ps.fsdp_enabled
         fsdp_group = ps.fsdp_group
-        device_type = get_device_type()
-        device_name = f"{device_type}:{ps.local_rank}"
-        get_torch_device().set_device(device_name)
         init_device = "meta" if ps_fsdp_enabled else "cuda"
     
     tokenizer_path = os.path.abspath(config["model"]["tokenizer_path"])
