@@ -3,7 +3,7 @@
 #SBATCH --partition=gpu-long
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
-#SBATCH --gres=gpu:a100-80:2
+#SBATCH --gres=gpu:h100-96:2
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=64G
 #SBATCH --time=08:00:00
@@ -19,7 +19,7 @@ RUN_NAME="aomt_mixed_final"
 OUTPUT_DIR="outputs/${RUN_NAME}"
 mkdir -p "${OUTPUT_DIR}" logs
 
-echo "[$(date)] Training final AOMT-Mixed with mask_prob=${BEST_MASK_PROB} on 2x A100"
+echo "[$(date)] Training final AOMT-Mixed with mask_prob=${BEST_MASK_PROB} on 2x H100-96"
 
 torchrun --nproc_per_node=2 \
   aomt/tasks/train_aomt.py \

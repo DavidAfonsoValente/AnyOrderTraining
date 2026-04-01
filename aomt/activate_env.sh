@@ -23,9 +23,6 @@ if [ -n "$JAVA_HOME" ]; then
     export PATH="$JAVA_HOME/bin:$PATH"
 fi
 
-echo "Setting memory limit to unlimited..."
-ulimit -v unlimited || ulimit -m unlimited || true
-
 export PYTORCH_CUDA_ALLOC_CONF="expandable_segments:True"
 
 VENV_PATH="${VEOMNI_PATH}/.venv/bin/activate"
