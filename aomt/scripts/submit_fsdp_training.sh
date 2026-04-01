@@ -39,9 +39,11 @@ echo "Task script: $TASK_SCRIPT"
 echo "Using Python from: $(which python)"
 echo "PYTHONPATH is: ${PYTHONPATH}"
 export NPROC_PER_NODE=2
+export OMP_NUM_THREADS=1
 
 # Use torchrun directly for distributed training
-srun torchrun \
+# Redundant 'srun' removed to prevent environment variable interference with torchrun
+torchrun \
     --nproc_per_node=$NPROC_PER_NODE \
     --rdzv_id=$SLURM_JOB_ID \
     --rdzv_backend=c10d \

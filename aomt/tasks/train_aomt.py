@@ -184,7 +184,16 @@ def main():
     from veomni.utils.dist_utils import all_reduce
 
     if "RANK" in os.environ and not dist.is_initialized():
-        dist.init_process_group(backend=get_nccl_backend())
+        local_rank = int(os.environ.get("LOCAL_RANK", 0))
+        # Explicitly pass device_id to init_process_group to fix "Duplicate GPU" and NCCL warnings
+        dist.init_process_group(backend=get_nccl_backend(), device_id=torch.device(f"cuda:{local_rank}"))
+        
+        # VERIFICATION: Confirm rank-to-GPU mapping
+        print(f"[VERIFY] Rank {dist.get_rank()} is on GPU {torch.cuda.current_device()}")
+        assert dist.get_rank() % torch.cuda.device_count() == torch.cuda.current_device(), \
+            f"Rank {dist.get_rank()} assigned to wrong GPU {torch.cuda.current_device()}"
+    
+    device_name = f"cuda:{dist.get_rank() % torch.cuda.device_count()}" if dist.is_initialized() else "cuda:0"
     
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", type=str, required=True)
@@ -226,7 +235,7 @@ def main():
 
     model = build_foundation_model(weights_path=model_path,
                                    config_path=config_path,
-                                   torch_dtype="bfloat16" if config["train"]["mixed_precision"] == "bf16" else "float32",
+                                   dtype="bfloat16" if config["train"]["mixed_precision"] == "bf16" else "float32",
                                    attn_implementation="sdpa", init_device=init_device,
                                    moe_implementation="fused")
 

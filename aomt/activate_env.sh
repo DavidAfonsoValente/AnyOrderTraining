@@ -24,6 +24,7 @@ if [ -n "$JAVA_HOME" ]; then
 fi
 
 export PYTORCH_CUDA_ALLOC_CONF="expandable_segments:True"
+export OMP_NUM_THREADS=1
 
 VENV_PATH="${VEOMNI_PATH}/.venv/bin/activate"
 
