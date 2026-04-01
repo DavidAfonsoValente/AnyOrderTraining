@@ -8,29 +8,23 @@ import os
 import sys
 
 # Strict Device Binding: Must happen before ANY torch.cuda calls
-# This ensures NCCL doesn't see multiple ranks on the same device.
 if "LOCAL_RANK" in os.environ:
     local_rank = int(os.environ["LOCAL_RANK"])
-    # If multiple GPUs are visible, restrict this process to only one.
     cvd = os.environ.get("CUDA_VISIBLE_DEVICES", "")
     if cvd:
         devices = cvd.split(",")
         if len(devices) > local_rank:
+            # Narrow visibility to just this one device
             os.environ["CUDA_VISIBLE_DEVICES"] = devices[local_rank]
-            print(f"[Rank {os.environ.get('RANK', '0')}] Bound to physical GPU {devices[local_rank]}")
+    
+    # After potential visibility narrowing, we must still set the device.
+    import torch
+    if torch.cuda.is_available():
+        target_dev = 0 if cvd else local_rank
+        torch.cuda.set_device(target_dev)
+        print(f"[Rank {os.environ.get('RANK', '0')}] Using GPU device {target_dev} (Physical: {cvd or 'unknown'})")
 
-import torch
 import torch.distributed as dist
-import torch.nn.functional as F
-import yaml
-import argparse
-from tqdm import tqdm
-import numpy as np
-import json
-
-# Set device immediately after import
-if torch.cuda.is_available():
-    torch.cuda.set_device(0) # Since we restricted visibility, it's always device 0
 
 # Apply transformers patch before other imports
 from aomt.utils import patch_transformers
