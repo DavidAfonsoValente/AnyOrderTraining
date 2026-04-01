@@ -3,7 +3,7 @@
 #SBATCH --partition=gpu-long
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
-#SBATCH --gres=gpu:a100-80:1
+#SBATCH --gres=gpu:a100-80:4
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=64G
 #SBATCH --time=12:00:00
@@ -18,9 +18,9 @@ RUN_NAME="standard_sft"
 OUTPUT_DIR="outputs/${RUN_NAME}"
 mkdir -p "${OUTPUT_DIR}" logs
 
-echo "[$(date)] Starting Standard SFT training on 1x A100"
+echo "[$(date)] Starting Standard SFT training on 4x A100"
 
-torchrun --nproc_per_node=1 \
+torchrun --nproc_per_node=4 \
   aomt/tasks/train_standard_sft.py --config aomt/configs/sft_standard.yaml
 
 echo "[$(date)] Standard SFT training complete. Output: ${OUTPUT_DIR}"

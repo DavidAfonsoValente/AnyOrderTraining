@@ -12,7 +12,7 @@ data:
 train:
   output_dir:                    ./checkpoints/aomt_mixed_ext
   num_epochs:                    10
-  learning_rate:                 1.0e-5      # lower LR for continued training
+  learning_rate:                 5.0e-6      # lower LR for continued training
   lr_scheduler:                  cosine
   min_lr:                        1.0e-6
   warmup_steps:                  20          # shorter warmup since model is warm

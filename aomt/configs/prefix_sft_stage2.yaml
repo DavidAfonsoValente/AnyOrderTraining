@@ -11,7 +11,7 @@ data:
 train:
   output_dir:                    ./checkpoints/prefix_sft_s2
   num_epochs:                    3
-  learning_rate:                 2e-5
+  learning_rate:                 1e-5
   lr_scheduler:                  cosine
   min_lr:                        2e-6
   warmup_steps:                  50
