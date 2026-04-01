@@ -5,6 +5,20 @@ Refactored to align strictly with dFactory standards while implementing unit-lev
 """
 
 import os
+import sys
+
+# Strict Device Binding: Must happen before ANY torch.cuda calls
+# This ensures NCCL doesn't see multiple ranks on the same device.
+if "LOCAL_RANK" in os.environ:
+    local_rank = int(os.environ["LOCAL_RANK"])
+    # If multiple GPUs are visible, restrict this process to only one.
+    cvd = os.environ.get("CUDA_VISIBLE_DEVICES", "")
+    if cvd:
+        devices = cvd.split(",")
+        if len(devices) > local_rank:
+            os.environ["CUDA_VISIBLE_DEVICES"] = devices[local_rank]
+            print(f"[Rank {os.environ.get('RANK', '0')}] Bound to physical GPU {devices[local_rank]}")
+
 import torch
 import torch.distributed as dist
 import torch.nn.functional as F
@@ -13,6 +27,10 @@ import argparse
 from tqdm import tqdm
 import numpy as np
 import json
+
+# Set device immediately after import
+if torch.cuda.is_available():
+    torch.cuda.set_device(0) # Since we restricted visibility, it's always device 0
 
 # Apply transformers patch before other imports
 from aomt.utils import patch_transformers
@@ -101,11 +119,6 @@ def collate_fn(batch, pad_id):
     return {"input_ids": input_ids, "prompt_lens": prompt_lens}
 
 def main():
-    # Strict Device Binding: Must happen before any distributed initialization
-    local_rank = int(os.environ.get("LOCAL_RANK", 0))
-    torch.cuda.set_device(local_rank)
-    device_name = f"cuda:{local_rank}"
-
     # dFactory/VeOmni Imports
     from veomni.models import build_foundation_model, build_tokenizer, save_model_weights
     from veomni.distributed.parallel_state import init_parallel_state, get_parallel_state
