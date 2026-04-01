@@ -27,6 +27,12 @@ if "LOCAL_RANK" in os.environ:
         print(f"[Rank {os.environ.get('RANK', '0')}] Using GPU device {target_dev} (Physical: {cvd or 'unknown'})")
 
 import torch.distributed as dist
+import torch.nn.functional as F
+import yaml
+import argparse
+from tqdm import tqdm
+import numpy as np
+import json
 
 # Apply transformers patch before other imports
 from aomt.utils import patch_transformers
