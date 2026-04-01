@@ -7,23 +7,16 @@ Strictly follows dFactory standards and Engineering Spec v3.
 import os
 import sys
 
-# Strict Device Binding: Must happen before ANY torch.cuda calls
+# 1. Strict Device Binding: MUST happen before ANY other imports
 if "LOCAL_RANK" in os.environ:
-    local_rank = int(os.environ["LOCAL_RANK"])
-    cvd = os.environ.get("CUDA_VISIBLE_DEVICES", "")
-    if cvd:
-        devices = cvd.split(",")
-        if len(devices) > local_rank:
-            # Narrow visibility to just this one device
-            os.environ["CUDA_VISIBLE_DEVICES"] = devices[local_rank]
-    
-    # After potential visibility narrowing, we must still set the device.
     import torch
-    if torch.cuda.is_available():
-        target_dev = 0 if cvd else local_rank
-        torch.cuda.set_device(target_dev)
-        print(f"[Rank {os.environ.get('RANK', '0')}] Using GPU device {target_dev} (Physical: {cvd or 'unknown'})")
+    local_rank = int(os.environ["LOCAL_RANK"])
+    torch.cuda.set_device(local_rank)
+    # Force initialize the context on the correct device
+    torch.cuda.init()
+    print(f"[Rank {os.environ.get('RANK', '0')}] Is isolated to GPU {local_rank}")
 
+# 2. Standard Imports
 import torch.distributed as dist
 import torch.nn.functional as F
 import yaml
