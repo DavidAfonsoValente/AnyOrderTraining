@@ -1,0 +1,4 @@
+method: "prefix_sft_stage2"
+epochs: 3
+p_mask: 0.0 # Only At is masked
+# init_checkpoint must be provided in train.py CLI

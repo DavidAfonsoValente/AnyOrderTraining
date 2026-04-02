@@ -1,0 +1,4 @@
+method: "aomt_action_only"
+epochs: 5
+p_mask: 0.15
+

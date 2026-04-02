@@ -36,6 +36,17 @@ from transformers.modeling_outputs import (
     MoeCausalLMOutputWithPast,
 )
 from transformers.modeling_rope_utils import ROPE_INIT_FUNCTIONS, dynamic_rope_update
+def _compute_default_rope_parameters(config, device=None, seq_len=None, layer_type=None):
+    head_dim = getattr(config, "head_dim", config.hidden_size // config.num_attention_heads)
+    partial_rotary_factor = getattr(config, "partial_rotary_factor", 1.0)
+    dim = int(head_dim * partial_rotary_factor)
+    base = getattr(config, "rope_theta", 10000.0)
+    inv_freq = 1.0 / (base ** (torch.arange(0, dim, 2, device=device).float() / dim))
+    return inv_freq, 1.0
+
+if "default" not in ROPE_INIT_FUNCTIONS:
+    ROPE_INIT_FUNCTIONS["default"] = _compute_default_rope_parameters
+
 from transformers.modeling_utils import ALL_ATTENTION_FUNCTIONS, PreTrainedModel
 from transformers.processing_utils import Unpack
 from transformers.pytorch_utils import (
@@ -114,9 +125,6 @@ class LLaDA2MoeRotaryEmbedding(nn.Module):
     @torch.no_grad()
     @dynamic_rope_update  # power user: used with advanced RoPE types (e.g. dynamic rope)
     def forward(self, x, position_ids):
-        if self.inv_freq.numel() > 0 and self.inv_freq.abs().max() == 0:
-            inv_freq, _ = self.rope_init_fn(self.config, x.device)
-            self.inv_freq = inv_freq
         inv_freq_expanded = (
             self.inv_freq[None, :, None]
             .float()
@@ -1394,10 +1402,13 @@ class LLaDA2MoeModelLM(LLaDA2MoePreTrainedModel, GenerationMixin):
 
         generated_answer = x[:, : prompt_length + gen_length]
 
-        gen_tokens = generated_answer[0, prompt_length:]
-        eos_positions = (gen_tokens == eos_id).nonzero(as_tuple=True)[0]
-        if len(eos_positions) > 0:
-            end = prompt_length + eos_positions[0].item() + 1
+        mask_positions = (generated_answer[0][input_ids.shape[1] :] == eos_id).nonzero(
+            as_tuple=True
+        )[0]
+        if len(mask_positions) > 0:
+            first_mask_position = mask_positions[0].item()
         else:
-            end = prompt_length + gen_length
-        return generated_answer[:, :end]
+            first_mask_position = gen_length
+        return generated_answer[
+            :, input_ids.shape[1] : input_ids.shape[1] + first_mask_position + 1
+        ]

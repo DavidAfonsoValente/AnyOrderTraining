@@ -1,0 +1,3 @@
+method: "standard_sft"
+epochs: 3
+p_mask: 0.0 # Only At is masked

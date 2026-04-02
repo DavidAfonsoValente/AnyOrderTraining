@@ -1,0 +1,26 @@
+# configs/prefix_sft_stage2.yaml
+# Baseline 2: Prefix SFT Stage 2 (Policy Fine-Tuning)
+model:
+  model_path:      ./models/prefix_sft_s1_merged
+  tokenizer_path:  ./models/llada2-mini-sep
+
+data:
+  train_path:  ./data/cache/sft_standard_train.jsonl
+  test_path:   ./data/cache/sft_standard_test.jsonl
+
+train:
+  output_dir:                    ./checkpoints/prefix_sft_s2
+  num_epochs:                    3
+  learning_rate:                 1e-5
+  lr_scheduler:                  cosine
+  min_lr:                        2e-6
+  warmup_steps:                  50
+  weight_decay:                  0.1
+  gradient_clip:                 1.0
+  per_device_batch_size:         1
+  gradient_accumulation_steps:   32
+  max_seq_length:                2048
+  mixed_precision:               bf16
+  save_steps:                    500
+  gradient_checkpointing:        true
+  fsdp_type:                     fsdp1

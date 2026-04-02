@@ -1,0 +1,5 @@
+method: "aomt_mixed"
+epochs: 5
+p_mask: 0.25
+masking_level: "token"
+

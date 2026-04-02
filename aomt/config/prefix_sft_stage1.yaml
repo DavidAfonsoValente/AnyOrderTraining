@@ -1,0 +1,3 @@
+method: "prefix_sft_stage1"
+epochs: 3
+p_mask: 0.0 # Only Ot+1 is masked

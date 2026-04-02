@@ -1,0 +1,29 @@
+model_id: "inclusionAI/LLaDA2.0-mini"
+max_seq_len: 2048
+precision: "bf16"
+seed: 42
+lr: 2.5e-5
+lr_min: 2.5e-6
+lr_schedule: cosine
+warmup_steps: 50
+weight_decay: 0.1
+grad_clip: 1.0
+batch_size: 64
+sep_token: "\n"
+dataset_name: "agent-eto/eto-sft-trajectory"
+checkpoint_save_steps: 500
+log_every_steps: 10
+eval_every_steps: 1000
+wandb_project: "aomt"
+# Inference
+max_new_tokens: 256
+block_length: 32
+diffusion_steps: 32
+temperature: 0.0
+# Planning (Mode B)
+default_inference_mode: "mode_a"
+planning_horizon: 3
+# Computed at preprocessing
+median_action_tokens: 33
+median_obs_tokens: 17
+output_dir: "checkpoints"

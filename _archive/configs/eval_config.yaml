@@ -1,0 +1,47 @@
+# Global Evaluation Configuration for AOMT Project
+
+# Configuration for ALFWorld environment
+alfworld:
+  # Path to the ALFWorld data, typically read-only on the cluster
+  data_path: "/opt/alfworld/data"
+  # 'eval_in_distribution' for seen tasks, 'eval_out_of_distribution' for unseen
+  train_eval_split: "eval_out_of_distribution"
+  # Placeholder for actual task config path if needed by AlfredTWEnv
+  # e.g., config_path: "/opt/alfworld/configs/alfworld_eval.json"
+  task_configs:
+    seen_tasks: ["go to cabinet 1", "put potato in fridge"] # Example tasks
+    unseen_tasks: ["cool a mug and put it on the counter"] # Example tasks
+
+# Configuration for ScienceWorld environment
+scienceworld:
+  # Base path for ScienceWorld data, if required by the environment
+  data_path: "/opt/scienceworld/data"
+  # Default simplification string for ScienceWorldEnv.load()
+  simplification_str: "easy"
+  # Example task names and their variations for evaluation
+  tasks:
+    seen_tasks:
+      - name: "cook water"
+        variation_idx: 0
+      - name: "make fire"
+        variation_idx: 1
+    unseen_tasks:
+      - name: "build a battery"
+        variation_idx: 0
+      - name: "extract metal"
+        variation_idx: 1
+
+# Configuration for WebShop environment
+webshop:
+  # URL for the WebShop local server, if running separately
+  url: "http://localhost:3000"
+  observation_mode: "text"
+  human_goals: True
+  # Example tasks for WebShop
+  tasks:
+    seen_tasks: ["buy a hat", "find a book on physics"] # Example tasks
+    unseen_tasks: ["search for a waterproof jacket", "order a specific brand of coffee"] # Example tasks
+
+# General evaluation settings
+max_episode_steps: 100 # Maximum steps for any episode across environments
+seed: 42 # Random seed for reproducibility
