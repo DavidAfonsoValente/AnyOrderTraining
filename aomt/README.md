@@ -1,112 +1,57 @@
-# Any-Order Masked Training (AOMT)
+# AOMT: Any-Order Masked Training for LLM Agents
 
-This repository contains the implementation for **"Any-Order Masked Training for Trajectory-Level Supervised Learning in LLM-Based Agents,"** a supervised fine-tuning (SFT) paradigm that reframes agent learning as a trajectory-level reconstruction problem.
+This repository provides a paper-ready implementation of Any-Order Masked Training (AOMT) for LLM-based agents, optimized for the SoC Compute Cluster (Slurm).
 
-AOMT uses a masked diffusion language model (LLaDA 2.0) to reconstruct arbitrarily masked observation and action units from bidirectional context in a single forward pass.
+## Overview
 
----
+AOMT jointly models the entire future trajectory by masking units (observations and actions) at random. This approach allows the agent to act as both a policy and a world model, enabling multi-step planning during inference.
 
-## 🚀 Automated Workflow (SoC Compute Cluster)
+## Quick Start (Slurm)
 
-Perform these steps from the `aomt/` directory.
+1.  **Launch Training:**
+    ```bash
+    bash aomt/slurm/run_train.sh
+    ```
+2.  **Launch Evaluation:**
+    ```bash
+    bash aomt/slurm/run_eval_and_analysis.sh
+    ```
 
-### 1. Environment Setup (Automatic Allocation via Slurm)
-*One-time setup. Installs Miniconda, creates a py311 environment, and sets up all dependencies (including WebShop indexing).*
-
-**⚠️ DO NOT run setup.sh manually on a login node.** Use `sbatch` to automatically request a compute node with sufficient memory.
-
-```bash
-# This command automatically handles the allocation for you
-sbatch slurm_setup.sh
-
-# Monitor progress: tail -f logs/setup_<jobid>.log
-```
-
-### 2. Launch Full Automated Pipeline (Login Node)
-*This single command handles everything: model preparation, data processing, hyperparameter tuning, training, and final evaluation.*
+## Setup
 
 ```bash
-sbatch submit_full_pipeline.slurm
+bash scripts/setup_all.sh
 ```
 
-The master script automatically manages:
-1. **Model Preparation:** Merges MoE weights (requests H100/A100-80).
-2. **Data Preparation:** Length analysis and JSONL generation.
-3. **Phase 1 (Ablation):** 4-way hyperparameter sweep.
-4. **Auto-Selection:** Picks the best `mask_prob` and updates configs.
-5. **Phase 2 (Main):** Sequential training of all baseline and AOMT models.
-6. **Phase 3 (Eval):** Full evaluation and summary table generation.
+## Running Tests
 
----
-
-## 🤖 How the Pipeline Works (Self-Tuning)
-...
-
-The pipeline is fully automated and operates in three distinct phases to ensure optimal results and QOS compliance:
-
-### Phase 1: Hyperparameter Search (Ablation)
-The system automatically runs a 4-way sweep of `mask_prob` ∈ {0.15, 0.25, 0.40, 0.50} on a representative ALFWorld subset. These runs are chained sequentially to stay within cluster GPU quotas.
-
-### Phase 2: Automatic Selection (The "Judge")
-Once the sweep finishes, a specialized job (`aomt_update_config`) automatically:
-1. Scans all ablation result files.
-2. Identifies the probability with the highest success rate.
-3. **Physically updates the YAML configuration files** for the main experiments with the winning value.
-
-### Phase 3: Main Benchmarking
-The primary experiments (Standard SFT, Prefix S1/S2, AOMT-Action, AOMT-Mixed) execute sequentially using the optimal hyperparameter. The pipeline concludes by running the full evaluation suite and generating a summary table.
-
----
-
-## 🖥️ Cluster Resource Strategy
-
-| Feature | Implementation | Rationale |
-| :--- | :--- | :--- |
-| **QOS Compliance** | **Sequential Chaining** | Only one 2-GPU task is active at a time to satisfy strict cluster quotas. |
-| **Hardware** | **1x H100-96 Node** | Provides exactly 192GB VRAM—the minimum required for the 16B model. |
-| **Memory** | **Grad Checkpointing** | Enabled by default to fit the 16B MoE sharded across 2 GPUs. |
-| **Stability** | **Pre-flight Checks** | Downstream jobs verify checkpoints before starting intensive loops. |
-
----
-
-## 📊 Monitoring & Management
-
-*   **Check Queue:** `squeue -u $USER`
-*   **Check Job Status:** `sacct -j <jobid>`
-*   **Cancel Pipeline:** `scancel -u $USER`
-*   **View Results:** 
-    *   Ablation results: `results/ablation_p*_alfworld.json`
-    *   Final comparison: `results/summary_table.txt`
-
----
-
-## ⚡ GPU: Triton fused MoE (VeOmni)
-
-Training uses `moe_implementation="fused"`. The **fast path** is VeOmni’s Triton **group GEMM** (`group_gemm_fused_moe_forward`). Your environment must satisfy:
-
-| Requirement | Notes |
-| :--- | :--- |
-| **CUDA PyTorch** | `torch.cuda.is_available()` must be `True` on a GPU node (not CPU-only wheels). |
-| **`triton`** | `pip install 'triton>=3.0'` — also listed in `requirements.txt` / VeOmni `pyproject` `[gpu]` extra. |
-| **`USE_GROUP_GEMM=1`** | Default in VeOmni; do **not** set `USE_GROUP_GEMM=0`. |
-| **No `torch_npu`** | If Ascend NPU torch is installed, VeOmni disables the CUDA fused-MoE check. |
-
-**Check your conda env (`aomt`) after `pip install -r requirements.txt`:**
-
+All tests must pass before submitting jobs:
 ```bash
-cd /path/to/aomt
-export PYTHONPATH="dFactory/VeOmni:dFactory:${PYTHONPATH}"
-python scripts/verify_triton_moe_env.py
+pytest aomt/data/tests/ aomt/model/tests/ aomt/tests/ -v
 ```
 
-Exit code **0** ⇒ Triton path is bound; **2** ⇒ PyTorch eager fallback (still runs, slower).
+## Inference Modes
 
----
+- **Mode A (Myopic):** Predicts only the immediate next action $A_t$. Valid for all training methods.
+- **Mode B (Planning):** Uses a multi-step future template (masking $A_t, O_{t+1}, A_{t+1}, \dots$). The model jointly denoises the entire suffix. Only the first action $A_t$ is executed. Exclusive to `aomt_mixed`.
+  - **Numerical Invariant:** When planning horizon $H=1$, Mode B is numerically identical to Mode A.
 
-## 📂 Repository Structure
+## Design Decisions
 
-*   `data/`: Trajectory parsing, subset filtering, and JSONL generation.
-*   `tasks/`: Training entry points for standard SFT and AOMT modes.
-*   `eval/`: Full evaluation suite (ALFWorld, ScienceWorld, WebShop, NLL-obs).
-*   `scripts/`: Automation logic (`submit_pipeline.sh`, `apply_ablation_winner.sh`).
-*   `configs/`: Master YAML files (automatically tuned by the pipeline).
+- **Unit-Level Masking:** We mask entire units (complete text spans) rather than individual tokens to prevent intra-unit information leakage.
+- **Data-Driven Causality:** No causal attention mask is used. Causality is enforced by simply excluding future units from the sequence in SFT methods.
+- **Local World Model:** Prefix SFT Stage 1 uses a local 3-unit window ($O_t, A_t, O_{t+1}$) to replicate the ALEE formulation.
+- **Mask Resampling:** For AOMT, masks are resampled every epoch in the `__getitem__` call, ensuring the model sees different masking patterns for the same trajectory over time.
+
+## File Structure
+
+```
+aomt/
+├── data/          # Tokenization, masking, dataset
+├── model/         # LLaDA wrapper, inference loops
+├── training/      # Unified trainer, loss functions
+├── evaluation/    # ALFWorld, ScienceWorld, WebShop runners
+├── config/        # YAML hyperparameters
+├── slurm/         # Master and individual submission scripts
+└── analysis/      # Table and plot generation
+```

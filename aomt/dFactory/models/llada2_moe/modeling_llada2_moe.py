@@ -42,15 +42,6 @@ from transformers.modeling_outputs import (
     MoeCausalLMOutputWithPast,
 )
 from transformers.modeling_rope_utils import ROPE_INIT_FUNCTIONS, dynamic_rope_update
-
-def _default_rope_init(config, device=None):
-    base = config.rope_theta
-    dim = int(config.hidden_size // config.num_attention_heads)
-    inv_freq = 1.0 / (base ** (torch.arange(0, dim, 2, dtype=torch.int64).float().to(device) / dim))
-    return inv_freq, 1.0
-
-if "default" not in ROPE_INIT_FUNCTIONS:
-    ROPE_INIT_FUNCTIONS["default"] = _default_rope_init
 from transformers.modeling_utils import PreTrainedModel, ALL_ATTENTION_FUNCTIONS
 from transformers.pytorch_utils import ALL_LAYERNORM_LAYERS, is_torch_greater_or_equal_than_1_13
 from transformers.utils import (
@@ -61,11 +52,7 @@ from transformers.utils import (
 from transformers.utils.import_utils import is_torch_fx_available
 from .configuration_llada2_moe import LLaDA2MoeConfig
 from transformers.generation.utils import GenerationMixin
-from veomni.ops import fused_moe_forward
-try:
-    from veomni.ops import causallm_loss_function
-except ImportError:
-    causallm_loss_function = None
+from veomni.ops import causallm_loss_function, fused_moe_forward
 from veomni.distributed.parallel_state import get_parallel_state
 from veomni.utils.import_utils import is_liger_kernel_available
 from veomni.utils import logging
@@ -319,8 +306,9 @@ class LLaDA2MoeExperts(nn.Module):
             )
 
             out = fused_moe_forward(
+                module=self,
                 num_experts=self.num_experts,
-                routing_weights=routing_weights.to(hidden_states.dtype),
+                routing_weights=routing_weights,
                 selected_experts=selected_experts,
                 hidden_states=hidden_states,
                 fc1_1_weight=self.gate_proj,
@@ -1065,16 +1053,17 @@ class LLaDA2MoeModel(LLaDA2MoePreTrainedModel):
         #     attention_mask = attention_mask if (attention_mask is not None and 0 in attention_mask) else None
         if self._use_sdpa and not output_attentions:
             # output_attentions=True can not be supported when using SDPA, and we fall back on
-            # the manual implementation that requires a 4D mask in all cases.
-            attention_mask = _prepare_4d_attention_mask(
+            # the manual implementation that requires a 4D causal mask in all cases.
+            attention_mask = _prepare_4d_causal_attention_mask_for_sdpa(
                 attention_mask,
-                inputs_embeds.dtype,
-                seq_length,
+                (batch_size, seq_length),
+                inputs_embeds,
+                past_key_values_length,
             )
         else:
             # 4d mask is passed through the layers
-            attention_mask = _prepare_4d_attention_mask(
-                attention_mask, inputs_embeds.dtype, seq_length
+            attention_mask = _prepare_4d_causal_attention_mask(
+                attention_mask, (batch_size, seq_length), inputs_embeds, past_key_values_length
             )
 
         # embed positions
