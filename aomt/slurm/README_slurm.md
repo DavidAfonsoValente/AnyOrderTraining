@@ -2,23 +2,25 @@
 
 This directory contains the SLURM submission scripts for the AOMT project on the SoC Compute Cluster.
 
-## One-Shot Workflow
+## Master Orchestration (Recommended)
 
-1.  **Submit Training Jobs:**
-    ```bash
-    bash aomt/slurm/run_train.sh
-    ```
-    This script submits all main training runs and parameter sweeps with correct dependencies. It writes the job IDs to `aomt/slurm/.train_ids`.
+The entire pipeline is managed by two master scripts in the root `slurm/` directory:
 
-2.  **Submit Evaluation and Analysis:**
+1.  **Part 1: Pre-flight & Training**
     ```bash
-    bash aomt/slurm/run_eval_and_analysis.sh
+    bash slurm/run_part1_baselines_and_sweeps.sh
     ```
-    This script reads `aomt/slurm/.train_ids` and submits evaluation, ablation, and analysis jobs that wait for the training to finish (using `--dependency=afterok`).
+    This script runs the GPU test suite first. If tests pass, it automatically submits all training runs and parameter sweeps with correct dependencies.
+
+2.  **Part 2: Evaluation & Analysis**
+    ```bash
+    bash slurm/run_part2_aomt_eval_and_analysis.sh
+    ```
+    Run this immediately after Part 1. It submits evaluation, ablation, and analysis jobs that wait for the training to finish (using `--dependency=afterok`).
 
 ## Monitoring
 
--   Check queue status: `squeue -u $USER`
+-   Check queue status: `squeue -u $USER | grep aomt`
 -   View logs: `tail -f results/logs/<job_name>/<job_id>_<job_name>.out`
 -   Checkpoints are saved in `results/checkpoints/`.
 
@@ -34,4 +36,3 @@ If a job fails, you can resume it using:
 ```bash
 python aomt/train.py --config aomt/config/<method>.yaml --resume results/checkpoints/<method>/checkpoint-last
 ```
-(Ensure you update the individual script if you want to use `sbatch`).

@@ -1,87 +1,70 @@
 # AOMT: Any-Order Masked Training for LLM Agents
 
-This repository implements **Any-Order Masked Training (AOMT)**, a supervised learning paradigm for LLM agents using Masked Diffusion Language Models (LLaDA 2.0).
+Complete, paper-ready implementation of **Any-Order Masked Training (AOMT)** for LLM-based agents, optimized for the SoC Compute Cluster (Slurm).
 
-## 1. Environment Setup
+## 1. Quick Start (Cluster)
 
-The project requires Python 3.10+ and a GPU cluster managed by SLURM.
-
-```bash
-# Create and activate environment
-python3 -m venv venv
-source venv/bin/activate
-
-# Install dependencies
-pip install -r aomt/requirements.txt
-
-# Setup dFactory/VeOmni (ensure submodules are initialized)
-git submodule update --init --recursive
-cd aomt/dFactory/VeOmni && pip install -e . && cd ../../..
-```
-
-## 2. Data Preparation
-
-Before training, generate the processed trajectory files from the ETO dataset:
+To run the entire pipeline (tests, training, evaluation, and analysis) on the cluster, execute these two commands:
 
 ```bash
-python3 aomt/data/prepare_data.py --output_dir ./data/cache/
+# Part 1: Run pre-flight tests and submit all training jobs
+bash slurm/run_part1_baselines_and_sweeps.sh
+
+# Part 2: Submit evaluation and analysis (waits for Part 1 to finish)
+bash slurm/run_part2_aomt_eval_and_analysis.sh
 ```
-This generates `sft_standard`, `prefix_sft_s1`, and `aomt` JSONL files.
 
-## 3. Cluster & GPU Configuration
+## 2. Environment Setup
 
-This project is optimized for the **SoC Compute Cluster**. 
-
-### Hardware Targeting:
-*   **Partition:** Use **`gpu-long`** for all training and evaluation (3-day limit). The standard `gpu` partition has a 3-hour limit which is insufficient.
-*   **GPU Type:** Request **`a100-80:1`** (NVIDIA A100 80GB). 
-*   **Account:** You must provide your cluster account name. Find it by running:
-    ```bash
-    sshare -U $USER | awk 'NR==3 {print $2}'
-    ```
-
----
-
-## 4. Experimental Workflow
+The project requires Python 3.10+ and a GPU cluster.
 
 ```bash
-bash scripts/slurm/pipeline_submit.sh
+# 1. Clone the repository
+git clone <repo_url>
+cd AnyOrderTraining
+
+# 2. Setup environment (installs requirements, clones dFactory, prepares benchmarks)
+bash scripts/setup_all.sh
 ```
 
+## 3. Repository Structure
 
-### Phase 2: Selection & Final AOMT Training
-1.  Wait for the jobs to finish.
-2.  Inspect the sweep results in `eval/results/maskprob_sweep/`.
-3.  Identify the `mask_prob` with the highest success rate on ALFWorld.
-4.  Launch the final training run (example using $p=0.25$):
-    ```bash
-    sbatch scripts/slurm/train_aomt_mixed_final.sh
-    ```
+- `aomt/`: Core implementation.
+  - `data/`: Tokenization, unit-level masking, and `AOMTDataset`.
+  - `model/`: LLaDA wrapper and Mode A/B inference logic.
+  - `training/`: Unified trainer and loss functions.
+  - `evaluation/`: Benchmark runners (ALFWorld, ScienceWorld, WebShop).
+  - `slurm/`: Individual job scripts and cluster utilities.
+- `slurm/`: Master orchestration scripts.
+- `scripts/`: Environment setup and data preparation utilities.
+- `results/`: Output CSVs, LaTeX tables, and PNG plots (generated at runtime).
 
-### Phase 3: Final Evaluation (Table Generation)
-Once training is complete, run the evaluation scripts to generate data for the paper:
+## 4. Training Methods
 
-| Task | Command | Output Table |
-| :--- | :--- | :--- |
-| **Main Results** | `sbatch scripts/slurm/eval_main_results.sh` | **Table 1** (Main Benchmarks) |
-| **Mask Sweep** | `sbatch scripts/slurm/eval_maskprob_sweep_alfworld.sh` | **Table 2** (Ablation) |
-| **Robustness** | `sbatch scripts/slurm/eval_robustness.sh` | **Table 5** ($\rho$ Noise Sweep) |
-| **NLL Analysis** | `sbatch scripts/slurm/eval_nllobs_checkpoints.sh` | **Table 4 & Figure 1** |
+1.  **Standard SFT:** Baseline causal-prefix SFT.
+2.  **Prefix SFT Stage 1:** Offline Internal World Model (IWM) pretraining (local 3-unit context).
+3.  **Prefix SFT Stage 2:** Policy SFT initialized from Stage 1.
+4.  **AOMT-Mixed:** The proposed method. Joint trajectory modeling via random unit-level masking.
 
----
+## 5. Inference Modes (for AOMT-Mixed)
 
-## 5. Directory Structure
+-   **Mode A (Myopic):** Denoises only the next action slot.
+-   **Mode B (Planning):** Jointly denoises a multi-step future template; extracts only the first action.
 
-*   `aomt/tasks/`: Core training logic (AOMT vs. Standard SFT).
-*   `aomt/inference.py`: Masked diffusion unmasking logic (Chat Template).
-*   `eval/task_eval.py`: Environment loop and inference dispatcher.
-*   `scripts/slurm/`: Job scripts for the cluster.
-*   `outputs/`: Model checkpoints.
-*   `eval/results/`: JSON results for paper tables.
+## 6. Testing
 
-## 6. Technical Implementation Notes
+Run local (CPU-only) tests:
+```bash
+pytest aomt/data/tests/ aomt/tests/ -v -m "not gpu"
+```
 
-*   **Training Format:** AOMT uses a **Flat Trajectory** format: `O_0 [EOS] A_0 [EOS] ... O_T [EOS]`.
-*   **Inference Format:** ALL methods use the **Chat Template** format per paper spec.
-*   **ReAct:** All models are trained on full reasoning strings (`Thought: ... \n Action: ...`).
+Run cluster (GPU required) tests:
+```bash
+sbatch aomt/slurm/run_tests.sh
+```
 
+## 7. Documentation
+
+- `PROJECT.md`: Comprehensive methodological and technical documentation.
+- `AUDIT.md`: Cluster configuration details and project history.
+- `QA_REPORT.md`: Detailed audit findings and bug fixes.
