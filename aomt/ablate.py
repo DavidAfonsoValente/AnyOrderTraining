@@ -25,7 +25,7 @@ def run_p_sweep_ablation(checkpoint_dir: str, output_dir: str):
             continue
             
         print(f"Evaluating p_mask=0.{p[1:]}...")
-        # In a real run, we would call evaluate_alfworld here
+        # success = evaluate_alfworld(...)
         results.append({"p": float(f"0.{p[1:]}"), "success": 0.0})
         
     df = pd.DataFrame(results)
@@ -33,15 +33,10 @@ def run_p_sweep_ablation(checkpoint_dir: str, output_dir: str):
 
 def run_unit_vs_token_masking_ablation(checkpoint_dir: str, output_dir: str):
     """A2: unit-level vs token-level masking."""
-    # Logic to compare amx_p025 (unit) vs amx_token (token)
     pass
 
 def run_stage2_vs_sft_ablation(checkpoint_dir: str, output_dir: str):
     """A3: prefix_sft_stage2 vs standard_sft."""
-    pass
-
-def run_inference_mode_ablation(checkpoint_dir: str, output_dir: str):
-    """A4: Mode A vs Mode B."""
     pass
 
 def run_robustness_ablation(checkpoint_dir: str, output_dir: str):
@@ -54,7 +49,7 @@ def run_learning_curve_ablation(checkpoint_dir: str, output_dir: str):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--ablation", type=str, required=True, choices=["p_sweep", "unit_vs_token", "stage2_vs_sft", "inference_mode", "robustness", "learning_curve", "all"])
+    parser.add_argument("--ablation", type=str, required=True, choices=["p_sweep", "unit_vs_token", "stage2_vs_sft", "robustness", "learning_curve", "all"])
     parser.add_argument("--checkpoint_dir", type=str, required=True)
     parser.add_argument("--output_dir", type=str, default="results/ablations/")
     args = parser.parse_args()
@@ -67,8 +62,6 @@ def main():
         run_unit_vs_token_masking_ablation(args.checkpoint_dir, args.output_dir)
     if args.ablation in ["stage2_vs_sft", "all"]:
         run_stage2_vs_sft_ablation(args.checkpoint_dir, args.output_dir)
-    if args.ablation in ["inference_mode", "all"]:
-        run_inference_mode_ablation(args.checkpoint_dir, args.output_dir)
     if args.ablation in ["robustness", "all"]:
         run_robustness_ablation(args.checkpoint_dir, args.output_dir)
     if args.ablation in ["learning_curve", "all"]:

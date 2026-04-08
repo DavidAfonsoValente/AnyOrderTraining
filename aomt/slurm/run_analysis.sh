@@ -12,7 +12,4 @@ PROJECT_DIR=$HOME/AnyOrderTraining
 cd $PROJECT_DIR
 source venv/bin/activate
 
-# Generate tables and plots
-python aomt/analysis/tables.py --results_dir results --output_dir results
-python aomt/analysis/plots.py --results_dir results --output_dir results
-# ... handle other analysis tasks
+python aomt/analysis.py --results_dir results --output_dir results --format both

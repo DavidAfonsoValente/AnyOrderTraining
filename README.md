@@ -27,29 +27,25 @@ cd AnyOrderTraining
 bash scripts/setup_all.sh
 ```
 
-## 3. Repository Structure
-
-- `aomt/`: Core implementation.
-  - `data/`: Tokenization, unit-level masking, and `AOMTDataset`.
-  - `model/`: LLaDA wrapper and Mode A/B inference logic.
-  - `training/`: Unified trainer and loss functions.
-  - `evaluation/`: Benchmark runners (ALFWorld, ScienceWorld, WebShop).
-  - `slurm/`: Individual job scripts and cluster utilities.
-- `slurm/`: Master orchestration scripts.
-- `scripts/`: Environment setup and data preparation utilities.
-- `results/`: Output CSVs, LaTeX tables, and PNG plots (generated at runtime).
-
-## 4. Training Methods
+## 3. Training Methods
 
 1.  **Standard SFT:** Baseline causal-prefix SFT.
 2.  **Prefix SFT Stage 1:** Offline Internal World Model (IWM) pretraining (local 3-unit context).
 3.  **Prefix SFT Stage 2:** Policy SFT initialized from Stage 1.
 4.  **AOMT-Mixed:** The proposed method. Joint trajectory modeling via random unit-level masking.
 
-## 5. Inference Modes (for AOMT-Mixed)
+## 4. Inference (Unified)
 
--   **Mode A (Myopic):** Denoises only the next action slot.
--   **Mode B (Planning):** Jointly denoises a multi-step future template; extracts only the first action.
+All methods use **identical inference** to ensure a fair comparison of training objectives.
+-   **Method:** LLaDA Block Diffusion (32 steps).
+-   **Prompt:** Full trajectory history joined with `\n`, wrapped in a single `USER` turn.
+-   **Target:** Next action generated in the `ASSISTANT` turn.
+
+## 5. Design Decisions
+
+- **Unit-Level Masking:** We mask entire text spans (units) to prevent intra-unit information leakage.
+- **Data-Driven Causality:** No causal attention mask is used; causality is enforced by sequence construction.
+- **Representational AOMT:** Benefit of AOMT-Mixed is internal; no hallucinated planning is used at inference time.
 
 ## 6. Testing
 
@@ -58,13 +54,7 @@ Run local (CPU-only) tests:
 pytest aomt/data/tests/ aomt/tests/ -v -m "not gpu"
 ```
 
-Run cluster (GPU required) tests:
-```bash
-sbatch aomt/slurm/run_tests.sh
-```
-
 ## 7. Documentation
 
-- `PROJECT.md`: Comprehensive methodological and technical documentation.
-- `AUDIT.md`: Cluster configuration details and project history.
+- `PROJECT.md`: Comprehensive technical and methodological documentation.
 - `QA_REPORT.md`: Detailed audit findings and bug fixes.

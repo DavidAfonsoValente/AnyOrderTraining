@@ -2,12 +2,12 @@
 
 ## 1. Overview
 
-Any-Order Masked Training (AOMT) is a training framework for LLM-based agents that enables them to jointly model both policies and world models. Unlike standard Supervised Fine-Tuning (SFT), which typically predicts the next action in a causal sequence, AOMT uses a random unit-level masking strategy over the entire agent trajectory. This allows the model to learn bidirectional dependencies between observations and actions, facilitating multi-step planning and increasing robustness to observation noise.
+Any-Order Masked Training (AOMT) is a training framework for LLM-based agents that enables them to jointly model both policies and world models. Unlike standard Supervised Fine-Tuning (SFT), which typically predicts the next action in a causal sequence, AOMT uses a random unit-level masking strategy over the entire agent trajectory. This allows the model to learn bidirectional dependencies between observations and actions.
 
 This codebase provides a complete, paper-ready implementation of AOMT, including:
 - Trajectory-level unit tokenization and masking.
 - Four distinct training methods (Standard SFT, Prefix SFT Stages 1 & 2, and AOMT-Mixed).
-- Dual inference modes: Myopic (Mode A) and Planning (Mode B).
+- Unified inference module using LLaDA block diffusion.
 - Comprehensive evaluation suite for ALFWorld, ScienceWorld, and WebShop.
 - Automated ablation and analysis pipelines.
 
@@ -35,27 +35,21 @@ Fine-tunes the policy starting from the Stage 1 checkpoint.
 The proposed method. Randomly masks any unit (observation or action) in the full trajectory.
 **Structure:** `[M_O0, SEP, M_A0, SEP, ..., M_OT]` where $M_i$ is a Bernoulli mask.
 
-## 4. Inference Modes
+## 4. Inference Mode
 
-### Mode A: Myopic Inference
-Denoises only the immediate next action slot. Valid for all methods.
-1. Tokenize history.
-2. Append `[MASK] * max_new_tokens`.
-3. Iteratively unmask the suffix using block diffusion.
+All four methods use an identical inference procedure to ensure a fair comparison. The benefits of AOMT-Mixed are purely representational — by training with bidirectional context, the model develops internal representations that encode the causal structure of trajectories.
 
-### Mode B: Planning Inference
-Exclusive to `aomt_mixed`. Jointly denoises a multi-step future template.
-1. Build planning template: `[History, SEP, MASK_At, SEP, MASK_Ot+1, SEP, MASK_At+1, ...]`
-2. Jointly denoise the entire suffix.
-3. Extract only $A_t$ for execution; discard the rest.
-4. Replan at each step with real observations.
+### Unified Inference Logic
+1.  **Prompt Construction:** The entire observation/action history is joined with `\n` and wrapped in a single `USER` role message.
+2.  **Generation:** LLaDA block diffusion generates the next action string in the `ASSISTANT` role.
+3.  **Iterative Denoising:** High-confidence tokens are unmasked first over 32 diffusion steps.
 
 ## 5. Design Decisions
 
 - **Unit-Level Masking:** We mask entire text spans (units) to prevent intra-unit information leakage, forcing the model to rely on inter-unit context.
 - **Data-Driven Causality:** We enforce causality by simply omitting future units from the sequence in SFT methods, avoiding the need for a causal attention mask.
-- **Mask Resampling:** Masks are resampled every epoch during the `__getitem__` call to maximize data diversity.
-- **dFactory as a Library:** We use `dFactory/VeOmni` for MoE handling and distributed utilities but keep our AOMT logic separate to prevent dependency divergence.
+- **Local World Model:** Prefix SFT Stage 1 uses a local 3-unit window ($O_t, A_t, O_{t+1}$) to replicate the ALEE formulation.
+- **Rejection of Planning Inference (Mode B):** We explicitly reject K-step lookahead planning at inference time. Hallucinating future observations in stochastic environments can mislead the agent. The representational benefit of AOMT is sufficient to improve policy performance without the risks of hallucinated context.
 
 ## 6. Training and Evaluation
 

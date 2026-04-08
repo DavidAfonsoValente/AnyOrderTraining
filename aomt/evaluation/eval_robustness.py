@@ -7,7 +7,6 @@ def evaluate_robustness(
     model, tokenizer, config,
     rhos: list = [0.0, 0.1, 0.2, 0.3],
     split: str = "eval_in_distribution",
-    inference_mode: str = "mode_a",
     seed: int = 42,
 ) -> Dict:
     """
@@ -19,7 +18,6 @@ def evaluate_robustness(
         res = evaluate_alfworld(
             model, tokenizer, config, 
             split=split, 
-            inference_mode=inference_mode,
             rho=rho,
             n_episodes=20, # Shorter eval for robustness curve
             seed=seed
