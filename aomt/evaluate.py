@@ -15,6 +15,7 @@ def main():
     parser.add_argument("--checkpoint", type=str, required=True)
     parser.add_argument("--benchmark", type=str, choices=["alfworld", "scienceworld", "webshop", "all"])
     parser.add_argument("--rho", type=float, default=0.0)
+    parser.add_argument("--diffusion_steps", type=int, help="Override number of diffusion steps")
     parser.add_argument("--output_dir", type=str, default="results/")
     parser.add_argument("--n_episodes", type=int, default=50)
     args = parser.parse_args()
@@ -23,6 +24,8 @@ def main():
     base_cfg = OmegaConf.load("aomt/config/base.yaml")
     # model_id override to checkpoint path
     base_cfg.model_id = args.checkpoint
+    if args.diffusion_steps:
+        base_cfg.diffusion_steps = args.diffusion_steps
     
     print(f"Loading model from {args.checkpoint}...")
     model, tokenizer = load_model_and_tokenizer(model_id=args.checkpoint)

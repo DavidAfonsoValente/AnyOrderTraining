@@ -13,24 +13,42 @@ def generate_action(
     temperature: float = 0.0,
 ) -> str:
     """
-    Identical for ALL five methods.
+    Identical for ALL methods.
     history_parts: list of obs/act strings ending with latest observation.
-    Joined as single user message — matches Standard SFT training format.
+    Joined as single user message — matches Standard SFT and AOMT training format.
+    
+    To resolve the training distribution mismatch, we format the prompt exactly
+    as the model saw it during training (a single USER message), removing the
+    trailing <|role_end|> token, appending the generation slot (MASKs), and
+    then appending <|role_end|>. The model denoises inside the USER role.
     """
-    prompt = "\n".join(history_parts)
+    prompt = "\n".join(history_parts) + "\n"
     conversation = [{"role": "user", "content": prompt}]
     
     input_ids = tokenizer.apply_chat_template(
         conversation,
-        add_generation_prompt=True,
+        add_generation_prompt=False,
         tokenize=True,
-        return_tensors="pt",
-    ).to(model.device)
+    )
+    
+    # Remove trailing <|role_end|> to generate inside the user message
+    # We find the role_end token ID manually or assume it's the last token.
+    # For LLaDA 2.0, the chat template ends with <|role_end|>
+    role_end_id = input_ids[-1]
+    prompt_ids = input_ids[:-1]
+    
+    prompt_len = len(prompt_ids)
+    
+    mask_ids = [tokenizer.mask_token_id] * gen_length
+    
+    # Re-append role_end_id after masks
+    full_ids = prompt_ids + mask_ids + [role_end_id]
+    
+    input_tensors = torch.tensor([full_ids], dtype=torch.long, device=model.device)
     
     with torch.no_grad():
-        # Using the custom generate method implemented in modeling_llada2_moe.py
         output_ids = model.generate(
-            input_ids,
+            input_tensors,
             gen_length=gen_length,
             block_length=32,
             steps=steps,
@@ -39,13 +57,20 @@ def generate_action(
             remasking="low_confidence",
         )
     
-    generated = output_ids[0, input_ids.shape[1]:]
+    generated = output_ids[0, prompt_len:prompt_len + gen_length]
     
     # Handle EOS
     eos_pos = (generated == tokenizer.eos_token_id).nonzero(as_tuple=True)[0]
     if len(eos_pos) > 0:
         generated = generated[:eos_pos[0]]
     
+    # Stop generation at the first newline (since actions are single lines in ETO format)
+    # The tokenizer encoding for newline is typically 198
+    newline_id = tokenizer.encode("\n", add_special_tokens=False)[0]
+    nl_pos = (generated == newline_id).nonzero(as_tuple=True)[0]
+    if len(nl_pos) > 0:
+        generated = generated[:nl_pos[0]]
+        
     return tokenizer.decode(generated, skip_special_tokens=True).strip()
 
 def corrupt_observation(

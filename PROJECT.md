@@ -40,9 +40,9 @@ The proposed method. Randomly masks any unit (observation or action) in the full
 All four methods use an identical inference procedure to ensure a fair comparison. The benefits of AOMT-Mixed are purely representational — by training with bidirectional context, the model develops internal representations that encode the causal structure of trajectories.
 
 ### Unified Inference Logic
-1.  **Prompt Construction:** The entire observation/action history is joined with `\n` and wrapped in a single `USER` role message.
-2.  **Generation:** LLaDA block diffusion generates the next action string in the `ASSISTANT` role.
-3.  **Iterative Denoising:** High-confidence tokens are unmasked first over 32 diffusion steps.
+1.  **Prompt Construction:** The entire observation/action history is joined with `\n` and wrapped in a single `USER` (HUMAN) role message.
+2.  **Generation:** The trailing `<|role_end|>` token is removed, and `[MASK]` tokens are appended. The model generates the next action string **inside** the `USER` role to match the training distribution.
+3.  **Iterative Denoising:** High-confidence tokens are unmasked first over 32 diffusion steps using LLaDA's block diffusion.
 
 ## 5. Design Decisions
 
