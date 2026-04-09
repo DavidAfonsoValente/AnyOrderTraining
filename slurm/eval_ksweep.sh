@@ -9,6 +9,9 @@
 #SBATCH --output=results/logs/ksweep/%j_%x.out
 
 set -euo pipefail
+module purge
+module load python/3.12
+
 PROJECT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 cd $PROJECT_DIR
 source venv/bin/activate
