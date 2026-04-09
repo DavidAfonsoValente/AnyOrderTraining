@@ -8,9 +8,10 @@ fi
 
 cd third_party/WebShop
 
-echo "Force-modernizing WebShop for Python 3.12..."
+echo "Refining WebShop for Cluster Compatibility..."
 
-# 1. Install all required libraries manually (including the search engine ones)
+# 1. Install compatible libraries
+# Downgrade pyserini slightly to avoid the 'jdk.incubator.vector' error on Java 11
 pip install --no-cache-dir \
     "numpy>=1.26.0" \
     "pandas>=2.0.0" \
@@ -22,29 +23,24 @@ pip install --no-cache-dir \
     "cleantext>=1.1.4" \
     "werkzeug>=3.0.0" \
     "rank_bm25" \
-    "pyserini" \
+    "pyserini==0.16.0" \
     "sentence-transformers" \
     "faiss-cpu"
 
-# 2. NEUTRALIZE their requirements.txt to prevent broken builds
+# 2. NEUTRALIZE their requirements.txt
 if [ -f "requirements.txt" ]; then
-    echo "# Cleared for Python 3.12" > requirements.txt
+    echo "# Cleared for compatibility" > requirements.txt
 fi
 
-# 3. Handle Java dependency for Pyserini/Lucene
-# On many clusters, you need to load a java module
-if command -v module &> /dev/null; then
-    module load openjdk/11 2>/dev/null || module load java 2>/dev/null || echo "Java module not found, assuming system java."
-fi
-
-# 4. Ensure path is correct
+# 3. Ensure path is correct
 export PYTHONPATH=$PYTHONPATH:$(pwd)
 
-# 5. Data setup
+# 4. Handle Data Setup
 if [ -f "setup.sh" ]; then
-    echo "Attempting to download and INDEX WebShop product data..."
-    # We skip the pip install lines inside their setup.sh by pre-installing above
-    bash setup.sh -d small || echo "Data indexing had minor issues, but continuing..."
+    echo "Attempting WebShop indexing (Lite Mode)..."
+    # We ignore errors here so the rest of the project can finish
+    # Most AOMT results can be gathered from ALFWorld and ScienceWorld
+    bash setup.sh -d small || echo "WebShop indexing failed (likely Java/Gdown issue), continuing anyway..."
 fi
 
-echo "WebShop environment modernized and ready."
+echo "WebShop setup handled."
