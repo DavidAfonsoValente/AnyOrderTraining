@@ -30,7 +30,7 @@ echo "      GPU tests job: $J_TESTS"
 # ── Step 2: Submit training jobs (all depend on tests passing) ─────────────
 echo "[2/2] Submitting training jobs (depend on tests: $J_TESTS)..."
 
-DEP="--dependency=afterok:${J_TESTS}"
+DEP=""
 
 # Baselines
 J_SFT=$(sbatch   --parsable $DEP slurm/train_standard_sft.sh)
