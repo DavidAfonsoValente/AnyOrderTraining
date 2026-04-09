@@ -10,7 +10,7 @@
 
 set -euo pipefail
 
-PROJECT_DIR="$SLURM_SUBMIT_DIR"
+PROJECT_DIR="/home/d/dvalente/AnyOrderTraining"
 cd $PROJECT_DIR
 source "$PROJECT_DIR/venv/bin/activate"
 export PYTHONPATH=${PYTHONPATH:-}:$(pwd)

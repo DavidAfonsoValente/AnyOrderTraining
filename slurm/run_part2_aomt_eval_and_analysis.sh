@@ -4,7 +4,7 @@
 # Reads Part 1 job IDs from slurm/.part1_job_ids.
 set -euo pipefail
 
-PROJECT_DIR="$SLURM_SUBMIT_DIR"
+PROJECT_DIR="/home/d/dvalente/AnyOrderTraining"
 IDS_FILE="$PROJECT_DIR/slurm/.part1_job_ids"
 
 echo "═══════════════════════════════════════════════════════════"
