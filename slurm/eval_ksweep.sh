@@ -12,6 +12,7 @@ set -euo pipefail
 PROJECT_DIR=$HOME/AnyOrderTraining
 cd $PROJECT_DIR
 source venv/bin/activate
+export PYTHONPATH=$PYTHONPATH:$(pwd)
 
 # Sweep diffusion steps K for aomt_mixed best p checkpoint
 K_STEPS=(1 2 4 8 16 32 64)

@@ -11,5 +11,6 @@ set -euo pipefail
 PROJECT_DIR=$HOME/AnyOrderTraining
 cd $PROJECT_DIR
 source venv/bin/activate
+export PYTHONPATH=$PYTHONPATH:$(pwd)
 
 python aomt/analysis.py --results_dir results --output_dir results --format both

@@ -16,6 +16,7 @@ module load python/3.11
 PROJECT_DIR=$HOME/AnyOrderTraining
 cd $PROJECT_DIR
 source venv/bin/activate
+export PYTHONPATH=$PYTHONPATH:$(pwd)
 
 torchrun \
   --nproc_per_node=$SLURM_GPUS_PER_NODE \

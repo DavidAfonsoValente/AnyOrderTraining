@@ -12,5 +12,6 @@ set -euo pipefail
 PROJECT_DIR=$HOME/AnyOrderTraining
 cd $PROJECT_DIR
 source venv/bin/activate
+export PYTHONPATH=$PYTHONPATH:$(pwd)
 
 python aomt/analysis/nll.py --checkpoint_dir results/checkpoints --output_dir results/

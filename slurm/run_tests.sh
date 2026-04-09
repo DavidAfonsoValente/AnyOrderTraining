@@ -12,6 +12,7 @@ set -euo pipefail
 PROJECT_DIR=$HOME/AnyOrderTraining
 cd $PROJECT_DIR
 source venv/bin/activate
+export PYTHONPATH=$PYTHONPATH:$(pwd)
 
 # Run all tests
 pytest aomt/data/tests/ aomt/model/tests/ aomt/tests/ -v
