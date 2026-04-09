@@ -1,20 +1,10 @@
-"""
-dFactory / VeOmni Integration:
-- Base Dataset: veomni.data.dataset.MappingDataset
-- Trainer: Linear training scripts (e.g., tasks/train_llada2_bd.py)
-- Collator: veomni.data.data_collator.DataCollatorWithPadding
-- Tokenization: Build build_tokenizer
-- Provides: Distributed data loading, efficient MoE handling.
-- Does NOT provide: AOMT unit-level masking, multi-unit trajectory handling.
-"""
-
 import torch
 from torch.utils.data import Dataset
 from typing import List, Dict, Any, Optional, Union
 import numpy as np
 import os
 import pickle
-from .tokenize_trajectory import tokenize_trajectory, TokenizedTrajectory, UnitSpan
+from .tokenize_trajectory import tokenize_trajectory, TokenizedTrajectory, UnitSpan, _ensure_list_of_ints
 from .masking import (
     apply_unit_mask,
     sample_sft_mask,
@@ -48,7 +38,6 @@ class AOMTDataset(Dataset):
         self.mask_token_id = tokenizer.mask_token_id
         self.token_level = token_level
 
-        # Cache tokenization
         cache_path = os.path.join(cache_dir, f"tokenized_{split}_{model_id.replace('/', '_')}.pkl")
         os.makedirs(cache_dir, exist_ok=True)
 
@@ -64,7 +53,6 @@ class AOMTDataset(Dataset):
             with open(cache_path, 'wb') as f:
                 pickle.dump(self.tokenized_trajectories, f)
 
-        # Pre-expand SFT examples
         if method in ["standard_sft", "prefix_sft_stage1", "prefix_sft_stage2"]:
             self.examples = []
             for traj_idx, traj in enumerate(self.tokenized_trajectories):
@@ -111,9 +99,16 @@ class AOMTDataset(Dataset):
             )
             input_ids, labels = apply_unit_mask(traj.token_ids, traj.unit_spans, masked_indices, self.mask_token_id)
 
+        # LLaDA 2.0 expects 4D block attention mask [1, L, L] for single example
+        # (Trainer will collate this into [B, 1, L, L])
+        seq_len = len(input_ids)
+        attention_mask = torch.ones((1, seq_len, seq_len), dtype=torch.long)
+
         return {
             "input_ids": torch.tensor(input_ids, dtype=torch.long),
             "labels": torch.tensor(labels, dtype=torch.long),
-            "attention_mask": torch.ones(len(input_ids), dtype=torch.long),
-            "method": self.method
+            "attention_mask": attention_mask,
+            "method": self.method,
+            "unit_span_starts": torch.tensor([s.start for s in traj.unit_spans]),
+            "unit_span_ends": torch.tensor([s.end for s in traj.unit_spans])
         }
