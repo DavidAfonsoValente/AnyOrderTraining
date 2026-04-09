@@ -104,6 +104,12 @@ class AOMTDataset(Dataset):
         seq_len = len(input_ids)
         attention_mask = torch.ones((1, seq_len, seq_len), dtype=torch.long)
 
+        # Debug: Check for strings
+        for i, val in enumerate(input_ids):
+            if not isinstance(val, int):
+                print(f"DEBUG: Found non-int at input_ids[{i}]: {val} (type: {type(val)})")
+                break
+
         return {
             "input_ids": torch.tensor(input_ids, dtype=torch.long),
             "labels": torch.tensor(labels, dtype=torch.long),

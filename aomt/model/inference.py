@@ -34,7 +34,6 @@ def generate_action(
     prompt = "\n".join(history_parts) + "\n"
     conversation = [{"role": "user", "content": prompt}]
     
-    # 1. Get prompt tokens
     raw_ids = tokenizer.apply_chat_template(conversation, add_generation_prompt=False, tokenize=True)
     input_ids = _ensure_list_of_ints(raw_ids)
     
@@ -42,27 +41,20 @@ def generate_action(
     prompt_ids = input_ids[:-1]
     prompt_len = len(prompt_ids)
     
-    # 2. Append MASK block and trailing role end
     full_ids = prompt_ids + [int(tokenizer.mask_token_id)] * gen_length + [role_end_id]
     input_tensors = torch.tensor([full_ids], dtype=torch.long, device=model.device)
     
-    # 3. Create 4D attention mask [B, 1, L, L]
-    seq_len = len(full_ids)
-    attention_mask = torch.ones((1, 1, seq_len, seq_len), device=model.device)
-    
+    # LLaDA 2.0 native generate() does not accept attention_mask
     with torch.no_grad():
         output_ids = model.generate(
             input_tensors,
-            attention_mask=attention_mask,
             gen_length=gen_length,
-            block_length=32,
             steps=steps,
-            temperature=temperature,
-            cfg_scale=0.0,
-            remasking="low_confidence",
+            temperature=int(temperature), # Model expects int temperature
+            mask_id=int(tokenizer.mask_token_id),
+            eos_id=int(tokenizer.eos_token_id)
         )
     
-    # 4. Extract and clean generation
     generated = output_ids[0, prompt_len:prompt_len + gen_length]
     
     eos_pos = (generated == tokenizer.eos_token_id).nonzero(as_tuple=True)[0]
