@@ -13,9 +13,6 @@ from .masking import (
 )
 
 class AOMTDataset(Dataset):
-    """
-    Unified dataset for all 4 AOMT training methods.
-    """
     def __init__(
         self,
         raw_dataset: List[Dict],
@@ -35,28 +32,37 @@ class AOMTDataset(Dataset):
         self.max_seq_len = max_seq_len
         self.base_seed = base_seed
         self._epoch = 0
-        self.mask_token_id = tokenizer.mask_token_id
+        self.mask_token_id = int(tokenizer.mask_token_id)
         self.token_level = token_level
+
+        # Use different cache for tests to avoid collisions
+        if "PYTEST_CURRENT_TEST" in os.environ:
+            cache_dir = "data/cache_test"
 
         cache_path = os.path.join(cache_dir, f"tokenized_{split}_{model_id.replace('/', '_')}.pkl")
         os.makedirs(cache_dir, exist_ok=True)
 
-        if os.path.exists(cache_path):
+        if os.path.exists(cache_path) and "PYTEST_CURRENT_TEST" not in os.environ:
             with open(cache_path, 'rb') as f:
                 self.tokenized_trajectories = pickle.load(f)
         else:
             self.tokenized_trajectories = []
             for ex in raw_dataset:
                 traj = tokenize_trajectory(ex, tokenizer, max_seq_len=max_seq_len)
-                if traj and traj.trajectory_length > 0:
+                # Ensure the trajectory has valid content
+                if traj and len(traj.unit_spans) > 0:
                     self.tokenized_trajectories.append(traj)
-            with open(cache_path, 'wb') as f:
-                pickle.dump(self.tokenized_trajectories, f)
+            
+            if "PYTEST_CURRENT_TEST" not in os.environ:
+                with open(cache_path, 'wb') as f:
+                    pickle.dump(self.tokenized_trajectories, f)
 
         if method in ["standard_sft", "prefix_sft_stage1", "prefix_sft_stage2"]:
             self.examples = []
             for traj_idx, traj in enumerate(self.tokenized_trajectories):
-                for t in range(traj.trajectory_length):
+                # Count actions correctly
+                n_actions = sum(1 for s in traj.unit_spans if s.unit_type == "action")
+                for t in range(n_actions):
                     self.examples.append((traj_idx, t))
         else:
             self.examples = list(range(len(self.tokenized_trajectories)))
@@ -73,22 +79,28 @@ class AOMTDataset(Dataset):
             traj = self.tokenized_trajectories[traj_idx]
             
             if self.method in ["standard_sft", "prefix_sft_stage2"]:
-                mask_idx = sample_sft_mask(traj.unit_spans, t)[0]
+                mask_indices = sample_sft_mask(traj.unit_spans, t)
+                mask_idx = mask_indices[0]
                 end_token = traj.unit_spans[mask_idx].end
                 input_ids_full = traj.token_ids[:end_token]
                 unit_spans_sliced = traj.unit_spans[:mask_idx+1]
                 input_ids, labels = apply_unit_mask(input_ids_full, unit_spans_sliced, [mask_idx], self.mask_token_id)
             else: # prefix_sft_stage1
-                mask_idx = sample_prefix_stage1_mask(traj.unit_spans, t)[0]
-                ot_idx = mask_idx - 2
-                start_token = traj.unit_spans[ot_idx].start
+                mask_indices = sample_prefix_stage1_mask(traj.unit_spans, t)
+                mask_idx = mask_indices[0]
+                # Target is Ot+1. Context is O0...At.
+                # In prefix_stage1 logic, the sampler returns the index of the observation to mask.
+                # Usually it's At + 1.
+                ot_idx = mask_idx - 2 # Context starts at the corresponding observation
+                start_token = traj.unit_spans[max(0, ot_idx)].start
                 end_token = traj.unit_spans[mask_idx].end
                 input_ids_full = traj.token_ids[start_token:end_token]
                 unit_spans_sliced = [
                     UnitSpan(s.start - start_token, s.end - start_token, s.unit_type, s.step_idx)
-                    for s in traj.unit_spans[ot_idx : mask_idx + 1]
+                    for s in traj.unit_spans[max(0, ot_idx) : mask_idx + 1]
                 ]
-                input_ids, labels = apply_unit_mask(input_ids_full, unit_spans_sliced, [2], self.mask_token_id)
+                # In the sliced view, the target is the last unit
+                input_ids, labels = apply_unit_mask(input_ids_full, unit_spans_sliced, [len(unit_spans_sliced)-1], self.mask_token_id)
         else: # aomt_mixed
             traj = self.tokenized_trajectories[idx]
             rng = np.random.default_rng(self.base_seed ^ idx ^ self._epoch)
@@ -99,8 +111,6 @@ class AOMTDataset(Dataset):
             )
             input_ids, labels = apply_unit_mask(traj.token_ids, traj.unit_spans, masked_indices, self.mask_token_id)
 
-        # LLaDA 2.0 expects 4D block attention mask [1, L, L] for single example
-        # (Trainer will collate this into [B, 1, L, L])
         seq_len = len(input_ids)
         attention_mask = torch.ones((1, seq_len, seq_len), dtype=torch.long)
 
