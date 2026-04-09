@@ -19,25 +19,21 @@ class TokenizedTrajectory:
     trajectory_length: int   # T (number of action steps)
 
 def _ensure_list_of_ints(token_output: Any) -> List[int]:
-    """Universal flattener for LLaDA Tokenizer outputs."""
-    # Handle BatchEncoding or Dict-like objects
-    if hasattr(token_output, "get") and "input_ids" in token_output:
-        return _ensure_list_of_ints(token_output["input_ids"])
+    """Extremely robust flattener for LLaDA Fast Tokenizer outputs."""
+    # If it's a BatchEncoding or Dict, get the input_ids
+    if isinstance(token_output, dict) or hasattr(token_output, "get"):
+        if "input_ids" in token_output:
+            return _ensure_list_of_ints(token_output["input_ids"])
     
-    # Handle the 'data' attribute in some Transformers versions
-    if hasattr(token_output, "data") and isinstance(token_output.data, dict):
-        if "input_ids" in token_output.data:
-            return _ensure_list_of_ints(token_output.data["input_ids"])
-
-    # Handle Tokenizers Encoding metadata object
+    # If it has a .ids attribute (Encoding object)
     if hasattr(token_output, "ids"):
         return [int(i) for i in token_output.ids]
     
-    # Handle Tensors
+    # If it's a tensor
     if torch.is_tensor(token_output):
         return token_output.flatten().tolist()
     
-    # Handle Nested Lists
+    # If it's a list, check if it's nested
     if isinstance(token_output, list):
         if len(token_output) > 0:
             if isinstance(token_output[0], (list, dict)) or hasattr(token_output[0], "ids"):
@@ -63,13 +59,12 @@ def tokenize_trajectory(
     full_content = "\n".join(units_text)
     conversation = [{"role": "user", "content": full_content}]
     
-    # Get standard chat-templated IDs
+    # 1. Get base IDs
     raw_ids = tokenizer.apply_chat_template(conversation, add_generation_prompt=False, tokenize=True)
     all_ids = _ensure_list_of_ints(raw_ids)
 
-    # Locate start of content
-    first_unit_raw = tokenizer.encode(units_text[0], add_special_tokens=False)
-    first_unit_ids = _ensure_list_of_ints(first_unit_raw)
+    # 2. Extract spans
+    first_unit_ids = _ensure_list_of_ints(tokenizer.encode(units_text[0], add_special_tokens=False))
     
     current_pos = 0
     for i in range(len(all_ids) - len(first_unit_ids) + 1):
@@ -85,7 +80,7 @@ def tokenize_trajectory(
         end_idx = start_idx + len(u_ids)
         unit_spans.append(UnitSpan(start_idx, end_idx, utype, current_step))
         if utype == "action": current_step += 1
-        current_pos = end_idx + 1 # +1 for \n
+        current_pos = end_idx + 1
 
     if len(all_ids) > max_seq_len:
         all_ids = all_ids[:max_seq_len]
@@ -106,4 +101,3 @@ def compute_median_unit_lengths(dataset, tokenizer, n_samples=1000) -> Dict[str,
         "median_obs_tokens": int(np.median(obs_lens)) if obs_lens else 17,
         "median_action_tokens": int(np.median(act_lens)) if act_lens else 33
     }
-# Final sync verified
