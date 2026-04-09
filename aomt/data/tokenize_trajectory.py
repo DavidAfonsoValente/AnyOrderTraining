@@ -19,16 +19,26 @@ class TokenizedTrajectory:
     trajectory_length: int   # T (number of action steps)
 
 def _ensure_list_of_ints(token_output: Any) -> List[int]:
-    """Helper to handle LLaDA tokenizer returning Encoding objects or nested lists."""
+    """Helper to handle LLaDA tokenizer returning Encoding or BatchEncoding objects."""
+    # Handle BatchEncoding (dict-like)
+    if isinstance(token_output, dict) or hasattr(token_output, "data"):
+        if "input_ids" in token_output:
+            return _ensure_list_of_ints(token_output["input_ids"])
+            
+    # Handle Encoding (object with .ids)
     if hasattr(token_output, "ids"):
         return [int(i) for i in token_output.ids]
+        
+    # Handle nested lists or tensors
     if isinstance(token_output, list):
-        # Handle list of lists or list of Encoding
-        if len(token_output) > 0 and (isinstance(token_output[0], list) or hasattr(token_output[0], "ids")):
-            return _ensure_list_of_ints(token_output[0])
+        if len(token_output) > 0:
+            if isinstance(token_output[0], list) or hasattr(token_output[0], "ids") or isinstance(token_output[0], dict):
+                return _ensure_list_of_ints(token_output[0])
         return [int(i) for i in token_output]
+        
     if torch.is_tensor(token_output):
         return token_output.flatten().tolist()
+        
     return [int(token_output)]
 
 def tokenize_trajectory(
@@ -48,12 +58,11 @@ def tokenize_trajectory(
     full_content = "\n".join(units_text)
     conversation = [{"role": "user", "content": full_content}]
     
-    # 1. Get the base IDs from the chat template
+    # Get base tokens
     raw_ids = tokenizer.apply_chat_template(conversation, add_generation_prompt=False, tokenize=True)
     all_ids = _ensure_list_of_ints(raw_ids)
 
-    # 2. Extract spans by encoding units individually
-    # Search for the content tokens to find the start of O0
+    # Search for start of content
     first_unit_raw = tokenizer.encode(units_text[0], add_special_tokens=False)
     first_unit_ids = _ensure_list_of_ints(first_unit_raw)
     

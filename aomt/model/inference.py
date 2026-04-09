@@ -5,12 +5,16 @@ from transformers import PreTrainedModel, PreTrainedTokenizer
 from math import ceil
 
 def _ensure_list_of_ints(token_output: Any) -> List[int]:
-    """Helper to handle LLaDA tokenizer returning Encoding objects."""
+    """Helper to handle LLaDA tokenizer returning Encoding or BatchEncoding objects."""
+    if isinstance(token_output, dict) or hasattr(token_output, "data"):
+        if "input_ids" in token_output:
+            return _ensure_list_of_ints(token_output["input_ids"])
     if hasattr(token_output, "ids"):
         return [int(i) for i in token_output.ids]
     if isinstance(token_output, list):
-        if len(token_output) > 0 and (isinstance(token_output[0], list) or hasattr(token_output[0], "ids")):
-            return _ensure_list_of_ints(token_output[0])
+        if len(token_output) > 0:
+            if isinstance(token_output[0], list) or hasattr(token_output[0], "ids") or isinstance(token_output[0], dict):
+                return _ensure_list_of_ints(token_output[0])
         return [int(i) for i in token_output]
     if torch.is_tensor(token_output):
         return token_output.flatten().tolist()
