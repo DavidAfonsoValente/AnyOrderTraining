@@ -13,7 +13,7 @@ set -euo pipefail
 
 PROJECT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 cd $PROJECT_DIR
-source venv/bin/activate
+source "$PROJECT_DIR/venv/bin/activate"
 export PYTHONPATH=${PYTHONPATH:-}:$(pwd)
 
 torchrun \
