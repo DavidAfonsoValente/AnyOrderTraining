@@ -1,6 +1,6 @@
 import torch
 from transformers import AutoTokenizer, AutoModelForCausalLM
-from typing import Tuple
+from typing import Tuple, Any
 
 LLADA_MODEL_ID = "aomt/weights/LLaDA2.0-mini"
 
@@ -18,11 +18,6 @@ def load_model_and_tokenizer(
     if tokenizer.mask_token_id is None:
         raise ValueError("Tokenizer MUST have a mask_token_id for AOMT.")
     
-    if tokenizer.mask_token_id == tokenizer.pad_token_id:
-        # Some tokenizers use same for both, but for AOMT we prefer distinct if possible.
-        # But we'll follow whatever the model was trained with.
-        pass
-
     torch_dtype = torch.bfloat16 if precision == "bf16" else torch.float32
     
     model = AutoModelForCausalLM.from_pretrained(
@@ -38,6 +33,3 @@ def load_model_and_tokenizer(
     print(f"Model loaded. Total parameters: {sum(p.numel() for p in model.parameters()) / 1e9:.2f}B")
     
     return model, tokenizer
-
-# Typing helper
-from typing import Any
