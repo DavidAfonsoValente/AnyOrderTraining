@@ -9,10 +9,10 @@
 #SBATCH --output=results/logs/tests/%j_%x.out
 
 set -euo pipefail
-PROJECT_DIR=$HOME/AnyOrderTraining
+PROJECT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 cd $PROJECT_DIR
 source venv/bin/activate
-export PYTHONPATH=$PYTHONPATH:$(pwd)
+export PYTHONPATH=${PYTHONPATH:-}:$(pwd)
 
 # Run all tests
 pytest aomt/data/tests/ aomt/model/tests/ aomt/tests/ -v

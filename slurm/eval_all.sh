@@ -9,10 +9,10 @@
 #SBATCH --output=results/logs/eval/%j_%x.out
 
 set -euo pipefail
-PROJECT_DIR=$HOME/AnyOrderTraining
+PROJECT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 cd $PROJECT_DIR
 source venv/bin/activate
-export PYTHONPATH=$PYTHONPATH:$(pwd)
+export PYTHONPATH=${PYTHONPATH:-}:$(pwd)
 
 # 1. Main Evaluation (all benchmarks, rho=0.0)
 METHODS=("std_sft" "prefix_s2" "amx_p025")

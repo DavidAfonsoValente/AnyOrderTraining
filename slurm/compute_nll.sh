@@ -9,9 +9,9 @@
 #SBATCH --output=results/logs/nll/%j_%x.out
 
 set -euo pipefail
-PROJECT_DIR=$HOME/AnyOrderTraining
+PROJECT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 cd $PROJECT_DIR
 source venv/bin/activate
-export PYTHONPATH=$PYTHONPATH:$(pwd)
+export PYTHONPATH=${PYTHONPATH:-}:$(pwd)
 
 python aomt/analysis/nll.py --checkpoint_dir results/checkpoints --output_dir results/
