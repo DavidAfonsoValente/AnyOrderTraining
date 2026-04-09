@@ -49,7 +49,7 @@ def print_stats(name, data):
 
 def main():
     ds_dict = load_robust_dataset()
-    tokenizer = AutoTokenizer.from_pretrained("aomt/weights/LLaDA2.0-mini")
+    tokenizer = AutoTokenizer.from_pretrained("aomt/weights/LLaDA2.0-mini", trust_remote_code=True)
     
     for split_name, ds in ds_dict.items():
         print(f"\n==================== SPLIT: {split_name} ({len(ds)} examples) ====================")
