@@ -8,23 +8,25 @@ fi
 
 cd third_party/WebShop
 
-# Check if setup.py exists, if not, install dependencies manually
-if [ -f "setup.py" ]; then
-    pip install -e . --no-cache-dir
-else
-    echo "setup.py not found in WebShop root. Installing requirements manually..."
-    # Install standard requirements
-    if [ -f "requirements.txt" ]; then
-        pip install -r requirements.txt --no-cache-dir
-    fi
-    # Ensure it's in the python path
-    export PYTHONPATH=$PYTHONPATH:$(pwd)
+# Python 3.12 Fix: Upgrade core build tools
+pip install --upgrade pip setuptools wheel --no-cache-dir
+
+# Install dependencies
+if [ -f "requirements.txt" ]; then
+    echo "Installing WebShop requirements..."
+    # We use --no-build-isolation to avoid pip creating a fresh environment with old setuptools
+    # If this fails, we will try standard install
+    pip install -r requirements.txt --no-cache-dir || pip install -r requirements.txt --no-cache-dir --no-build-isolation
 fi
 
-# Download data (this can be large, watch your quota)
-# Some versions of WebShop use a setup.sh for data
+# Ensure it's in the python path
+export PYTHONPATH=$PYTHONPATH:$(pwd)
+
+# Download data (small version to save quota)
 if [ -f "setup.sh" ]; then
-    bash setup.sh
+    echo "Running WebShop data setup (small)..."
+    # The -d small flag is often supported in WebShop setup.sh
+    bash setup.sh -d small || bash setup.sh
 fi
 
 echo "WebShop setup complete"
