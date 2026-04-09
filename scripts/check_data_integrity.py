@@ -4,57 +4,43 @@ from aomt.data.dataset import AOMTDataset
 from aomt.data.utils import load_robust_dataset
 import os
 
-def manual_verify():
+def visualize_masks():
     tokenizer = AutoTokenizer.from_pretrained("aomt/weights/LLaDA2.0-mini", trust_remote_code=True)
+    mask_token_id = tokenizer.mask_token_id # 156895
+    
     ds_dict, _ = load_robust_dataset()
-    raw_traj = [ds_dict["train"][0]] # Use the same trajectory for all
+    raw_traj = [ds_dict["train"][0]]
     
     methods = ["standard_sft", "prefix_sft_stage1", "aomt_mixed"]
     
     for method in methods:
-        print(f"\n\n{'#'*30} VERIFYING METHOD: {method} {'#'*30}")
-        ds = AOMTDataset(raw_traj, tokenizer, method=method, p_mask=0.25)
+        print(f"\n\n{'='*40} {method.upper()} {'='*40}")
+        ds = AOMTDataset(raw_traj, tokenizer, method=method, p_mask=0.4) # Use 40% mask for mixed to see it clearly
         item = ds[0]
         
         input_ids = item["input_ids"].tolist()
         labels = item["labels"].tolist()
         
-        print(f"Sequence Length: {len(input_ids)}")
+        # We will decode token by token to show exactly where masks are
+        decoded_parts = []
+        for i, token_id in enumerate(input_ids):
+            if token_id == mask_token_id:
+                # This is a mask! Show the target it's hiding in brackets
+                target_text = tokenizer.decode([labels[i]]) if labels[i] != -100 else "???"
+                decoded_parts.append(f"[{target_text.strip() if target_text.strip() else 'SPC'}_MASK]")
+            else:
+                decoded_parts.append(tokenizer.decode([token_id]))
         
-        # We want to see the "Boundary" between context and target
-        # Target tokens are where labels != -100
-        target_indices = [i for i, l in enumerate(labels) if l != -100]
+        full_visualization = "".join(decoded_parts)
+        print("MODEL INPUT VISUALIZATION:")
+        print("-" * 80)
+        print(full_visualization)
+        print("-" * 80)
         
-        if not target_indices:
-            print("ERROR: No target tokens found!")
-            continue
-            
-        first_target = target_indices[0]
-        last_target = target_indices[-1]
-        
-        # 1. Print the context just before the target
-        context_before = input_ids[max(0, first_target-10) : first_target]
-        print(f"\nContext before target: '{tokenizer.decode(context_before)}'")
-        
-        # 2. Print the target content
-        target_content = labels[first_target : last_target+1]
-        print(f"Target content (masked): '{tokenizer.decode(target_content)}'")
-        
-        # 3. Print the trailing tokens
-        context_after = input_ids[last_target+1 : last_target+10]
-        if context_after:
-            print(f"Context after target: '{tokenizer.decode(context_after)}'")
-        else:
-            print("Context after target: [END OF SEQUENCE]")
-
-        # 4. Verify Role Markers
-        full_text = tokenizer.decode(input_ids)
-        has_human_start = "<role>HUMAN</role>" in full_text or "HUMAN" in full_text
-        print(f"\nRole Check: Start Marker Present? {has_human_start}")
-        
-        # 5. Verify Mask Token
-        is_masked = all(input_ids[i] == tokenizer.mask_token_id for i in target_indices)
-        print(f"Mask Check: All target tokens replaced by MASK? {is_masked}")
+        # Sanity Check
+        mask_count = input_ids.count(mask_token_id)
+        label_count = sum(1 for l in labels if l != -100)
+        print(f"Stats: {mask_count} masks vs {label_count} labels. Match? {mask_count == label_count}")
 
 if __name__ == "__main__":
-    manual_verify()
+    visualize_masks()
