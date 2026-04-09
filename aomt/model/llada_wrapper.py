@@ -1,6 +1,20 @@
 import torch
 from transformers import AutoTokenizer, AutoModelForCausalLM
+import transformers.modeling_rope_utils as mru
 from typing import Tuple, Any
+
+# 1. ROPE Patch: LLaDA 2.0-mini expects 'default' in ROPE_INIT_FUNCTIONS
+# which was removed in newer transformers versions.
+def _compute_default_rope_parameters(config, device=None, seq_len=None, layer_type=None):
+    head_dim = getattr(config, "head_dim", config.hidden_size // config.num_attention_heads)
+    partial_rotary_factor = getattr(config, "partial_rotary_factor", 1.0)
+    dim = int(head_dim * partial_rotary_factor)
+    base = getattr(config, "rope_theta", 10000.0)
+    inv_freq = 1.0 / (base ** (torch.arange(0, dim, 2, device=device).float() / dim))
+    return inv_freq, 1.0
+
+if "default" not in mru.ROPE_INIT_FUNCTIONS:
+    mru.ROPE_INIT_FUNCTIONS["default"] = _compute_default_rope_parameters
 
 LLADA_MODEL_ID = "aomt/weights/LLaDA2.0-mini"
 
