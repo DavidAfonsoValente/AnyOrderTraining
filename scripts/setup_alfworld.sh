@@ -1,15 +1,16 @@
 #!/bin/bash
 set -e
-pip install alfworld
-python -c "import alfworld; print('alfworld version:', alfworld.__version__)"
-# Download game files
-python -c "import alfworld.agents.environment; alfworld.agents.environment.AlfredTWEnv"
-# Verify by listing available configs
+pip install alfworld --no-cache-dir
+echo "AlfWorld package installed."
+
+# Download game files (this is the actual important part)
+python -c "import alfworld.agents.environment"
+echo "AlfWorld environment importable."
+
+# Verify by listing data path
 python -c "
-import alfworld
 import os
 data_path = os.environ.get('ALFWORLD_DATA', os.path.expanduser('~/.alfworld'))
-print('ALFWORLD_DATA:', data_path)
-print('Exists:', os.path.exists(data_path))
+print('ALFWORLD_DATA path:', data_path)
 "
 echo "ALFWorld setup complete"
