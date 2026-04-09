@@ -20,16 +20,17 @@ def evaluate_alfworld(
     """
     os.environ['ALFWORLD_DATA'] = os.path.expanduser('~/.alfworld')
     
-    # Load ALFWorld config
-    config_path = os.path.join(os.path.dirname(__file__), "alfworld_config.yaml")
-    if not os.path.exists(config_path):
-        import alfworld.agents.modules.generic as common
-        alf_cfg = common.load_config(os.path.join(os.path.dirname(alfworld.__file__), "configs/base_config.yaml"))
-    else:
-        with open(config_path, "r") as f:
-            import yaml
-            alf_cfg = yaml.safe_load(f)
+    # ALFWorld expects a config file.
+    # The split mapping matches the ETO dataset expectations.
+    
+    # Default config path
+    default_cfg_path = os.path.join(os.path.dirname(alfworld.__file__), "configs/base_config.yaml")
+    
+    import alfworld.agents.modules.generic as common
+    # load_config in newer alfworld versions only takes the path string
+    alf_cfg = common.load_config(default_cfg_path)
 
+    # Use the requested split
     env_class = alfworld.agents.environment.AlfredTWEnv
     env = env_class(alf_cfg, split=split)
     env.seed(seed)
@@ -43,7 +44,6 @@ def evaluate_alfworld(
         obs, info = env.reset()
         done = False
         step = 0
-        # history_parts is a list of strings [O0, A0, O1, A1, ..., Ot]
         history_parts = []
         
         # Initial observation corruption
@@ -51,7 +51,6 @@ def evaluate_alfworld(
         history_parts.append(obs_str)
         
         while not done and step < 50:
-            # All methods now use identical inference
             action = generate_action(
                 model, tokenizer, history_parts, 
                 gen_length=config.get("max_new_tokens", 256),

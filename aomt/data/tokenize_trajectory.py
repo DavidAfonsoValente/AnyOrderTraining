@@ -19,12 +19,17 @@ class TokenizedTrajectory:
     trajectory_length: int   # T (number of action steps)
 
 def _ensure_list_of_ints(token_output: Any) -> List[int]:
-    """Helper to handle LLaDA tokenizer returning Encoding objects."""
+    """Helper to handle LLaDA tokenizer returning Encoding objects or nested lists."""
     if hasattr(token_output, "ids"):
-        return token_output.ids
+        return [int(i) for i in token_output.ids]
     if isinstance(token_output, list):
+        # Handle list of lists or list of Encoding
+        if len(token_output) > 0 and (isinstance(token_output[0], list) or hasattr(token_output[0], "ids")):
+            return _ensure_list_of_ints(token_output[0])
         return [int(i) for i in token_output]
-    return list(token_output)
+    if torch.is_tensor(token_output):
+        return token_output.flatten().tolist()
+    return [int(token_output)]
 
 def tokenize_trajectory(
     raw_example: Dict,
@@ -43,12 +48,15 @@ def tokenize_trajectory(
     full_content = "\n".join(units_text)
     conversation = [{"role": "user", "content": full_content}]
     
-    # Tokenize and ensure we have a list of ints
+    # 1. Get the base IDs from the chat template
     raw_ids = tokenizer.apply_chat_template(conversation, add_generation_prompt=False, tokenize=True)
     all_ids = _ensure_list_of_ints(raw_ids)
 
+    # 2. Extract spans by encoding units individually
     # Search for the content tokens to find the start of O0
-    first_unit_ids = tokenizer.encode(units_text[0], add_special_tokens=False)
+    first_unit_raw = tokenizer.encode(units_text[0], add_special_tokens=False)
+    first_unit_ids = _ensure_list_of_ints(first_unit_raw)
+    
     current_pos = 0
     for i in range(len(all_ids) - len(first_unit_ids) + 1):
         if all_ids[i : i+len(first_unit_ids)] == first_unit_ids:
@@ -58,12 +66,15 @@ def tokenize_trajectory(
     unit_spans = []
     current_step = 0
     for text, utype in zip(units_text, units_type):
-        ids = tokenizer.encode(text, add_special_tokens=False)
+        raw_u_ids = tokenizer.encode(text, add_special_tokens=False)
+        u_ids = _ensure_list_of_ints(raw_u_ids)
+        
         start_idx = current_pos
-        end_idx = start_idx + len(ids)
+        end_idx = start_idx + len(u_ids)
+        
         unit_spans.append(UnitSpan(start_idx, end_idx, utype, current_step))
         if utype == "action": current_step += 1
-        current_pos = end_idx + 1 # +1 for \n
+        current_pos = end_idx + 1 # +1 for \n separator
 
     if len(all_ids) > max_seq_len:
         all_ids = all_ids[:max_seq_len]
