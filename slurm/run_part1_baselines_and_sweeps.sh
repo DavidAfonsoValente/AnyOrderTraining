@@ -5,7 +5,7 @@
 # Output: slurm/.part1_job_ids
 set -euo pipefail
 
-PROJECT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+PROJECT_DIR="$SLURM_SUBMIT_DIR"
 # Aligned with cluster_info.md: Use project dir or a high-quota mount
 OUTPUT_ROOT=$PROJECT_DIR/results
 
