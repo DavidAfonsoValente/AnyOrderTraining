@@ -1,44 +1,49 @@
 from dataclasses import dataclass
-from typing import List, Dict, Optional, Any
+from typing import List, Dict, Optional, Any, Union
 import torch
 from transformers import PreTrainedTokenizer
 import numpy as np
 
 @dataclass
 class UnitSpan:
-    """Token span for one trajectory unit in the flat tokenized sequence."""
-    start: int        # inclusive
-    end: int          # exclusive
-    unit_type: str    # "observation" | "action"
-    step_idx: int     # 0-indexed
+    start: int
+    end: int
+    unit_type: str
+    step_idx: int
 
 @dataclass
 class TokenizedTrajectory:
     token_ids: List[int]
     unit_spans: List[UnitSpan]
-    trajectory_length: int   # T (number of action steps)
+    trajectory_length: int
 
 def _ensure_list_of_ints(token_output: Any) -> List[int]:
-    """Extremely robust flattener for LLaDA Fast Tokenizer outputs."""
-    # If it's a BatchEncoding or Dict, get the input_ids
+    """Absolute flattener. Returns only List[int]."""
+    # 1. Handle Dict/BatchEncoding
     if isinstance(token_output, dict) or hasattr(token_output, "get"):
         if "input_ids" in token_output:
             return _ensure_list_of_ints(token_output["input_ids"])
     
-    # If it has a .ids attribute (Encoding object)
+    # 2. Handle metadata objects
     if hasattr(token_output, "ids"):
-        return [int(i) for i in token_output.ids]
-    
-    # If it's a tensor
+        token_output = token_output.ids
+        
+    # 3. Handle Tensors
     if torch.is_tensor(token_output):
         return token_output.flatten().tolist()
     
-    # If it's a list, check if it's nested
-    if isinstance(token_output, list):
-        if len(token_output) > 0:
-            if isinstance(token_output[0], (list, dict)) or hasattr(token_output[0], "ids"):
-                return _ensure_list_of_ints(token_output[0])
-        return [int(i) for i in token_output]
+    # 4. Handle Lists/Iterables
+    if isinstance(token_output, (list, tuple)):
+        out = []
+        for item in token_output:
+            if isinstance(item, (list, dict)) or hasattr(item, "ids"):
+                out.extend(_ensure_list_of_ints(item))
+            else:
+                try:
+                    out.append(int(item))
+                except:
+                    pass # Skip non-integers
+        return out
     
     return [int(token_output)]
 
@@ -47,9 +52,6 @@ def tokenize_trajectory(
     tokenizer: PreTrainedTokenizer,
     max_seq_len: int = 2048,
 ) -> Optional[TokenizedTrajectory]:
-    """
-    Converts one raw ETO example into a TokenizedTrajectory.
-    """
     convs = raw_example.get('conversations', [])
     if not convs: return None
 
@@ -59,16 +61,17 @@ def tokenize_trajectory(
     full_content = "\n".join(units_text)
     conversation = [{"role": "user", "content": full_content}]
     
-    # 1. Get base IDs
+    # Get base sequence
     raw_ids = tokenizer.apply_chat_template(conversation, add_generation_prompt=False, tokenize=True)
     all_ids = _ensure_list_of_ints(raw_ids)
 
-    # 2. Extract spans
-    first_unit_ids = _ensure_list_of_ints(tokenizer.encode(units_text[0], add_special_tokens=False))
+    # Find start of O0
+    first_u_raw = tokenizer.encode(units_text[0], add_special_tokens=False)
+    first_u_ids = _ensure_list_of_ints(first_u_raw)
     
     current_pos = 0
-    for i in range(len(all_ids) - len(first_unit_ids) + 1):
-        if all_ids[i : i+len(first_unit_ids)] == first_unit_ids:
+    for i in range(len(all_ids) - len(first_u_ids) + 1):
+        if all_ids[i : i+len(first_u_ids)] == first_u_ids:
             current_pos = i
             break
 
@@ -94,10 +97,7 @@ def compute_median_unit_lengths(dataset, tokenizer, n_samples=1000) -> Dict[str,
         traj = tokenize_trajectory(dataset[i], tokenizer)
         if not traj: continue
         for span in traj.unit_spans:
-            length = span.end - span.start
-            if span.unit_type == "observation": obs_lens.append(length)
-            else: act_lens.append(length)
-    return {
-        "median_obs_tokens": int(np.median(obs_lens)) if obs_lens else 17,
-        "median_action_tokens": int(np.median(act_lens)) if act_lens else 33
-    }
+            l = span.end - span.start
+            if span.unit_type == "observation": obs_lens.append(l)
+            else: act_lens.append(l)
+    return {"median_obs_tokens": int(np.median(obs_lens or [17])), "median_action_tokens": int(np.median(act_lens or [33]))}

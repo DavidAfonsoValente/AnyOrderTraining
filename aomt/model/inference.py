@@ -5,21 +5,19 @@ from transformers import PreTrainedModel, PreTrainedTokenizer
 from math import ceil
 
 def _ensure_list_of_ints(token_output: Any) -> List[int]:
-    """Universal flattener for LLaDA Tokenizer outputs."""
-    if hasattr(token_output, "get") and "input_ids" in token_output:
-        return _ensure_list_of_ints(token_output["input_ids"])
-    if hasattr(token_output, "data") and isinstance(token_output.data, dict):
-        if "input_ids" in token_output.data:
-            return _ensure_list_of_ints(token_output.data["input_ids"])
-    if hasattr(token_output, "ids"):
-        return [int(i) for i in token_output.ids]
-    if torch.is_tensor(token_output):
-        return token_output.flatten().tolist()
-    if isinstance(token_output, list):
-        if len(token_output) > 0:
-            if isinstance(token_output[0], (list, dict)) or hasattr(token_output[0], "ids"):
-                return _ensure_list_of_ints(token_output[0])
-        return [int(i) for i in token_output]
+    """Absolute flattener. Returns only List[int]."""
+    if isinstance(token_output, dict) or hasattr(token_output, "get"):
+        if "input_ids" in token_output: return _ensure_list_of_ints(token_output["input_ids"])
+    if hasattr(token_output, "ids"): token_output = token_output.ids
+    if torch.is_tensor(token_output): return token_output.flatten().tolist()
+    if isinstance(token_output, (list, tuple)):
+        out = []
+        for item in token_output:
+            if isinstance(item, (list, dict)) or hasattr(item, "ids"): out.extend(_ensure_list_of_ints(item))
+            else:
+                try: out.append(int(item))
+                except: pass
+        return out
     return [int(token_output)]
 
 def generate_action(
@@ -31,12 +29,11 @@ def generate_action(
     temperature: float = 0.0,
 ) -> str:
     """
-    Identical for ALL methods.
+    Unified inference logic.
     """
     prompt = "\n".join(history_parts) + "\n"
     conversation = [{"role": "user", "content": prompt}]
     
-    # 1. Get prompt tokens
     raw_ids = tokenizer.apply_chat_template(conversation, add_generation_prompt=False, tokenize=True)
     input_ids = _ensure_list_of_ints(raw_ids)
     
@@ -44,11 +41,10 @@ def generate_action(
     prompt_ids = input_ids[:-1]
     prompt_len = len(prompt_ids)
     
-    # 2. Append MASK block and trailing role end
+    # Construction
     full_ids = prompt_ids + [int(tokenizer.mask_token_id)] * gen_length + [role_end_id]
     input_tensors = torch.tensor([full_ids], dtype=torch.long, device=model.device)
     
-    # 3. Native generate()
     with torch.no_grad():
         output_ids = model.generate(
             input_tensors,
@@ -59,26 +55,21 @@ def generate_action(
             eos_id=int(tokenizer.eos_token_id)
         )
     
-    # 4. Extract generation slot
-    generated = output_ids[0, prompt_len:prompt_len + gen_length]
+    generated_ids = output_ids[0, prompt_len : prompt_len + gen_length]
     
-    # Clean up generation
-    eos_pos = (generated == tokenizer.eos_token_id).nonzero(as_tuple=True)[0]
-    if len(eos_pos) > 0: generated = generated[:eos_pos[0]]
+    # 1. Strip EOS
+    eos_pos = (generated_ids == tokenizer.eos_token_id).nonzero(as_tuple=True)[0]
+    if len(eos_pos) > 0: generated_ids = generated_ids[:eos_pos[0]]
     
-    # Robust newline stopping: only stop if newline is NOT the very first token
-    raw_nl = tokenizer.encode("\n", add_special_tokens=False)
-    newline_id = int(_ensure_list_of_ints(raw_nl)[0])
+    # 2. Decode and cleanup
+    text = tokenizer.decode(generated_ids, skip_special_tokens=True).strip()
     
-    nl_pos = (generated == newline_id).nonzero(as_tuple=True)[0]
-    if len(nl_pos) > 0:
-        # If the model started with a newline, we skip it and look for the next one
-        if nl_pos[0] == 0 and len(nl_pos) > 1:
-            generated = generated[1:nl_pos[1]]
-        elif nl_pos[0] > 0:
-            generated = generated[:nl_pos[0]]
+    # 3. If model started with newline, ensure we don't return empty
+    # Action should be the first non-empty line
+    for line in text.split("\n"):
+        if line.strip(): return line.strip()
         
-    return tokenizer.decode(generated, skip_special_tokens=True).strip()
+    return text.strip()
 
 def corrupt_observation(
     observation: str,
@@ -87,11 +78,10 @@ def corrupt_observation(
     rng: np.random.Generator,
 ) -> str:
     if rho <= 0: return observation
-    token_ids = _ensure_list_of_ints(tokenizer.encode(observation, add_special_tokens=False))
-    n_tokens = len(token_ids)
-    n_to_corrupt = int(round(rho * n_tokens))
+    ids = _ensure_list_of_ints(tokenizer.encode(observation, add_special_tokens=False))
+    if not ids: return observation
+    n_to_corrupt = int(round(rho * len(ids)))
     if n_to_corrupt > 0:
-        indices = rng.choice(n_tokens, size=n_to_corrupt, replace=False)
-        for idx in indices:
-            token_ids[idx] = int(rng.integers(0, tokenizer.vocab_size))
-    return tokenizer.decode(token_ids)
+        indices = rng.choice(len(ids), size=n_to_corrupt, replace=False)
+        for idx in indices: ids[idx] = int(rng.integers(0, tokenizer.vocab_size))
+    return tokenizer.decode(ids)
