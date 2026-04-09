@@ -3,7 +3,7 @@
 #SBATCH --partition=gpu-long
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
-#SBATCH --gpus-per-node=h100-96:1
+#SBATCH --gres=gpu:h100-96:1
 #SBATCH --mem=64G
 #SBATCH --time=01:00:00
 #SBATCH --output=results/logs/tests/%j_%x.out

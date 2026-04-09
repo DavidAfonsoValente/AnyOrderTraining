@@ -6,12 +6,13 @@
 set -euo pipefail
 
 PROJECT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-# CLUSTER_TODO: set correct scratch path
-SCRATCH=$HOME/scratch
+# Aligned with cluster_info.md: Use project dir or a high-quota mount
+OUTPUT_ROOT=$PROJECT_DIR/results
 
 echo "════════════════════════════════════════════════════"
 echo "AOMT Part 1: Baselines + Sweeps"
 echo "Project: $PROJECT_DIR"
+echo "Output:  $OUTPUT_ROOT"
 echo "════════════════════════════════════════════════════"
 
 # ── Step 1: Submit GPU test job ────────────────────────────────────────────

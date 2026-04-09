@@ -3,7 +3,7 @@
 #SBATCH --partition=gpu-long
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=2
-#SBATCH --gpus-per-node=h100-96:2
+#SBATCH --gres=gpu:h100-96:2
 #SBATCH --mem=200G
 #SBATCH --time=20:00:00
 #SBATCH --output=results/logs/prefix_s1/%j_%x.out
