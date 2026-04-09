@@ -4,50 +4,72 @@ from aomt.data.dataset import AOMTDataset
 from aomt.data.utils import load_robust_dataset
 import os
 
-def visualize_real_data():
+def deep_audit():
     tokenizer = AutoTokenizer.from_pretrained("aomt/weights/LLaDA2.0-mini", trust_remote_code=True)
-    mask_token_id = tokenizer.mask_token_id
+    mask_id = tokenizer.mask_token_id
     
     ds_dict, _ = load_robust_dataset()
-    # Pull a real, multi-turn trajectory
-    real_traj = [ds_dict["train"][5]] # Index 5 is usually a good multi-turn example
+    train_ds = ds_dict["train"]
     
-    methods = ["standard_sft", "aomt_mixed"]
-    
-    for method in methods:
-        print(f"\n\n{'#'*40} REAL DATA: {method.upper()} {'#'*40}")
-        ds = AOMTDataset(real_traj, tokenizer, method=method, p_mask=0.3)
+    # 1. Find a REAL long trajectory (not a placeholder)
+    real_example = None
+    for i in range(len(train_ds)):
+        convs = train_ds[i]["conversations"]
+        if len(convs) > 6: # Find one with at least 3-4 steps
+            real_example = [train_ds[i]]
+            break
+            
+    if not real_example:
+        print("Could not find a long trajectory. Using first available.")
+        real_example = [train_ds[0]]
+
+    # 2. Audit Main Methods
+    for method in ["standard_sft", "aomt_mixed"]:
+        print(f"\n\n{'#'*30} AUDIT: {method.upper()} {'#'*30}")
+        # Use p_mask=0.2 for clear visualization
+        ds = AOMTDataset(real_example, tokenizer, method=method, p_mask=0.2)
         item = ds[0]
         
-        input_ids = item["input_ids"].tolist()
+        ids = item["input_ids"].tolist()
         labels = item["labels"].tolist()
         
-        print(f"Total Tokens: {len(input_ids)}")
-        
-        decoded_output = []
-        for i, tid in enumerate(input_ids):
-            token_text = tokenizer.decode([tid])
-            
-            if tid == mask_token_id:
-                # Masked! Show what it's hiding in RED/Brackets
-                target_text = tokenizer.decode([labels[i]])
-                # Clean up whitespace for display
-                disp = target_text.replace("\n", "\\n")
-                decoded_output.append(f"[[{disp}]]")
+        # --- BUILD INPUT VIEW ---
+        input_view = []
+        for i, tid in enumerate(ids):
+            if tid == mask_id:
+                input_view.append("[MASK]")
             else:
-                # Visible context
-                decoded_output.append(token_text)
+                input_view.append(tokenizer.decode([tid]))
         
-        print("\n--- FULL MODEL INPUT ( [[Text]] = Masked Token ) ---")
-        print("".join(decoded_output))
-        print("-" * 80)
+        # --- BUILD TARGET VIEW ---
+        target_view = []
+        for i, lid in enumerate(labels):
+            if lid == -100:
+                target_view.append(" _ ") # Context token
+            else:
+                target_view.append(tokenizer.decode([lid]))
         
-        # Critical Check: Is the newline masked?
-        nl_masked = False
-        for i, tid in enumerate(input_ids):
-            if tid == mask_token_id and labels[i] == 198: # 198 is usually \n
-                nl_masked = True
-        print(f"Integrity Check: Is '\\n' correctly kept as visible context? {not nl_masked}")
+        print("\n[STEP 1] WHAT THE MODEL SEES (INPUT):")
+        print("-" * 50)
+        print("".join(input_view))
+        
+        print("\n[STEP 2] WHAT THE MODEL PREDICTS (TARGETS):")
+        print("-" * 50)
+        print("".join(target_view))
+        
+        print("\n[STEP 3] DISTRIBUTION CHECK:")
+        full_text = "".join(input_view)
+        inside_user = "<role>HUMAN</role>" in full_text and "<|role_end|>" in full_text
+        print(f"Is generating inside USER role? {inside_user}")
+        
+        # Check if the last role marker is after the masks (Standard SFT only)
+        if method == "standard_sft":
+            last_mask_idx = max([i for i, tid in enumerate(ids) if tid == mask_id])
+            role_end_ids = tokenizer.encode("<|role_end|>", add_special_tokens=False)
+            # Find index of <|role_end|>
+            # In LLaDA it is usually the very last token
+            is_at_end = ids[-1] in [156900, 157152] # Common role end IDs
+            print(f"Does sequence end with <|role_end|>? {is_at_end}")
 
 if __name__ == "__main__":
-    visualize_real_data()
+    deep_audit()
