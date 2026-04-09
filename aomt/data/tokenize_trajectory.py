@@ -19,27 +19,31 @@ class TokenizedTrajectory:
     trajectory_length: int   # T (number of action steps)
 
 def _ensure_list_of_ints(token_output: Any) -> List[int]:
-    """Extremely robust helper to handle LLaDA BatchEncoding, Encoding, or Tensors."""
-    # 1. Handle Transformers BatchEncoding or Dict
-    if isinstance(token_output, dict) or (hasattr(token_output, "data") and isinstance(token_output.data, dict)):
-        if "input_ids" in token_output:
-            return _ensure_list_of_ints(token_output["input_ids"])
+    """Universal flattener for LLaDA Tokenizer outputs."""
+    # Handle BatchEncoding or Dict-like objects
+    if hasattr(token_output, "get") and "input_ids" in token_output:
+        return _ensure_list_of_ints(token_output["input_ids"])
     
-    # 2. Handle Tokenizers Encoding object
+    # Handle the 'data' attribute in some Transformers versions
+    if hasattr(token_output, "data") and isinstance(token_output.data, dict):
+        if "input_ids" in token_output.data:
+            return _ensure_list_of_ints(token_output.data["input_ids"])
+
+    # Handle Tokenizers Encoding metadata object
     if hasattr(token_output, "ids"):
         return [int(i) for i in token_output.ids]
     
-    # 3. Handle Lists (nested or otherwise)
+    # Handle Tensors
+    if torch.is_tensor(token_output):
+        return token_output.flatten().tolist()
+    
+    # Handle Nested Lists
     if isinstance(token_output, list):
         if len(token_output) > 0:
             if isinstance(token_output[0], (list, dict)) or hasattr(token_output[0], "ids"):
                 return _ensure_list_of_ints(token_output[0])
         return [int(i) for i in token_output]
     
-    # 4. Handle Tensors
-    if torch.is_tensor(token_output):
-        return token_output.flatten().tolist()
-        
     return [int(token_output)]
 
 def tokenize_trajectory(
