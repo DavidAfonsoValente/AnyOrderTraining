@@ -58,19 +58,16 @@ def main():
 
     collator = AOMTDataCollator(tokenizer)
 
-    # Note: OmegaConf objects might cause issues if passed directly into HF Trainer args if they contain non-primitives.
-    # But here we are passing primitive values extracted from the config.
     training_args = TrainingArguments(
         output_dir=args.output_dir,
         per_device_train_batch_size=config.batch_size,
-        # We'll use a safe default if accumulation steps isn't in config
         gradient_accumulation_steps=config.get("gradient_accumulation_steps", 1),
         learning_rate=config.lr,
         num_train_epochs=config.epochs,
         bf16=True,
         logging_steps=10,
         save_steps=config.get("checkpoint_save_steps", 500),
-        evaluation_strategy="no",
+        eval_strategy="no", # Fixed: was evaluation_strategy
         remove_unused_columns=False,
         report_to="none"
     )
