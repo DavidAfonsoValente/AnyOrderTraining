@@ -17,7 +17,7 @@ export MASTER_PORT=$(shuf -i 20000-65000 -n 1)
 source "$PROJECT_DIR/venv/bin/activate"
 export PYTHONPATH=${PYTHONPATH:-}:$(pwd)
 
-  --nproc_per_node=1 \
+torchrun --master_port=$MASTER_PORT --nproc_per_node=1 \
   aomt/train.py \
   --config aomt/config/prefix_sft_stage2.yaml \
   --init_checkpoint results/checkpoints/prefix_s1/checkpoint-epoch_end \
