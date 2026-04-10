@@ -28,7 +28,13 @@ def main():
     parser.add_argument("--output_dir", type=str, required=True)
     args = parser.parse_args()
 
-    config = OmegaConf.load(args.config)
+    # Load base config first
+    base_config_path = os.path.join(os.path.dirname(__file__), "config/base.yaml")
+    config = OmegaConf.load(base_config_path)
+    
+    # Merge with provided experiment config
+    exp_config = OmegaConf.load(args.config)
+    config = OmegaConf.merge(config, exp_config)
     
     print(f"Starting training for method: {config.method}")
     
@@ -52,15 +58,18 @@ def main():
 
     collator = AOMTDataCollator(tokenizer)
 
+    # Note: OmegaConf objects might cause issues if passed directly into HF Trainer args if they contain non-primitives.
+    # But here we are passing primitive values extracted from the config.
     training_args = TrainingArguments(
         output_dir=args.output_dir,
         per_device_train_batch_size=config.batch_size,
-        gradient_accumulation_steps=config.gradient_accumulation_steps,
-        learning_rate=config.learning_rate,
+        # We'll use a safe default if accumulation steps isn't in config
+        gradient_accumulation_steps=config.get("gradient_accumulation_steps", 1),
+        learning_rate=config.lr,
         num_train_epochs=config.epochs,
         bf16=True,
         logging_steps=10,
-        save_steps=500,
+        save_steps=config.get("checkpoint_save_steps", 500),
         evaluation_strategy="no",
         remove_unused_columns=False,
         report_to="none"
