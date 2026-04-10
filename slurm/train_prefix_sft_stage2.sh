@@ -20,5 +20,5 @@ export PYTHONPATH=${PYTHONPATH:-}:$(pwd)
 torchrun --master_port=$MASTER_PORT --nproc_per_node=1 \
   aomt/train.py \
   --config aomt/config/prefix_sft_stage2.yaml \
-  --init_checkpoint results/checkpoints/prefix_s1/checkpoint-epoch_end \
+  --init_checkpoint results/checkpoints/prefix_s1 \
   --output_dir results/checkpoints/prefix_s2

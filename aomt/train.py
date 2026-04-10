@@ -26,6 +26,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", type=str, required=True)
     parser.add_argument("--output_dir", type=str, required=True)
+    parser.add_argument("--init_checkpoint", type=str, default=None, help="Path to previous stage checkpoint")
     args = parser.parse_args()
 
     base_config_path = os.path.join(os.path.dirname(__file__), "config/base.yaml")
@@ -45,12 +46,15 @@ def main():
     )
 
     # 2. Load Model with Quantization
-    print("Loading model in 4-bit (QLoRA)...")
     from transformers import AutoModelForCausalLM, AutoTokenizer
     # We load directly here to ensure bnb_config is applied
     tokenizer = AutoTokenizer.from_pretrained("aomt/weights/LLaDA2.0-mini", trust_remote_code=True)
+    
+    model_path = args.init_checkpoint if args.init_checkpoint else "aomt/weights/LLaDA2.0-mini"
+    print(f"Loading model from: {model_path} in 4-bit (QLoRA)...")
+    
     model = AutoModelForCausalLM.from_pretrained(
-        "aomt/weights/LLaDA2.0-mini",
+        model_path,
         quantization_config=bnb_config,
         device_map="auto",
         trust_remote_code=True
