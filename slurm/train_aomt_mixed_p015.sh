@@ -16,7 +16,7 @@ cd $PROJECT_DIR
 source "$PROJECT_DIR/venv/bin/activate"
 export PYTHONPATH=${PYTHONPATH:-}:$(pwd)
 
-torchrun \
+torchrun --master_port=$MASTER_PORT \
   --nproc_per_node=1 \
   aomt/train.py \
   --config aomt/config/ablations/aomt_mixed_p015.yaml \
