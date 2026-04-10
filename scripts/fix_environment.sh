@@ -7,21 +7,17 @@ cd "$PROJECT_DIR"
 
 source venv/bin/activate
 
-echo "Ensuring Pip is ready..."
-pip install --upgrade pip
-
-echo "Installing Cluster-Compatible PyTorch (CUDA 12.1)..."
-# We use /tmp for the cache to bypass your home directory quota
+echo "Installing Training Optimizers (PEFT, BitsAndBytes, Accelerate)..."
 export PIP_CACHE_DIR="/tmp/$USER/pip_cache"
 mkdir -p "$PIP_CACHE_DIR"
 
-pip install --no-cache-dir --force-reinstall \
-    torch==2.4.0 \
-    torchvision \
-    torchaudio \
-    --index-url https://download.pytorch.org/whl/cu121
+# Install all necessary libraries for QLoRA 16B training
+pip install --no-cache-dir \
+    peft \
+    bitsandbytes \
+    accelerate \
+    scipy \
+    sentencepiece
 
-echo "------------------------------------------------"
-echo "VERIFYING CUDA VISIBILITY:"
-python3 -c "import torch; print(f'RESULT: CUDA Available = {torch.cuda.is_available()}'); print(f'DEVICE: {torch.cuda.get_device_name(0)}' if torch.cuda.is_available() else 'RESULT: FAILED')"
-echo "------------------------------------------------"
+echo "Verifying all modules..."
+python3 -c "import torch; import peft; import bitsandbytes; print(f'SUCCESS: CUDA={torch.cuda.is_available()}, PEFT and BNB loaded.')"
