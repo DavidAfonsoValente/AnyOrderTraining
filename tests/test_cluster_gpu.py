@@ -10,7 +10,6 @@ from aomt.model.inference import (
 from aomt.data.dataset import AOMTDataset
 from aomt.data.collator import AOMTDataCollator
 from aomt.training.losses import masked_cross_entropy_loss
-from aomt.evaluation.eval_alfworld import evaluate_alfworld
 from omegaconf import OmegaConf
 
 @pytest.fixture(scope="module")
@@ -30,7 +29,8 @@ def test_forward_pass_output_shape_real(real_components):
     model, tokenizer = real_components
     input_ids = torch.tensor([[1, 2, 3]]).to(model.device)
     seq_len = input_ids.shape[1]
-    attention_mask = torch.ones((1, 1, seq_len, seq_len)).to(model.device)
+    # LLaDA 2.0 strictly requires mask dtype to match query dtype (bf16)
+    attention_mask = torch.ones((1, 1, seq_len, seq_len), device=model.device, dtype=model.dtype)
     with torch.no_grad():
         outputs = model(input_ids=input_ids, attention_mask=attention_mask)
     assert outputs.logits.shape[0] == 1
@@ -39,10 +39,8 @@ def test_forward_pass_output_shape_real(real_components):
 def test_generate_action_real(real_components):
     model, tokenizer = real_components
     history = ["You are in a kitchen.", "Observation: You see a potato."]
-    # Use higher temp for smoke test to ensure the model bits flip
     res = generate_action(model, tokenizer, history, temperature=1.0, steps=8)
     assert isinstance(res, str)
-    print(f"Smoke test generation: '{res}'")
 
 @pytest.mark.gpu
 def test_aomt_dataset_getitem_no_partial_masking_real(real_components):

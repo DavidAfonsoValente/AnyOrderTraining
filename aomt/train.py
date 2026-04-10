@@ -11,10 +11,13 @@ from omegaconf import OmegaConf
 
 class AOMTTrainer(Trainer):
     def compute_loss(self, model, inputs, return_outputs=False, **kwargs):
-        # LLaDA 2.0 requires 4D mask
+        # LLaDA 2.0 strictly requires mask dtype to match model dtype
+        # We ensure it here before passing to model.
+        attention_mask = inputs["attention_mask"].to(model.dtype)
+        
         outputs = model(
             input_ids=inputs["input_ids"],
-            attention_mask=inputs["attention_mask"]
+            attention_mask=attention_mask
         )
         logits = outputs.logits
         labels = inputs["labels"]
@@ -32,17 +35,14 @@ def main():
     exp_config = OmegaConf.load(args.config)
     config = OmegaConf.merge(config, exp_config)
     
-    # HARD GPU CHECK
     if not torch.cuda.is_available():
-        raise RuntimeError("FATAL: CUDA is not available. Training on CPU is disabled to prevent node hang.")
+        raise RuntimeError("FATAL: CUDA is not available. Training on CPU is disabled.")
     
-    device_name = torch.cuda.get_device_name(0)
-    print(f"### Starting AOMT Training on GPU: {device_name} ###")
-    print(f"### Method: {config.method} | BF16: {torch.cuda.is_bf16_supported()} ###")
+    print(f"### Starting AOMT Training on GPU: {torch.cuda.get_device_name(0)} ###")
     
     model, tokenizer = load_model_and_tokenizer(
         model_id="aomt/weights/LLaDA2.0-mini",
-        precision="bf16", # We force bf16 because we know H100 supports it
+        precision="bf16",
         device_map="auto"
     )
 
@@ -63,7 +63,7 @@ def main():
         gradient_accumulation_steps=config.get("gradient_accumulation_steps", 1),
         learning_rate=config.lr,
         num_train_epochs=config.epochs,
-        bf16=True, # H100 always supports this
+        bf16=True,
         logging_steps=10,
         save_steps=config.get("checkpoint_save_steps", 500),
         eval_strategy="no",
@@ -80,3 +80,6 @@ def main():
 
     trainer.train()
     trainer.save_model(args.output_dir)
+
+if __name__ == "__main__":
+    main()
