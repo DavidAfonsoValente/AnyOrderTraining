@@ -64,6 +64,7 @@ def main():
         learning_rate=config.lr,
         num_train_epochs=config.epochs,
         bf16=True,
+        gradient_checkpointing=True,
         logging_steps=10,
         save_steps=config.get("checkpoint_save_steps", 500),
         eval_strategy="no",

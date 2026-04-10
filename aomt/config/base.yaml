@@ -8,7 +8,8 @@ lr_schedule: cosine
 warmup_steps: 50
 weight_decay: 0.1
 grad_clip: 1.0
-batch_size: 64
+batch_size: 1
+gradient_accumulation_steps: 64
 sep_token: "\n"
 dataset_name: "agent-eto/eto-sft-trajectory"
 checkpoint_save_steps: 500
