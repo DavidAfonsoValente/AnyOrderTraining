@@ -12,6 +12,7 @@ set -euo pipefail
 
 PROJECT_DIR="/home/d/dvalente/AnyOrderTraining"
 cd $PROJECT_DIR
+export MASTER_PORT=$(shuf -i 20000-65000 -n 1)
 source "$PROJECT_DIR/venv/bin/activate"
 export PYTHONPATH=${PYTHONPATH:-}:$(pwd)
 
