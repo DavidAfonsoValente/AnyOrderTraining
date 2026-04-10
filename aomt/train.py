@@ -1,74 +1,81 @@
-import argparse
 import os
-from omegaconf import OmegaConf
-from datasets import load_dataset
+import torch
+from transformers import Trainer, TrainingArguments
+from aomt.model.llada_wrapper import load_model_and_tokenizer
 from aomt.data.dataset import AOMTDataset
 from aomt.data.collator import AOMTDataCollator
-from aomt.model.llada_wrapper import load_model_and_tokenizer
-from aomt.training.trainer import AOMTTrainer
 from aomt.data.utils import load_robust_dataset
+from aomt.training.losses import masked_cross_entropy_loss
+import argparse
+from omegaconf import OmegaConf
+
+class AOMTTrainer(Trainer):
+    def compute_loss(self, model, inputs, return_outputs=False, **kwargs):
+        # LLaDA 2.0 requires 4D attention mask [B, 1, L, L]
+        # Our collator already provides this.
+        outputs = model(
+            input_ids=inputs["input_ids"],
+            attention_mask=inputs["attention_mask"]
+        )
+        logits = outputs.logits
+        labels = inputs["labels"]
+        loss = masked_cross_entropy_loss(logits, labels)
+        return (loss, outputs) if return_outputs else loss
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", type=str, required=True)
-    parser.add_argument("--method", type=str, choices=["standard_sft", "prefix_sft_stage1", "prefix_sft_stage2", "aomt_mixed"])
-    parser.add_argument("--p_mask", type=float)
-    parser.add_argument("--output_dir", type=str)
-    parser.add_argument("--init_checkpoint", type=str, help="Initialize from this checkpoint instead of base model")
+    parser.add_argument("--output_dir", type=str, required=True)
     args = parser.parse_args()
 
-    # Load base config and merge with specific config
-    base_cfg = OmegaConf.load("aomt/config/base.yaml")
-    run_cfg = OmegaConf.load(args.config)
-    config = OmegaConf.merge(base_cfg, run_cfg)
-    
-    # Overrides
-    if args.method: config.method = args.method
-    if args.p_mask: config.p_mask = args.p_mask
-    if args.output_dir: config.output_dir = args.output_dir
-    if args.init_checkpoint: config.model_id = args.init_checkpoint
+    config = OmegaConf.load(args.config)
     
     print(f"Starting training for method: {config.method}")
     
-    # Load dataset
-    print("Loading dataset...")
-    # Use the robust loader we explored in Phase 1
-    ds_dict, _ = load_robust_dataset(config.dataset_name)
-    train_raw = ds_dict["train"]
-    
-    # Load model and tokenizer
-    print(f"Loading model and tokenizer from {config.model_id}...")
     model, tokenizer = load_model_and_tokenizer(
-        model_id=config.model_id,
-        precision=config.precision
+        model_id="aomt/weights/LLaDA2.0-mini",
+        precision="bf16",
+        device_map="auto"
     )
+
+    print("Loading dataset...")
+    raw_datasets, _ = load_robust_dataset()
     
-    # Create dataset
     train_dataset = AOMTDataset(
-        raw_dataset=train_raw,
-        tokenizer=tokenizer,
+        raw_datasets["train"],
+        tokenizer,
         method=config.method,
-        p_mask=config.get("p_mask", 0.25),
+        p_mask=config.p_mask,
         max_seq_len=config.max_seq_len,
-        split="train",
-        model_id=config.model_id
+        token_level=config.get("token_level", False)
     )
-    
-    # Create collator
+
     collator = AOMTDataCollator(tokenizer)
-    config.collator_fn = collator
-    
-    # Initialize trainer
+
+    training_args = TrainingArguments(
+        output_dir=args.output_dir,
+        per_device_train_batch_size=config.batch_size,
+        gradient_accumulation_steps=config.gradient_accumulation_steps,
+        learning_rate=config.learning_rate,
+        num_train_epochs=config.epochs,
+        bf16=True,
+        logging_steps=10,
+        save_steps=500,
+        evaluation_strategy="no",
+        remove_unused_columns=False,
+        report_to="none"
+    )
+
     trainer = AOMTTrainer(
         model=model,
-        tokenizer=tokenizer,
+        args=training_args,
         train_dataset=train_dataset,
-        config=config,
-        method=config.method
+        data_collator=collator,
     )
-    
-    # Train
+
     trainer.train()
+    trainer.save_model(args.output_dir)
+    print(f"Training complete. Model saved to {args.output_dir}")
 
 if __name__ == "__main__":
     main()
