@@ -65,6 +65,7 @@ def main():
         num_train_epochs=config.epochs,
         bf16=True,
         gradient_checkpointing=True,
+        optim=config.get("optimizer", "adamw_torch"),
         logging_steps=10,
         save_steps=config.get("checkpoint_save_steps", 500),
         eval_strategy="no",
