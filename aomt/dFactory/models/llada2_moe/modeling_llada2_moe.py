@@ -878,6 +878,17 @@ class LLaDA2MoePreTrainedModel(PreTrainedModel):
     _supports_sdpa = True
     _supports_cache_class = True
 
+    def set_submodule(self, target: str, module: "nn.Module") -> None:
+        """
+        Sets the submodule at the given target path.
+        Added to support quantization with bitsandbytes when the method is missing.
+        """
+        if not target:
+            raise ValueError("Target path cannot be empty.")
+        parts = target.split(".")
+        target_mod = self.get_submodule(".".join(parts[:-1]))
+        setattr(target_mod, parts[-1], module)
+
     def _init_weights(self, module):
         std = self.config.initializer_range
         if isinstance(module, nn.Linear):
