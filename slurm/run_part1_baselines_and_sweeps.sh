@@ -22,6 +22,10 @@ mkdir -p "$OUTPUT_ROOT/checkpoints/"{std_sft,prefix_s1,prefix_s2,amx_p015,amx_p0
 mkdir -p "$OUTPUT_ROOT/eval"
 mkdir -p "$OUTPUT_ROOT/analysis"
 
+# ── Step 0.5: Auto-Fix Environment ─────────────────────────────────────────
+echo "[0.5/2] Verifying dependencies (PEFT, BitsAndBytes)..."
+srun -p gpu --gres=gpu:1 --mem=16G --time=00:10:00 "$PROJECT_DIR/venv/bin/pip" install --no-cache-dir peft bitsandbytes accelerate scipy sentencepiece
+
 # ── Step 1: Submit GPU test job ────────────────────────────────────────────
 echo "[1/2] Submitting GPU test pre-flight..."
 J_TESTS=$(sbatch --parsable slurm/run_tests.sh)
