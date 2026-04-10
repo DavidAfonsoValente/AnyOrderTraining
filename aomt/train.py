@@ -11,7 +11,7 @@ from omegaconf import OmegaConf
 
 class AOMTTrainer(Trainer):
     def compute_loss(self, model, inputs, return_outputs=False, **kwargs):
-        # Our collator already provides the 4D mask LLaDA 2.0 requires
+        # LLaDA 2.0 requires 4D mask
         outputs = model(
             input_ids=inputs["input_ids"],
             attention_mask=inputs["attention_mask"]
@@ -27,32 +27,25 @@ def main():
     parser.add_argument("--output_dir", type=str, required=True)
     args = parser.parse_args()
 
-    # Configuration setup
     base_config_path = os.path.join(os.path.dirname(__file__), "config/base.yaml")
     config = OmegaConf.load(base_config_path)
     exp_config = OmegaConf.load(args.config)
     config = OmegaConf.merge(config, exp_config)
     
-    print(f"Starting training for method: {config.method}")
+    # HARD GPU CHECK
+    if not torch.cuda.is_available():
+        raise RuntimeError("FATAL: CUDA is not available. Training on CPU is disabled to prevent node hang.")
     
-    # 1. Hardware Detection
-    has_cuda = torch.cuda.is_available()
-    # On some cluster nodes, is_bf16_supported() returns False even if H100 is present
-    # due to driver/toolkit version mismatches.
-    bf16_available = has_cuda and torch.cuda.is_bf16_supported()
-    fp16_available = has_cuda and not bf16_available
+    device_name = torch.cuda.get_device_name(0)
+    print(f"### Starting AOMT Training on GPU: {device_name} ###")
+    print(f"### Method: {config.method} | BF16: {torch.cuda.is_bf16_supported()} ###")
     
-    print(f"CUDA Available: {has_cuda}")
-    print(f"BF16 Supported: {bf16_available}")
-    
-    # 2. Model Loading (Model itself stays in BF16 if possible)
     model, tokenizer = load_model_and_tokenizer(
         model_id="aomt/weights/LLaDA2.0-mini",
-        precision="bf16" if (bf16_available or has_cuda) else "fp32",
+        precision="bf16", # We force bf16 because we know H100 supports it
         device_map="auto"
     )
 
-    # 3. Dataset & Collator
     raw_datasets, _ = load_robust_dataset()
     train_dataset = AOMTDataset(
         raw_datasets["train"],
@@ -64,16 +57,13 @@ def main():
     )
     collator = AOMTDataCollator(tokenizer)
 
-    # 4. Training Arguments
-    # We only set the precision flags that the environment explicitly supports
     training_args = TrainingArguments(
         output_dir=args.output_dir,
         per_device_train_batch_size=config.batch_size,
         gradient_accumulation_steps=config.get("gradient_accumulation_steps", 1),
         learning_rate=config.lr,
         num_train_epochs=config.epochs,
-        bf16=bf16_available,
-        fp16=fp16_available,
+        bf16=True, # H100 always supports this
         logging_steps=10,
         save_steps=config.get("checkpoint_save_steps", 500),
         eval_strategy="no",
@@ -90,7 +80,3 @@ def main():
 
     trainer.train()
     trainer.save_model(args.output_dir)
-    print(f"Training complete. Model saved to {args.output_dir}")
-
-if __name__ == "__main__":
-    main()
