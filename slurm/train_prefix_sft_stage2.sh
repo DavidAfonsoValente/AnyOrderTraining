@@ -2,8 +2,8 @@
 #SBATCH --job-name=aomt_prefix_s2
 #SBATCH --partition=gpu-long
 #SBATCH --nodes=1
-#SBATCH --ntasks-per-node=2
-#SBATCH --gres=gpu:h100-96:2
+#SBATCH --ntasks-per-node=1
+#SBATCH --gres=gpu:h100-96:1
 #SBATCH --mem=200G
 #SBATCH --time=20:00:00
 #SBATCH --output=results/logs/prefix_s2/%j_%x.out
@@ -17,7 +17,7 @@ source "$PROJECT_DIR/venv/bin/activate"
 export PYTHONPATH=${PYTHONPATH:-}:$(pwd)
 
 torchrun \
-  --nproc_per_node=$SLURM_GPUS_PER_NODE \
+  --nproc_per_node=1 \
   aomt/train.py \
   --config aomt/config/prefix_sft_stage2.yaml \
   --init_checkpoint results/checkpoints/prefix_s1/checkpoint-epoch_end \

@@ -2,8 +2,8 @@
 #SBATCH --job-name=aomt_amx_token
 #SBATCH --partition=gpu-long
 #SBATCH --nodes=1
-#SBATCH --ntasks-per-node=2
-#SBATCH --gres=gpu:h100-96:2
+#SBATCH --ntasks-per-node=1
+#SBATCH --gres=gpu:h100-96:1
 #SBATCH --mem=200G
 #SBATCH --time=20:00:00
 #SBATCH --output=results/logs/amx_token/%j_%x.out
@@ -17,7 +17,7 @@ source "$PROJECT_DIR/venv/bin/activate"
 export PYTHONPATH=${PYTHONPATH:-}:$(pwd)
 
 torchrun \
-  --nproc_per_node=$SLURM_GPUS_PER_NODE \
+  --nproc_per_node=1 \
   aomt/train.py \
   --config aomt/config/ablations/aomt_mixed_token_level.yaml \
   --output_dir results/checkpoints/amx_token
