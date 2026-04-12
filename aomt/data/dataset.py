@@ -47,11 +47,22 @@ class AOMTDataset(Dataset):
                 self.tokenized_trajectories = pickle.load(f)
         else:
             self.tokenized_trajectories = []
-            for ex in raw_dataset:
+            print(f"Tokenizing {len(raw_dataset)} trajectories...")
+            rejected_empty = 0
+            rejected_no_spans = 0
+            for i, ex in enumerate(raw_dataset):
                 traj = tokenize_trajectory(ex, tokenizer, max_seq_len=max_seq_len)
-                # Ensure the trajectory has valid content
-                if traj and len(traj.unit_spans) > 0:
-                    self.tokenized_trajectories.append(traj)
+                if not traj:
+                    rejected_empty += 1
+                    continue
+                if len(traj.unit_spans) == 0:
+                    rejected_no_spans += 1
+                    continue
+                self.tokenized_trajectories.append(traj)
+                if i < 5: # Log first few for success check
+                    print(f"Trajectory {i} tokenized: {len(traj.token_ids)} tokens, {len(traj.unit_spans)} spans")
+            
+            print(f"Tokenization complete. Success: {len(self.tokenized_trajectories)}, Rejected (empty): {rejected_empty}, Rejected (no spans): {rejected_no_spans}")
             
             if "PYTEST_CURRENT_TEST" not in os.environ:
                 with open(cache_path, 'wb') as f:
