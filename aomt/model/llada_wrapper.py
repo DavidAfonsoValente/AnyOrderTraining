@@ -1,7 +1,18 @@
 import torch
+import torch.nn as nn
 from transformers import AutoTokenizer, AutoModelForCausalLM
 import transformers.modeling_rope_utils as mru
 from typing import Tuple, Any
+
+# Monkey-patch nn.Module to ensure set_submodule is available for bitsandbytes
+if not hasattr(nn.Module, "set_submodule"):
+    def set_submodule(self, target: str, module: nn.Module) -> None:
+        if not target:
+            raise ValueError("Target path cannot be empty.")
+        parts = target.split(".")
+        target_mod = self.get_submodule(".".join(parts[:-1]))
+        setattr(target_mod, parts[-1], module)
+    nn.Module.set_submodule = set_submodule
 
 # 1. ROPE Patch: LLaDA 2.0-mini expects 'default' in ROPE_INIT_FUNCTIONS
 # which was removed in newer transformers versions.

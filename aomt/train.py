@@ -1,7 +1,18 @@
 import os
 import torch
+import torch.nn as nn
 from transformers import Trainer, TrainingArguments, BitsAndBytesConfig
-from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
+from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training, PeftModel
+
+# Monkey-patch nn.Module to ensure set_submodule is available for bitsandbytes
+if not hasattr(nn.Module, "set_submodule"):
+    def set_submodule(self, target: str, module: nn.Module) -> None:
+        if not target:
+            raise ValueError("Target path cannot be empty.")
+        parts = target.split(".")
+        target_mod = self.get_submodule(".".join(parts[:-1]))
+        setattr(target_mod, parts[-1], module)
+    nn.Module.set_submodule = set_submodule
 from aomt.model.llada_wrapper import load_model_and_tokenizer
 from aomt.data.dataset import AOMTDataset
 from aomt.data.collator import AOMTDataCollator
@@ -15,7 +26,8 @@ class AOMTTrainer(Trainer):
         attention_mask = inputs["attention_mask"].to(model.dtype)
         outputs = model(
             input_ids=inputs["input_ids"],
-            attention_mask=attention_mask
+            attention_mask=attention_mask,
+            return_dict=True
         )
         logits = outputs.logits
         labels = inputs["labels"]
@@ -61,16 +73,21 @@ def main():
     )
 
     # 3. Prepare for LoRA
-    model = prepare_model_for_kbit_training(model)
-    lora_config = LoraConfig(
-        r=16,
-        lora_alpha=32,
-        target_modules=["query_key_value", "dense", "gate_proj", "up_proj", "down_proj"],
-        lora_dropout=0.05,
-        bias="none",
-        task_type="CAUSAL_LM"
-    )
-    model = get_peft_model(model, lora_config)
+    if not isinstance(model, PeftModel):
+        print("Initializing new LoRA adapter...")
+        model = prepare_model_for_kbit_training(model)
+        lora_config = LoraConfig(
+            r=16,
+            lora_alpha=32,
+            target_modules=["query_key_value", "dense", "gate_proj", "up_proj", "down_proj"],
+            lora_dropout=0.05,
+            bias="none",
+            task_type="CAUSAL_LM"
+        )
+        model = get_peft_model(model, lora_config)
+    else:
+        print("Detected existing PEFT model, skipping re-initialization.")
+    
     model.print_trainable_parameters()
 
     # 4. Data Setup
