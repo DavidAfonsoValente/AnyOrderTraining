@@ -41,6 +41,12 @@ def sample_prefix_stage1_mask(
             return [i]
     return []
 
+def sample_all_actions_mask(
+    unit_spans: List[UnitSpan],
+) -> List[int]:
+    """Returns indices of all action units for Standard SFT."""
+    return [i for i, span in enumerate(unit_spans) if span.unit_type == "action"]
+
 def sample_aomt_mixed_mask(
     unit_spans: List[UnitSpan],
     p_mask: float,

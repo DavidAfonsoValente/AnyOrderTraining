@@ -81,7 +81,7 @@ def tokenize_trajectory(
     # Fallback: if strict match fails, the template might have added prefix tokens
     # Just start after the first few tokens (usually BOS + template header)
     if not found_first:
-        current_pos = max(0, len(all_ids) - sum(len(_ensure_list_of_ints(tokenizer.encode(t, add_special_tokens=False))) for t in units_text) - len(units_text))
+        current_pos = max(0, len(all_ids) - sum(len(_ensure_list_of_ints(tokenizer.encode(t, add_special_tokens=False))) for t in units_text) - (len(units_text) - 1))
 
     unit_spans = []
     current_step = 0

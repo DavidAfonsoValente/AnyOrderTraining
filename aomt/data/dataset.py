@@ -8,6 +8,7 @@ from .tokenize_trajectory import tokenize_trajectory, TokenizedTrajectory, UnitS
 from .masking import (
     apply_unit_mask,
     sample_sft_mask,
+    sample_all_actions_mask,
     sample_prefix_stage1_mask,
     sample_aomt_mixed_mask
 )
@@ -42,8 +43,8 @@ class AOMTDataset(Dataset):
         cache_path = os.path.join(cache_dir, f"tokenized_{split}_{model_id.replace('/', '_')}.pkl")
         os.makedirs(cache_dir, exist_ok=True)
 
-        # FORCE FRESH TOKENIZATION (Disabled cache check temporarily to fix 1-sample bug)
-        if False and os.path.exists(cache_path) and "PYTEST_CURRENT_TEST" not in os.environ:
+        # Cache check re-enabled after robust tokenization fix
+        if os.path.exists(cache_path) and "PYTEST_CURRENT_TEST" not in os.environ:
             with open(cache_path, 'rb') as f:
                 self.tokenized_trajectories = pickle.load(f)
         else:
@@ -60,8 +61,8 @@ class AOMTDataset(Dataset):
                     rejected_no_spans += 1
                     continue
                 self.tokenized_trajectories.append(traj)
-                if i < 5: # Log first few for success check
-                    print(f"Trajectory {i} tokenized: {len(traj.token_ids)} tokens, {len(traj.unit_spans)} spans")
+                # if i < 5: # Log first few for success check
+                #     print(f"Trajectory {i} tokenized: {len(traj.token_ids)} tokens, {len(traj.unit_spans)} spans")
             
             print(f"Tokenization complete. Success: {len(self.tokenized_trajectories)}, Rejected (empty): {rejected_empty}, Rejected (no spans): {rejected_no_spans}")
             
@@ -69,14 +70,14 @@ class AOMTDataset(Dataset):
                 with open(cache_path, 'wb') as f:
                     pickle.dump(self.tokenized_trajectories, f)
 
-        if method in ["standard_sft", "prefix_sft_stage1", "prefix_sft_stage2"]:
+        if method in ["prefix_sft_stage1", "prefix_sft_stage2"]:
             self.examples = []
             for traj_idx, traj in enumerate(self.tokenized_trajectories):
                 # Count actions correctly
                 n_actions = sum(1 for s in traj.unit_spans if s.unit_type == "action")
                 for t in range(n_actions):
                     self.examples.append((traj_idx, t))
-        else:
+        else: # standard_sft and aomt_mixed
             self.examples = list(range(len(self.tokenized_trajectories)))
 
     def set_epoch(self, epoch: int):
@@ -86,11 +87,15 @@ class AOMTDataset(Dataset):
         return len(self.examples)
 
     def __getitem__(self, idx: int) -> Dict[str, Any]:
-        if self.method in ["standard_sft", "prefix_sft_stage1", "prefix_sft_stage2"]:
+        if self.method == "standard_sft":
+            traj = self.tokenized_trajectories[idx]
+            mask_indices = sample_all_actions_mask(traj.unit_spans)
+            input_ids, labels = apply_unit_mask(traj.token_ids, traj.unit_spans, mask_indices, self.mask_token_id)
+        elif self.method in ["prefix_sft_stage1", "prefix_sft_stage2"]:
             traj_idx, t = self.examples[idx]
             traj = self.tokenized_trajectories[traj_idx]
             
-            if self.method in ["standard_sft", "prefix_sft_stage2"]:
+            if self.method == "prefix_sft_stage2":
                 mask_indices = sample_sft_mask(traj.unit_spans, t)
                 mask_idx = mask_indices[0]
                 end_token = traj.unit_spans[mask_idx].end
@@ -101,8 +106,6 @@ class AOMTDataset(Dataset):
                 mask_indices = sample_prefix_stage1_mask(traj.unit_spans, t)
                 mask_idx = mask_indices[0]
                 # Target is Ot+1. Context is O0...At.
-                # In prefix_stage1 logic, the sampler returns the index of the observation to mask.
-                # Usually it's At + 1.
                 ot_idx = mask_idx - 2 # Context starts at the corresponding observation
                 start_token = traj.unit_spans[max(0, ot_idx)].start
                 end_token = traj.unit_spans[mask_idx].end
@@ -111,7 +114,6 @@ class AOMTDataset(Dataset):
                     UnitSpan(s.start - start_token, s.end - start_token, s.unit_type, s.step_idx)
                     for s in traj.unit_spans[max(0, ot_idx) : mask_idx + 1]
                 ]
-                # In the sliced view, the target is the last unit
                 input_ids, labels = apply_unit_mask(input_ids_full, unit_spans_sliced, [len(unit_spans_sliced)-1], self.mask_token_id)
         else: # aomt_mixed
             traj = self.tokenized_trajectories[idx]
