@@ -42,7 +42,8 @@ class AOMTDataset(Dataset):
         cache_path = os.path.join(cache_dir, f"tokenized_{split}_{model_id.replace('/', '_')}.pkl")
         os.makedirs(cache_dir, exist_ok=True)
 
-        if os.path.exists(cache_path) and "PYTEST_CURRENT_TEST" not in os.environ:
+        # FORCE FRESH TOKENIZATION (Disabled cache check temporarily to fix 1-sample bug)
+        if False and os.path.exists(cache_path) and "PYTEST_CURRENT_TEST" not in os.environ:
             with open(cache_path, 'rb') as f:
                 self.tokenized_trajectories = pickle.load(f)
         else:
