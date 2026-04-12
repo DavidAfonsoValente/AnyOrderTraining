@@ -73,7 +73,8 @@ def main():
     )
 
     # 3. Prepare for LoRA
-    if not isinstance(model, PeftModel):
+    # Check for peft_config attribute which is more reliable for custom models
+    if not hasattr(model, "peft_config"):
         print("Initializing new LoRA adapter...")
         model = prepare_model_for_kbit_training(model)
         lora_config = LoraConfig(
@@ -86,7 +87,7 @@ def main():
         )
         model = get_peft_model(model, lora_config)
     else:
-        print("Detected existing PEFT model, skipping re-initialization.")
+        print("Detected existing PEFT model (peft_config found), skipping re-initialization.")
     
     model.print_trainable_parameters()
 
@@ -100,6 +101,7 @@ def main():
         max_seq_len=config.max_seq_len,
         token_level=config.get("token_level", False)
     )
+    print(f"Dataset loaded. Total training samples: {len(train_dataset)}")
     collator = AOMTDataCollator(tokenizer)
 
     # 5. Training Args (Using Paged Optimizer)
