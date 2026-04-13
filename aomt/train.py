@@ -1,3 +1,11 @@
+# 1. Strict Device Binding: MUST happen before ANY other imports
+if "LOCAL_RANK" in os.environ:
+    import torch
+    local_rank = int(os.environ["LOCAL_RANK"])
+    torch.cuda.set_device(local_rank)
+    torch.cuda.init()
+    print(f"[Rank {os.environ.get('RANK', '0')}] Is isolated to GPU {local_rank}")
+
 import os
 import torch
 import torch.nn as nn
@@ -29,7 +37,7 @@ class AOMTTrainer(Trainer):
             attention_mask=attention_mask,
             return_dict=True
         )
-        logits = outputs.logits
+        logits = outputs.logits if hasattr(outputs, "logits") else outputs[0]
         labels = inputs["labels"]
         loss = masked_cross_entropy_loss(logits, labels)
         return (loss, outputs) if return_outputs else loss
@@ -73,8 +81,8 @@ def main():
     )
 
     # 3. Prepare for LoRA
-    # Check for peft_config attribute which is more reliable for custom models
-    if not hasattr(model, "peft_config"):
+    # Check if model is already a PeftModel
+    if not isinstance(model, PeftModel):
         print("Initializing new LoRA adapter...")
         model = prepare_model_for_kbit_training(model)
         lora_config = LoraConfig(
@@ -87,7 +95,7 @@ def main():
         )
         model = get_peft_model(model, lora_config)
     else:
-        print("Detected existing PEFT model (peft_config found), skipping re-initialization.")
+        print("Detected existing PEFT model, skipping re-initialization.")
     
     model.print_trainable_parameters()
 

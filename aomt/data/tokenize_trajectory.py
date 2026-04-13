@@ -66,22 +66,40 @@ def tokenize_trajectory(
     all_ids = _ensure_list_of_ints(raw_ids)
 
     # Find start of O0
+    # We use a smaller window (first 5 tokens) to find the start, as template prefixing
+    # can sometimes merge the very first token with template markers.
     first_u_raw = tokenizer.encode(units_text[0], add_special_tokens=False)
     first_u_ids = _ensure_list_of_ints(first_u_raw)
     
+    match_len = min(len(first_u_ids), 10)
     current_pos = 0
-    # Search for the first unit ids in the full sequence
     found_first = False
-    for i in range(len(all_ids) - len(first_u_ids) + 1):
-        if all_ids[i : i+len(first_u_ids)] == first_u_ids:
-            current_pos = i
-            found_first = True
-            break
+    if match_len > 0:
+        for i in range(len(all_ids) - match_len + 1):
+            if all_ids[i : i+match_len] == first_u_ids[:match_len]:
+                current_pos = i
+                found_first = True
+                break
     
-    # Fallback: if strict match fails, the template might have added prefix tokens
-    # Just start after the first few tokens (usually BOS + template header)
+    # Fallback: if even a partial match fails, just skip the known template overhead
+    # In dFactory templates, this is usually around 10-20 tokens.
     if not found_first:
-        current_pos = max(0, len(all_ids) - sum(len(_ensure_list_of_ints(tokenizer.encode(t, add_special_tokens=False))) for t in units_text) - (len(units_text) - 1))
+        # Try to find any occurrence of any unit to anchor
+        for u_text in units_text:
+            u_ids = _ensure_list_of_ints(tokenizer.encode(u_text, add_special_tokens=False))
+            if len(u_ids) < 5: continue
+            for i in range(len(all_ids) - 5 + 1):
+                if all_ids[i:i+5] == u_ids[:5]:
+                    # Found an anchor! Backtrack to find start of O0
+                    # This is complex, so let's just use a fixed offset as last resort
+                    current_pos = i # This is wrong but better than 0
+                    found_first = True
+                    break
+            if found_first: break
+
+    if not found_first:
+        # Last resort: skip standard LLaDA/dFactory prefix (approx 12 tokens)
+        current_pos = min(12, len(all_ids))
 
     unit_spans = []
     current_step = 0

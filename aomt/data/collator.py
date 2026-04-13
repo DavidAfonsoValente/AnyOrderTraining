@@ -25,10 +25,10 @@ class AOMTDataCollator:
         )
         
         # LLaDA 2.0 4D attention mask [B, 1, L, L]
-        # For simplicity, we create a full block mask. 
-        # If examples vary in length, you'd ideally want a padding mask here too.
-        # But LLaDA is usually used with same-length blocks or packing.
-        attention_mask = torch.ones((batch_size, 1, max_len, max_len))
+        # Create 2D padding mask: True for real tokens, False for padding
+        padding_mask = (input_ids_padded != self.pad_token_id)
+        # Expand to 4D [B, 1, L, L]
+        attention_mask = padding_mask.view(batch_size, 1, 1, max_len).expand(-1, -1, max_len, -1)
 
         return {
             "input_ids": input_ids_padded,
