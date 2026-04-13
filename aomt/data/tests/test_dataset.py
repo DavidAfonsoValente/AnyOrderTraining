@@ -3,9 +3,9 @@ from aomt.data.dataset import AOMTDataset
 
 def test_standard_sft_dataset(synthetic_trajectory, tokenizer_fixture):
     raw_dataset = [synthetic_trajectory]
-    # T=2 actions, should produce 2 examples
+    # Optimized behavior: 1 trajectory produces 1 example with all actions masked
     ds = AOMTDataset(raw_dataset, tokenizer_fixture, method="standard_sft")
-    assert len(ds) == 2
+    assert len(ds) == 1
     
     # Check first example
     item = ds[0]
