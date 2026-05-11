@@ -1,64 +1,52 @@
 # AOMT: Any-Order Masked Training for LLM Agents
 
-## 1. Overview
+## 1. Research Overview
+Any-Order Masked Training (AOMT) is a representational learning framework for LLM-based agents. It enables models to jointly learn **policies** (predicting actions from observations) and **world models** (predicting observations from actions) within a single unified training objective.
 
-Any-Order Masked Training (AOMT) is a training framework for LLM-based agents that enables them to jointly model both policies and world models. Unlike standard Supervised Fine-Tuning (SFT), which typically predicts the next action in a causal sequence, AOMT uses a random unit-level masking strategy over the entire agent trajectory. This allows the model to learn bidirectional dependencies between observations and actions.
+By using a random unit-level masking strategy over the entire agent trajectory, AOMT forces the model to learn the complex bidirectional dependencies required for grounded reasoning. This repository provides the official implementation using **LLaDA 2.0**, a bidirectional masked diffusion language model.
 
-This codebase provides a complete, paper-ready implementation of AOMT, including:
-- Trajectory-level unit tokenization and masking.
-- Four distinct training methods (Standard SFT, Prefix SFT Stages 1 & 2, and AOMT-Mixed).
-- Unified inference module using LLaDA block diffusion.
-- Comprehensive evaluation suite for ALFWorld, ScienceWorld, and WebShop.
-- Automated ablation and analysis pipelines.
+## 2. Core Model Architecture
+We leverage **LLaDA 2.0-mini**, which is a high-performance **Mixture-of-Experts (MoE)** model:
+- **Total Parameters:** ~16 Billion.
+- **Active Parameters:** ~2 Billion per token.
+- **Context Window:** 32,768 tokens.
+- **Training Objective:** Discrete Diffusion (Any-Order Denoising).
 
-## 2. Background: Why AOMT?
+### Hardware Requirements
+Due to the 16B MoE architecture and the memory overhead of the Adam optimizer states (~128GB), the model requires significant VRAM:
+- **Training:** Minimum **2x H100 (96GB)** GPUs using **FSDP1** sharding.
+- **Precision:** `bf16` (Mixed Precision) with `expandable_segments` enabled to prevent fragmentation.
 
-Standard SFT is inefficient for trajectory modeling. For a trajectory of length $T$, standard SFT only utilizes a small fraction ($T/2^{2T+1}$) of the potential information available in the sequence. By contrast, AOMT's random masking objective allows the model to learn from any combination of context and target units within the trajectory.
+## 3. The Data Pipeline
+The codebase utilizes the **ETO Trajectory Dataset** (AlfWorld, ScienceWorld, WebShop) with a robust, multi-stage loading pipeline:
+- **Unit Tokenization:** Trajectories are parsed into "Units" (Observations and Actions).
+- **Masking Invariants:** We use **Unit-Level Masking** (masking entire text spans) to prevent intra-unit information leakage.
+- **Vocabulary Safeguards:** Automatic clipping of token IDs to the model's actual logit dimension (156,891) to prevent CUDA out-of-bounds asserts.
 
-We leverage LLaDA 2.0, a masked diffusion language model, which is naturally suited for this task due to its native bidirectional attention and ability to perform iterative denoising (block diffusion).
+## 4. Training Methodologies
+The pipeline evaluates four distinct training regimes:
 
-## 3. The Four Training Methods
+1.  **Standard SFT:** Baseline causal-prefix learning. The model is trained to predict the next action given the full causal history.
+2.  **Prefix SFT Stage 1 (IWM):** Offline Internal World Model pretraining. The model learns to predict $O_{t+1}$ given $O_t$ and $A_t$ (local 3-unit window).
+3.  **Prefix SFT Stage 2:** Policy fine-tuning initialized from the Stage 1 world-model checkpoint.
+4.  **AOMT-Mixed:** The proposed framework. Bernoulli(p=0.25) masking applied across all units (obs and act) in the full trajectory.
 
-### Standard SFT (Method 1)
-Baseline causal-prefix policy learning. The model predicts the next action given the history.
-**Structure:** `[O0, SEP, A0, SEP, ..., Ot, SEP, MASK_At]`
+## 5. Unified Inference Protocol
+To ensure a fair comparison and isolate the representational benefits of AOMT, **all models use an identical inference procedure**:
+- **Format:** Standard Chat Template (`HUMAN` role contains the history, `ASSISTANT` is generated).
+- **Method:** LLaDA Block Diffusion (32 denoising steps per block).
+- **Hyperparameters:** Temperature 0.0, Block Length 32, Generation Length 256.
+- **Action Extraction:** Automatic ReAct parsing (`Thought: ... \n Action: ...`) before environment interaction.
 
-### Prefix SFT Stage 1: Offline IWM (Method 2)
-Pretrains the model as an Internal World Model (IWM) using local context only.
-**Structure:** `[Ot, SEP, At, SEP, MASK_Ot+1]` (exactly 3 units).
+## 6. Evaluation Suite
+The project includes automated pipelines for four benchmark areas:
+- **ALFWorld:** Binary success rate across 6 household task categories.
+- **ScienceWorld:** Continuous normalised scores across 30 elementary science tasks.
+- **WebShop:** Average reward for e-commerce shopping tasks.
+- **NLL_obs:** Evaluation of the model's "World Modeling" accuracy via pseudo-log-likelihood of masked observations.
 
-### Prefix SFT Stage 2: Policy SFT (Method 3)
-Fine-tunes the policy starting from the Stage 1 checkpoint.
-**Structure:** Same as Standard SFT.
-
-### AOMT-Mixed (Method 4)
-The proposed method. Randomly masks any unit (observation or action) in the full trajectory.
-**Structure:** `[M_O0, SEP, M_A0, SEP, ..., M_OT]` where $M_i$ is a Bernoulli mask.
-
-## 4. Inference Mode
-
-All four methods use an identical inference procedure to ensure a fair comparison. The benefits of AOMT-Mixed are purely representational — by training with bidirectional context, the model develops internal representations that encode the causal structure of trajectories.
-
-### Unified Inference Logic
-1.  **Prompt Construction:** The entire observation/action history is joined with `\n` and wrapped in a single `USER` (HUMAN) role message.
-2.  **Generation:** The trailing `<|role_end|>` token is removed, and `[MASK]` tokens are appended. The model generates the next action string **inside** the `USER` role to match the training distribution.
-3.  **Iterative Denoising:** High-confidence tokens are unmasked first over 32 diffusion steps using LLaDA's block diffusion.
-
-## 5. Design Decisions
-
-- **Unit-Level Masking:** We mask entire text spans (units) to prevent intra-unit information leakage, forcing the model to rely on inter-unit context.
-- **Data-Driven Causality:** We enforce causality by simply omitting future units from the sequence in SFT methods, avoiding the need for a causal attention mask.
-- **Local World Model:** Prefix SFT Stage 1 uses a local 3-unit window ($O_t, A_t, O_{t+1}$) to replicate the ALEE formulation.
-- **Rejection of Planning Inference (Mode B):** We explicitly reject K-step lookahead planning at inference time. Hallucinating future observations in stochastic environments can mislead the agent. The representational benefit of AOMT is sufficient to improve policy performance without the risks of hallucinated context.
-
-## 6. Training and Evaluation
-
-Training is orchestrated via two master SLURM scripts:
-1. `bash slurm/run_part1_baselines_and_sweeps.sh`: Pre-flight tests and main training runs.
-2. `bash slurm/run_part2_aomt_eval_and_analysis.sh`: Evaluation and result generation.
-
-Evaluation is performed on:
-- **ALFWorld:** Household task success.
-- **ScienceWorld:** Elementary science task scores.
-- **WebShop:** E-commerce agent rewards.
-- **NLL_obs:** Trajectory reconstruction accuracy (pseudo-log-likelihood).
+## 7. Operational Technicalities
+- **Distributed Training:** Orchestrated via `torchrun` and Slurm.
+- **Memory Management:** Uses `paged_adamw_32bit` and FSDP sharding to fit the 16B model on cluster hardware.
+- **GPU Isolation:** Strict early device binding using `LOCAL_RANK` to prevent NCCL collisions on multi-GPU nodes.
+- **Attention Masks:** Custom 4D attention masks ensure bidirectional visibility while respecting padding boundaries.
